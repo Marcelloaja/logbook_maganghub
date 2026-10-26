@@ -1476,43 +1476,54 @@ let storageFolders = [];
 let storageFiles = [];
 let currentActiveFolderId = null;
 
+// Official Default Google Apps Script URL for all 33 interns
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbw3lngPgPRjMGFCTQCaNcMxRKXp4iBEsnXBMVslLQmCH7aZhzOUG-1AcI5BGaElZPVl/exec';
+
+// Real default folder for Marcello (no more dummy folders)
 const DEFAULT_FOLDERS = [
-  { id: 'f-1', name: '01. Ilham - Divisi TI & Website', createdAt: '2026-10-26' },
-  { id: 'f-2', name: '02. Sarah - Hubungan Masyarakat (Humas)', createdAt: '2026-10-26' },
-  { id: 'f-3', name: '03. Rizky - Tim Pengkajian Bahasa', createdAt: '2026-10-26' },
-  { id: 'f-4', name: '04. Dewi - Perlindungan & Literasi', createdAt: '2026-10-26' }
+  { id: 'f-marcello', name: 'Marcello Ilham - Tim Pelindungan', createdAt: '2026-10-26' }
 ];
+
+function getGasWebhookUrl() {
+  const inputEl = document.getElementById('gas-webhook-url');
+  const fromInput = inputEl ? inputEl.value.trim() : '';
+  const fromStorage = (localStorage.getItem('gas_webhook_url') || '').trim();
+  return fromInput || fromStorage || DEFAULT_GAS_URL;
+}
 
 function initStorageHub() {
   loadSavedDriveConfigs();
   loadStorageData();
   renderStorageFolders();
+  // Automatically pull live folders & files from Google Drive / Cloud
+  syncStorageWithCloud(true);
 }
 
 function loadSavedDriveConfigs() {
-  const savedUrl = localStorage.getItem('gas_webhook_url');
-  if (savedUrl) {
-    const el = document.getElementById('gas-webhook-url');
-    if (el) el.value = savedUrl;
-    const hint = document.getElementById('storage-sync-hint');
-    if (hint) hint.textContent = '✓ Google Apps Script terhubung! Berkas akan otomatis masuk ke folder Google Drive koordinator.';
+  const currentUrl = getGasWebhookUrl();
+  const el = document.getElementById('gas-webhook-url');
+  if (el) el.value = currentUrl;
+  const hint = document.getElementById('storage-sync-hint');
+  if (hint) {
+    hint.textContent = '✓ Google Apps Script terhubung otomatis untuk seluruh 33 peserta magang.';
   }
 }
 
 function saveScriptUrl() {
-  const val = (document.getElementById('gas-webhook-url')?.value || '').trim();
+  const val = (document.getElementById('gas-webhook-url')?.value || '').trim() || DEFAULT_GAS_URL;
   localStorage.setItem('gas_webhook_url', val);
   const hint = document.getElementById('storage-sync-hint');
   if (val) {
     if (hint) hint.textContent = '✓ Google Apps Script terhubung! Berkas akan otomatis masuk ke folder Google Drive koordinator.';
     showToast('Koneksi Google Apps Script disimpan!');
+    syncStorageWithCloud(false);
   } else {
     if (hint) hint.textContent = 'URL tersimpan di browser. Jika belum diisi, website otomatis menyimpan berkas di Storage Lokal Website.';
   }
 }
 
 async function testAppsScriptConnection() {
-  const url = (document.getElementById('gas-webhook-url')?.value || localStorage.getItem('gas_webhook_url') || '').trim();
+  const url = getGasWebhookUrl();
   if (!url) {
     showToast('Masukkan URL Google Apps Script terlebih dahulu!');
     return;
@@ -1552,6 +1563,76 @@ async function testAppsScriptConnection() {
   }
 }
 
+async function syncStorageWithCloud(silent = true) {
+  const url = getGasWebhookUrl();
+  if (!url) return;
+
+  const btn = document.getElementById('btn-sync-storage');
+  const origHtml = btn ? btn.innerHTML : '';
+  if (btn && !silent) {
+    btn.disabled = true;
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67"/></svg>
+      <span>Sinkronisasi...</span>
+    `;
+  }
+
+  try {
+    const resp = await fetch(url, { method: 'GET', mode: 'cors' });
+    const res = await resp.json();
+    if (res.success) {
+      let changed = false;
+      if (Array.isArray(res.folders) && res.folders.length > 0) {
+        const cloudFolderMap = new Map();
+        res.folders.forEach(f => {
+          if (f && f.name && !['f-1', 'f-2', 'f-3', 'f-4'].includes(f.id)) {
+            cloudFolderMap.set(f.name.toLowerCase().trim(), f);
+          }
+        });
+
+        storageFolders.forEach(f => {
+          const k = f.name.toLowerCase().trim();
+          if (!['f-1', 'f-2', 'f-3', 'f-4'].includes(f.id) && !cloudFolderMap.has(k)) {
+            cloudFolderMap.set(k, f);
+          }
+        });
+
+        storageFolders = Array.from(cloudFolderMap.values());
+        saveStorageFolders();
+        changed = true;
+      }
+
+      if (Array.isArray(res.files) && res.files.length > 0) {
+        const fileMap = new Map();
+        res.files.forEach(f => fileMap.set(f.id || f.url, f));
+        storageFiles.forEach(f => {
+          const key = f.id || f.url;
+          if (!fileMap.has(key)) fileMap.set(key, f);
+        });
+        storageFiles = Array.from(fileMap.values());
+        saveStorageFiles();
+        changed = true;
+      }
+
+      if (changed) {
+        renderStorageFolders();
+        if (currentActiveFolderId) {
+          renderFolderFiles(currentActiveFolderId);
+        }
+      }
+      if (!silent) showToast('✅ Data folder dan berkas berhasil disinkronkan dari Cloud Google Drive!');
+    }
+  } catch (err) {
+    console.warn('Sync storage note:', err);
+    if (!silent) showToast('Gagal sinkronisasi cloud: ' + err.message);
+  } finally {
+    if (btn && !silent) {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+  }
+}
+
 function toggleStorageAdminSettings() {
   const card = document.getElementById('storage-admin-card');
   if (!card) return;
@@ -1562,7 +1643,14 @@ function loadStorageData() {
   try {
     const savedFolders = localStorage.getItem('maganghub_storage_folders');
     if (savedFolders) {
-      storageFolders = JSON.parse(savedFolders);
+      let parsed = JSON.parse(savedFolders);
+      // Clean up legacy dummy folders (f-1, f-2, f-3, f-4)
+      parsed = parsed.filter(f => !['f-1', 'f-2', 'f-3', 'f-4'].includes(f.id));
+      if (parsed.length === 0) {
+        parsed = [...DEFAULT_FOLDERS];
+      }
+      storageFolders = parsed;
+      saveStorageFolders();
     } else {
       storageFolders = [...DEFAULT_FOLDERS];
       saveStorageFolders();
@@ -1667,7 +1755,7 @@ function confirmCreateFolder() {
     return;
   }
 
-  const exists = storageFolders.some(f => f.name.toLowerCase() === name.toLowerCase());
+  const exists = storageFolders.some(f => f.name.toLowerCase().trim() === name.toLowerCase().trim());
   if (exists) {
     showToast('Folder dengan nama ini sudah ada!');
     return;
@@ -1684,6 +1772,23 @@ function confirmCreateFolder() {
   closeCreateFolderModal();
   renderStorageFolders();
   showToast(`Folder "${name}" berhasil dibuat! 📁`);
+
+  // Cloud sync to Google Drive & GAS properties
+  const webhookUrl = getGasWebhookUrl();
+  if (webhookUrl) {
+    fetch(webhookUrl, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'createFolder', folderName: name })
+    }).then(r => r.json()).then(res => {
+      if (res.success && res.folder) {
+        newFolder.id = res.folder.id || newFolder.id;
+        saveStorageFolders();
+        renderStorageFolders();
+      }
+    }).catch(err => console.warn('Cloud folder create error:', err));
+  }
 
   openFolderView(newFolder.id);
 }
@@ -1838,7 +1943,7 @@ async function saveActiveLogbookToCurrentFolder() {
       blob = await generateWordBlob(data);
     }
 
-    const webhookUrl = (document.getElementById('gas-webhook-url')?.value || localStorage.getItem('gas_webhook_url') || '').trim();
+    const webhookUrl = getGasWebhookUrl();
     let finalUrl = '';
     let isCloud = false;
 
@@ -1873,6 +1978,7 @@ async function saveActiveLogbookToCurrentFolder() {
         }
         finalUrl = result.url;
         isCloud = true;
+        setTimeout(() => syncStorageWithCloud(true), 1200);
       } catch (uploadErr) {
         console.warn('Cloud upload failed, falling back to local storage:', uploadErr);
         const dataUrl = await new Promise((resolve) => {

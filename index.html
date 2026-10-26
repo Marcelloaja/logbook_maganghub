@@ -288,6 +288,10 @@
           <input type="text" id="storage-search-input" placeholder="Cari folder peserta / divisi..." oninput="handleStorageSearch(this.value)" />
         </div>
         <div class="storage-action-btns">
+          <button type="button" class="btn btn-secondary" id="btn-sync-storage" onclick="syncStorageWithCloud(false)" title="Sinkronkan data folder & berkas dari Google Drive">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67"/></svg>
+            <span>Sinkronkan Cloud</span>
+          </button>
           <button type="button" class="btn btn-primary" onclick="openCreateFolderModal()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Buat Folder Baru
@@ -483,39 +487,32 @@
         </ol>
         <div class="code-block-container">
           <button type="button" class="btn-copy-code" onclick="copyAppsScriptCode()">Salin Kode Script</button>
-          <pre class="code-block"><code id="gas-code-content">function doPost(e) {
+          <pre class="code-block"><code id="gas-code-content">// ============================================================
+// GOOGLE APPS SCRIPT: LOGBOOK STORAGE HUB (33 PESERTA MAGANG)
+// Mendukung sinkronisasi realtime folder &amp; berkas untuk seluruh peserta
+// ============================================================
+
+function doGet(e) {
   try {
-    var data = JSON.parse(e.postData.contents);
-    var rootFolderName = "Logbook Magang Balai Bahasa Jatim";
-    var rootFolders = DriveApp.getFoldersByName(rootFolderName);
-    var rootFolder = rootFolders.hasNext() ? rootFolders.next() : DriveApp.createFolder(rootFolderName);
+    var props = PropertiesService.getScriptProperties();
+    var foldersJson = props.getProperty("folders");
+    var filesJson = props.getProperty("files");
     
-    // Buat/ambil subfolder per anak magang atau divisi
-    var targetFolderName = data.folderName || "Umum";
-    var subFolders = rootFolder.getFoldersByName(targetFolderName);
-    var targetFolder = subFolders.hasNext() ? subFolders.next() : rootFolder.createFolder(targetFolderName);
+    var folders = foldersJson ? JSON.parse(foldersJson) : null;
+    var files = filesJson ? JSON.parse(filesJson) : [];
     
-    // Set folder publik (bisa diakses siapa saja yang punya link)
-    targetFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    
-    // Decode dan simpan file dokumen logbook
-    var decoded = Utilities.base64Decode(data.base64);
-    var blob = Utilities.newBlob(decoded, data.mimeType, data.fileName);
-    var file = targetFolder.createFile(blob);
-    
-    // Set izin file publik (siapa saja yang punya link bisa melihat)
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    
-    var fileUrl = "https://drive.google.com/file/d/" + file.getId() + "/view?usp=sharing";
-    var folderUrl = targetFolder.getUrl();
+    // Inisialisasi awal jika properties masih kosong
+    if (!folders || folders.length === 0) {
+      folders = [
+        { id: "f-marcello", name: "Marcello Ilham - Tim Pelindungan", createdAt: "2026-10-26" }
+      ];
+      props.setProperty("folders", JSON.stringify(folders));
+    }
     
     return ContentService.createTextOutput(JSON.stringify({
       success: true,
-      url: fileUrl,
-      folderUrl: folderUrl,
-      fileId: file.getId(),
-      fileName: file.getName(),
-      folderName: targetFolderName
+      folders: folders,
+      files: files
     })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({
@@ -525,11 +522,84 @@
   }
 }
 
-function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({
-    success: true,
-    message: "Google Apps Script Logbook MagangHub siap digunakan!"
-  })).setMimeType(ContentService.MimeType.JSON);
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var props = PropertiesService.getScriptProperties();
+    var folders = JSON.parse(props.getProperty("folders") || "[]");
+    var files = JSON.parse(props.getProperty("files") || "[]");
+
+    var rootFolderName = "Logbook Magang Balai Bahasa Jatim";
+    var rootFolders = DriveApp.getFoldersByName(rootFolderName);
+    var rootFolder = rootFolders.hasNext() ? rootFolders.next() : DriveApp.createFolder(rootFolderName);
+    rootFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    // ACTION 1: BUAT FOLDER BARU
+    if (data.action === "createFolder") {
+      var folderName = (data.folderName || "").trim();
+      if (!folderName) throw new Error("Nama folder tidak boleh kosong");
+      
+      var existingSub = rootFolder.getFoldersByName(folderName);
+      var driveSub = existingSub.hasNext() ? existingSub.next() : rootFolder.createFolder(folderName);
+      driveSub.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+      var newFolderObj = {
+        id: driveSub.getId(),
+        name: folderName,
+        createdAt: Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd")
+      };
+
+      var exists = folders.some(function(f) { return f.name.toLowerCase() === folderName.toLowerCase(); });
+      if (!exists) {
+        folders.unshift(newFolderObj);
+        props.setProperty("folders", JSON.stringify(folders));
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        folder: newFolderObj,
+        folders: folders
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ACTION 2: SIMPAN / UPLOAD DOKUMEN LOGBOOK
+    var targetFolderName = (data.folderName || "Umum").trim();
+    var subFolders = rootFolder.getFoldersByName(targetFolderName);
+    var targetFolder = subFolders.hasNext() ? subFolders.next() : rootFolder.createFolder(targetFolderName);
+    targetFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    var decoded = Utilities.base64Decode(data.base64);
+    var blob = Utilities.newBlob(decoded, data.mimeType, data.fileName);
+    var file = targetFolder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    var fileUrl = "https://drive.google.com/file/d/" + file.getId() + "/view?usp=sharing";
+    var fileObj = {
+      id: file.getId(),
+      folderId: targetFolder.getId(),
+      folderName: targetFolderName,
+      name: file.getName(),
+      url: fileUrl,
+      date: Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd HH:mm"),
+      size: file.getSize()
+    };
+
+    files.unshift(fileObj);
+    if (files.length > 500) files = files.slice(0, 500);
+    props.setProperty("files", JSON.stringify(files));
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      url: fileUrl,
+      folderUrl: targetFolder.getUrl(),
+      file: fileObj
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: err.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }</code></pre>
         </div>
         <ol class="modal-steps" start="3">
