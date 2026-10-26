@@ -489,31 +489,12 @@
           <button type="button" class="btn-copy-code" onclick="copyAppsScriptCode()">Salin Kode Script</button>
           <pre class="code-block"><code id="gas-code-content">// ============================================================
 // GOOGLE APPS SCRIPT: LOGBOOK STORAGE HUB (33 PESERTA MAGANG)
-// Mendukung sinkronisasi realtime folder &amp; berkas untuk seluruh peserta
+// Otomatis membaca & sinkronisasi seluruh folder fisik Google Drive
 // ============================================================
 
 function doGet(e) {
   try {
-    var props = PropertiesService.getScriptProperties();
-    var foldersJson = props.getProperty("folders");
-    var filesJson = props.getProperty("files");
-    
-    var folders = foldersJson ? JSON.parse(foldersJson) : null;
-    var files = filesJson ? JSON.parse(filesJson) : [];
-    
-    // Inisialisasi awal jika properties masih kosong
-    if (!folders || folders.length === 0) {
-      folders = [
-        { id: "f-marcello", name: "Marcello Ilham - Tim Pelindungan", createdAt: "2026-10-26" }
-      ];
-      props.setProperty("folders", JSON.stringify(folders));
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      folders: folders,
-      files: files
-    })).setMimeType(ContentService.MimeType.JSON);
+    return handleGetSyncData();
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({
       success: false,
@@ -522,28 +503,77 @@ function doGet(e) {
   }
 }
 
+function handleGetSyncData() {
+  var rootFolderName = "Logbook Magang Balai Bahasa Jatim";
+  var rootFolders = DriveApp.getFoldersByName(rootFolderName);
+  var rootFolder = rootFolders.hasNext() ? rootFolders.next() : DriveApp.createFolder(rootFolderName);
+  rootFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+  var folders = [];
+  var files = [];
+
+  // 1. Baca LANGSUNG seluruh subfolder fisik yang ada di Google Drive
+  var subFolders = rootFolder.getFolders();
+  while (subFolders.hasNext()) {
+    var sub = subFolders.next();
+    var fName = sub.getName();
+    var fId = sub.getId();
+    folders.push({
+      id: fId,
+      name: fName,
+      createdAt: Utilities.formatDate(sub.getDateCreated(), "Asia/Jakarta", "yyyy-MM-dd")
+    });
+
+    // Baca file-file di dalam subfolder ini
+    var subFiles = sub.getFiles();
+    while (subFiles.hasNext()) {
+      var file = subFiles.next();
+      files.push({
+        id: file.getId(),
+        folderId: fId,
+        folderName: fName,
+        name: file.getName(),
+        url: "https://drive.google.com/file/d/" + file.getId() + "/view?usp=sharing",
+        date: Utilities.formatDate(file.getDateCreated(), "Asia/Jakarta", "yyyy-MM-dd HH:mm"),
+        size: file.getSize()
+      });
+    }
+  }
+
+  // 2. Baca file yang ada di root folder (jika ada)
+  var rootFiles = rootFolder.getFiles();
+  while (rootFiles.hasNext()) {
+    var rFile = rootFiles.next();
+    files.push({
+      id: rFile.getId(),
+      folderId: rootFolder.getId(),
+      folderName: "Umum",
+      name: rFile.getName(),
+      url: "https://drive.google.com/file/d/" + rFile.getId() + "/view?usp=sharing",
+      date: Utilities.formatDate(rFile.getDateCreated(), "Asia/Jakarta", "yyyy-MM-dd HH:mm"),
+      size: rFile.getSize()
+    });
+  }
+
+  // Urutkan nama folder A-Z
+  folders.sort(function(a, b) {
+    return a.name.localeCompare(b.name);
+  });
+
+  return ContentService.createTextOutput(JSON.stringify({
+    success: true,
+    folders: folders,
+    files: files
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
-    var props = PropertiesService.getScriptProperties();
-    var folders = JSON.parse(props.getProperty("folders") || "[]");
-    var files = JSON.parse(props.getProperty("files") || "[]");
 
-    // Inisialisasi awal jika folder masih kosong
-    if (!folders || folders.length === 0) {
-      folders = [
-        { id: "f-marcello", name: "Marcello Ilham - Tim Pelindungan", createdAt: "2026-10-26" }
-      ];
-      props.setProperty("folders", JSON.stringify(folders));
-    }
-
-    // ACTION 0: SINKRONISASI DATA VIA POST
+    // ACTION 0: SINKRONISASI DATA FOLDER & BERKAS
     if (data.action === "getSyncData") {
-      return ContentService.createTextOutput(JSON.stringify({
-        success: true,
-        folders: folders,
-        files: files
-      })).setMimeType(ContentService.MimeType.JSON);
+      return handleGetSyncData();
     }
 
     var rootFolderName = "Logbook Magang Balai Bahasa Jatim";
@@ -560,22 +590,13 @@ function doPost(e) {
       var driveSub = existingSub.hasNext() ? existingSub.next() : rootFolder.createFolder(folderName);
       driveSub.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
-      var newFolderObj = {
-        id: driveSub.getId(),
-        name: folderName,
-        createdAt: Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd")
-      };
-
-      var exists = folders.some(function(f) { return f.name.toLowerCase() === folderName.toLowerCase(); });
-      if (!exists) {
-        folders.unshift(newFolderObj);
-        props.setProperty("folders", JSON.stringify(folders));
-      }
-
       return ContentService.createTextOutput(JSON.stringify({
         success: true,
-        folder: newFolderObj,
-        folders: folders
+        folder: {
+          id: driveSub.getId(),
+          name: folderName,
+          createdAt: Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd")
+        }
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -600,10 +621,6 @@ function doPost(e) {
       date: Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd HH:mm"),
       size: file.getSize()
     };
-
-    files.unshift(fileObj);
-    if (files.length > 500) files = files.slice(0, 500);
-    props.setProperty("files", JSON.stringify(files));
 
     return ContentService.createTextOutput(JSON.stringify({
       success: true,

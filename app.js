@@ -1710,7 +1710,7 @@ function renderStorageFolders(query = '') {
   if (emptyState) emptyState.style.display = 'none';
 
   grid.innerHTML = filtered.map(folder => {
-    const fileCount = storageFiles.filter(f => f.folderId === folder.id).length;
+    const fileCount = storageFiles.filter(f => f.folderId === folder.id || (f.folderName && folder.name && f.folderName.toLowerCase().trim() === folder.name.toLowerCase().trim())).length;
     return `
       <div class="folder-card" onclick="openFolderView('${folder.id}')">
         <div class="folder-card-top">
@@ -1873,7 +1873,8 @@ function renderFolderFiles(folderId) {
   const metaEl = document.getElementById('active-folder-meta');
   if (!tbody) return;
 
-  const files = storageFiles.filter(f => f.folderId === folderId);
+  const currentFolder = storageFolders.find(f => f.id === folderId);
+  const files = storageFiles.filter(f => f.folderId === folderId || (currentFolder && f.folderName && f.folderName.toLowerCase().trim() === currentFolder.name.toLowerCase().trim()));
   if (metaEl) metaEl.textContent = `${files.length} Berkas tersimpan`;
 
   if (files.length === 0) {
