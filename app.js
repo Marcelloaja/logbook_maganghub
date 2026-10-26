@@ -888,14 +888,23 @@ function buildDocHTML(data) {
   const logoSrc = logoDataUrl || window.LOGO_BASE64 || 'assets/logo.png';
 
   // Table Kegiatan Rows
-  const rowsHtml = data.kegiatan.map((k, idx) => `
+  const rowsHtml = data.kegiatan.map((k, idx) => {
+    const descParas = escapeHtml(k.deskripsi || '')
+      .split(/\n+/)
+      .map(p => p.trim())
+      .filter(p => p.length > 0)
+      .map(p => `<p class="doc-desc-p">${p}</p>`)
+      .join('') || '-';
+
+    return `
     <tr>
       <td style="text-align:center">${idx + 1}</td>
       <td style="white-space:nowrap;font-weight:600;font-size:11px;color:#1e293b">${escapeHtml(k.waktu || formatWaktuKegiatan(k))}</td>
       <td><strong>${escapeHtml(k.nama)}</strong></td>
-      <td class="kg-desc-cell" style="text-align:justify;text-justify:inter-word;line-height:1.55">${escapeHtml(k.deskripsi).replace(/\n/g, '<br/>')}</td>
+      <td class="kg-desc-cell">${descParas}</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   // Per-Activity Photos Section
   const activitiesWithPhotos = data.kegiatan.filter(k => k.fotos && k.fotos.length > 0);
@@ -1061,9 +1070,7 @@ async function generatePDFBlob(data) {
     tabPreview.style.position = 'fixed';
     tabPreview.style.top = '0';
     tabPreview.style.left = '0';
-    tabPreview.style.width = '100vw';
-    tabPreview.style.height = '100vh';
-    tabPreview.style.overflow = 'hidden';
+    tabPreview.style.width = '100%';
     tabPreview.style.zIndex = '9999';
     tabPreview.style.background = '#ffffff';
   }
@@ -1086,6 +1093,7 @@ async function generatePDFBlob(data) {
       scrollX: 0,
       scrollY: 0
     },
+    pagebreak: { mode: ['css', 'legacy'] },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
@@ -1100,8 +1108,6 @@ async function generatePDFBlob(data) {
       tabPreview.style.top = '';
       tabPreview.style.left = '';
       tabPreview.style.width = '';
-      tabPreview.style.height = '';
-      tabPreview.style.overflow = '';
       tabPreview.style.zIndex = '';
       tabPreview.style.background = '';
     }

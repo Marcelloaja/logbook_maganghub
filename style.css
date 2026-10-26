@@ -1425,10 +1425,30 @@ a {
 }
 
 .kegiatan-table td {
-  padding: 8px 10px;
+  padding: 7px 10px;
   border: 1px solid #ccc;
   vertical-align: top;
-  line-height: 1.55;
+  line-height: 1.5;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.kegiatan-table tr {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.doc-desc-p {
+  margin: 0 0 6px 0;
+  text-align: justify;
+  text-justify: inter-word;
+  line-height: 1.5;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.doc-desc-p:last-child {
+  margin-bottom: 0;
 }
 
 .kegiatan-table td:last-child,
