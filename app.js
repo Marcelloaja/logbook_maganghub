@@ -1031,8 +1031,86 @@ function buildDocHTML(data) {
 }
 
 // ============================================================
-// EXPORT TO PDF
+// UNIFIED PDF GENERATOR (ZERO SCROLL OFFSET & SAFE PAGE BREAKS)
 // ============================================================
+async function generatePDFBlob(data) {
+  if (typeof html2pdf !== 'function') {
+    throw new Error('Library html2pdf belum siap. Pastikan terhubung ke internet dan refresh browser.');
+  }
+
+  // Make sure preview doc in DOM is rendered
+  renderPreview();
+
+  const cleanNama = (data.nama || 'Peserta').replace(/[^a-zA-Z0-9]/g, '_');
+  const cleanDate = (data.tanggal || new Date().toISOString().split('T')[0]);
+  const fileName = `Logbook_${cleanNama}_${cleanDate}.pdf`;
+
+  // Create an isolated print container at top: 0, left: 0 behind page view.
+  // This completely eliminates any blank space caused by window.scrollY / window.pageYOffset,
+  // and guarantees proper dimensions even if tab-preview is hidden.
+  const printContainer = document.createElement('div');
+  printContainer.className = 'preview-doc print-pdf-mode';
+  printContainer.id = 'print-pdf-container';
+  printContainer.style.position = 'fixed';
+  printContainer.style.top = '0';
+  printContainer.style.left = '0';
+  printContainer.style.width = '794px';
+  printContainer.style.maxWidth = '794px';
+  printContainer.style.background = '#ffffff';
+  printContainer.style.color = '#111111';
+  printContainer.style.zIndex = '-9999';
+  printContainer.style.boxShadow = 'none';
+  printContainer.style.margin = '0';
+  printContainer.style.padding = '0';
+  printContainer.innerHTML = buildDocHTML(data);
+  document.body.appendChild(printContainer);
+
+  // Wait for images and layouts to settle
+  await new Promise(r => setTimeout(r, 250));
+
+  const opt = {
+    margin: [10, 10, 10, 10],
+    filename: fileName,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: 800
+    },
+    pagebreak: {
+      mode: ['css', 'legacy'],
+      avoid: [
+        '.doc-kop',
+        '.doc-kop-divider',
+        '.doc-title-bar',
+        '.doc-table-info',
+        '.doc-section-heading',
+        '.kegiatan-table tr',
+        '.doc-kg-foto-group',
+        '.doc-foto-grid',
+        '.doc-foto-item',
+        '.doc-catatan-box',
+        '.doc-footer-sign',
+        '.sign-col'
+      ]
+    },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  try {
+    const pdfBlob = await html2pdf().set(opt).from(printContainer).outputPdf('blob');
+    return { blob: pdfBlob, fileName };
+  } finally {
+    if (printContainer && printContainer.parentNode) {
+      printContainer.parentNode.removeChild(printContainer);
+    }
+  }
+}
+
 async function exportPDF() {
   const btn = document.getElementById('btn-pdf');
   const origText = btn.innerHTML;
@@ -1040,31 +1118,9 @@ async function exportPDF() {
   btn.textContent = 'Membuat PDF...';
 
   try {
-    if (typeof html2pdf !== 'function') {
-      throw new Error('Library html2pdf belum siap. Pastikan terhubung ke internet dan refresh browser.');
-    }
-    renderPreview();
     const data = collectData();
-    const cleanNama = data.nama.replace(/[^a-zA-Z0-9]/g, '_');
-    const fileName = `Logbook_${cleanNama}_${data.tanggal || 'tanggal'}.pdf`;
-
-    const el = document.getElementById('preview-doc');
-    const opt = {
-      margin: [10, 10, 10, 10],
-      filename: fileName,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        allowTaint: true,
-        logging: false 
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    // Output PDF as Blob and download with guaranteed filename and .pdf extension
-    const pdfBlob = await html2pdf().set(opt).from(el).outputPdf('blob');
-    const success = await downloadBlob(pdfBlob, fileName, 'application/pdf');
+    const { blob, fileName } = await generatePDFBlob(data);
+    const success = await downloadBlob(blob, fileName, 'application/pdf');
     if (success !== false) {
       showToast('PDF berhasil diunduh: ' + fileName);
     }
@@ -1768,18 +1824,10 @@ async function saveActiveLogbookToCurrentFolder() {
     let blob;
 
     if (format === 'pdf') {
-      fileName = `Logbook_${cleanNama}_${cleanDate}.pdf`;
       mimeType = 'application/pdf';
-      renderPreview();
-      await new Promise(r => setTimeout(r, 350));
-      const el = document.getElementById('preview-doc');
-      const opt = {
-        margin: [10, 10, 10, 10],
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-      blob = await html2pdf().set(opt).from(el).outputPdf('blob');
+      const pdfRes = await generatePDFBlob(data);
+      blob = pdfRes.blob;
+      fileName = pdfRes.fileName;
     } else {
       fileName = `Logbook_${cleanNama}_${cleanDate}.docx`;
       mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
