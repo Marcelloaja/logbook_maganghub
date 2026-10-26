@@ -774,8 +774,16 @@ function loadSavedDraft() {
   }
 }
 
-function resetForm() {
-  if (!confirm('Apakah kamu yakin ingin mereset formulir logbook hari ini?')) return;
+async function resetForm() {
+  const confirmed = await showCustomConfirmDialog({
+    title: 'Reset Formulir Logbook?',
+    message: 'Apakah Anda yakin ingin mengosongkan seluruh isian formulir logbook hari ini?',
+    subtext: 'Data yang belum disimpan akan hilang dan formulir akan kembali bersih.',
+    confirmText: 'Ya, Reset Form',
+    cancelText: 'Batal',
+    isDanger: false
+  });
+  if (!confirmed) return;
 
   const namaEl = document.getElementById('nama');
   const unitEl = document.getElementById('unit');
@@ -2148,14 +2156,118 @@ function copyFileLink(url) {
   });
 }
 
+// ============================================================
+// CUSTOM CONFIRM DIALOG (MODERN POPUP)
+// ============================================================
+function showCustomConfirmDialog({
+  title = 'Konfirmasi Tindakan',
+  message = 'Apakah Anda yakin?',
+  subtext = '',
+  confirmText = 'Ya, Lanjutkan',
+  cancelText = 'Batal',
+  isDanger = true
+} = {}) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('custom-dialog-modal');
+    if (!modal) {
+      resolve(confirm(message.replace(/<[^>]+>/g, '')));
+      return;
+    }
+
+    const titleEl = document.getElementById('custom-dialog-title');
+    const msgEl = document.getElementById('custom-dialog-message');
+    const subtextEl = document.getElementById('custom-dialog-subtext');
+    const subtextTxt = document.getElementById('custom-dialog-subtext-txt');
+    const confirmBtn = document.getElementById('custom-dialog-confirm-btn');
+    const cancelBtn = document.getElementById('custom-dialog-cancel-btn');
+    const closeBtn = document.getElementById('custom-dialog-close-btn');
+    const iconEl = document.getElementById('custom-dialog-icon');
+
+    if (titleEl) titleEl.textContent = title;
+    if (msgEl) msgEl.innerHTML = message;
+
+    if (subtextEl && subtextTxt) {
+      if (subtext) {
+        subtextTxt.textContent = subtext;
+        subtextEl.style.display = 'flex';
+      } else {
+        subtextEl.style.display = 'none';
+      }
+    }
+
+    if (iconEl) {
+      iconEl.className = 'custom-dialog-icon ' + (isDanger ? 'danger' : 'warning');
+      if (isDanger) {
+        iconEl.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+            <line x1="10" y1="11" x2="10" y2="17"/>
+            <line x1="14" y1="11" x2="14" y2="17"/>
+          </svg>
+        `;
+      } else {
+        iconEl.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        `;
+      }
+    }
+
+    if (confirmBtn) {
+      confirmBtn.textContent = confirmText;
+      confirmBtn.className = isDanger ? 'btn btn-danger' : 'btn btn-primary';
+    }
+
+    if (cancelBtn) {
+      cancelBtn.textContent = cancelText;
+    }
+
+    let closed = false;
+    const cleanup = (val) => {
+      if (closed) return;
+      closed = true;
+      modal.classList.remove('open');
+      window.removeEventListener('keydown', keyHandler);
+      resolve(val);
+    };
+
+    const keyHandler = (e) => {
+      if (e.key === 'Escape') cleanup(false);
+    };
+
+    window.addEventListener('keydown', keyHandler);
+
+    confirmBtn.onclick = () => cleanup(true);
+    cancelBtn.onclick = () => cleanup(false);
+    if (closeBtn) closeBtn.onclick = () => cleanup(false);
+    modal.onclick = (e) => {
+      if (e.target === modal) cleanup(false);
+    };
+
+    modal.classList.add('open');
+    if (confirmBtn) setTimeout(() => confirmBtn.focus(), 80);
+  });
+}
+
 async function deleteStorageFile(fileId) {
   const file = storageFiles.find(f => f.id === fileId);
   if (!file) return;
 
   const fileName = file.fileName || file.name || 'berkas ini';
-  if (!confirm(`Apakah Anda yakin ingin menghapus "${fileName}"?\n\nBerkas ini juga akan otomatis dipindahkan ke Sampah (Trash) di Google Drive.`)) {
-    return;
-  }
+  const confirmed = await showCustomConfirmDialog({
+    title: 'Hapus Berkas?',
+    message: `Apakah Anda yakin ingin menghapus berkas <strong style="color:var(--text);">${escapeHtml(fileName)}</strong>?`,
+    subtext: 'Berkas ini juga akan otomatis dipindahkan ke Sampah (Trash) di Google Drive.',
+    confirmText: 'Ya, Hapus Berkas',
+    cancelText: 'Batal',
+    isDanger: true
+  });
+
+  if (!confirmed) return;
 
   // Hapus dari state lokal
   storageFiles = storageFiles.filter(f => f.id !== fileId);
@@ -2195,10 +2307,19 @@ async function confirmDeleteCurrentFolder() {
 
   const filesInFolder = storageFiles.filter(f => f.folderId === folder.id || (f.folderName && folder.name && f.folderName.toLowerCase().trim() === folder.name.toLowerCase().trim()));
   const msg = filesInFolder.length > 0 
-    ? `Hapus folder "${folder.name}" beserta ${filesInFolder.length} berkas di dalamnya?\n\nFolder dan seluruh berkasnya juga akan otomatis dipindahkan ke Sampah (Trash) di Google Drive.` 
-    : `Hapus folder "${folder.name}"?\n\nFolder ini juga akan otomatis dipindahkan ke Sampah (Trash) di Google Drive.`;
+    ? `Hapus folder <strong style="color:var(--text);">${escapeHtml(folder.name)}</strong> beserta <strong>${filesInFolder.length} berkas</strong> di dalamnya?` 
+    : `Apakah Anda yakin ingin menghapus folder <strong style="color:var(--text);">${escapeHtml(folder.name)}</strong>?`;
 
-  if (!confirm(msg)) return;
+  const confirmed = await showCustomConfirmDialog({
+    title: 'Hapus Folder & Isinya?',
+    message: msg,
+    subtext: 'Folder dan seluruh berkas di dalamnya akan otomatis dipindahkan ke Sampah (Trash) di Google Drive.',
+    confirmText: 'Ya, Hapus Folder',
+    cancelText: 'Batal',
+    isDanger: true
+  });
+
+  if (!confirmed) return;
 
   const folderIdToDelete = folder.id;
   const folderNameToDelete = folder.name;
