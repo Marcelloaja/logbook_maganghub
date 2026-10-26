@@ -529,6 +529,23 @@ function doPost(e) {
     var folders = JSON.parse(props.getProperty("folders") || "[]");
     var files = JSON.parse(props.getProperty("files") || "[]");
 
+    // Inisialisasi awal jika folder masih kosong
+    if (!folders || folders.length === 0) {
+      folders = [
+        { id: "f-marcello", name: "Marcello Ilham - Tim Pelindungan", createdAt: "2026-10-26" }
+      ];
+      props.setProperty("folders", JSON.stringify(folders));
+    }
+
+    // ACTION 0: SINKRONISASI DATA VIA POST
+    if (data.action === "getSyncData") {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        folders: folders,
+        files: files
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
     var rootFolderName = "Logbook Magang Balai Bahasa Jatim";
     var rootFolders = DriveApp.getFoldersByName(rootFolderName);
     var rootFolder = rootFolders.hasNext() ? rootFolders.next() : DriveApp.createFolder(rootFolderName);

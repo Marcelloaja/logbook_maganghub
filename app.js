@@ -1578,9 +1578,16 @@ async function syncStorageWithCloud(silent = true) {
   }
 
   try {
-    const resp = await fetch(url, { method: 'GET', mode: 'cors' });
+    // Gunakan POST text/plain agar kompatibel penuh dengan Google Apps Script tanpa CORS preflight
+    const resp = await fetch(url, {
+      method: 'POST',
+      mode: 'cors',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getSyncData' })
+    });
     const res = await resp.json();
-    if (res.success) {
+    if (res && res.success) {
       let changed = false;
       if (Array.isArray(res.folders) && res.folders.length > 0) {
         const cloudFolderMap = new Map();
@@ -1620,11 +1627,22 @@ async function syncStorageWithCloud(silent = true) {
           renderFolderFiles(currentActiveFolderId);
         }
       }
-      if (!silent) showToast('✅ Data folder dan berkas berhasil disinkronkan dari Cloud Google Drive!');
+      if (!silent) showToast('✅ Data folder dan berkas berhasil disinkronkan dari Google Drive!');
     }
   } catch (err) {
     console.warn('Sync storage note:', err);
-    if (!silent) showToast('Gagal sinkronisasi cloud: ' + err.message);
+    if (!silent) {
+      alert(
+        '⚠️ Google Apps Script Perlu Diperbarui (1 Menit):\n\n' +
+        'Penyebab "Failed to fetch": Skrip Anda di script.google.com saat ini baru memiliki fungsi upload file lama, belum ada fungsi sinkronisasi cloud.\n\n' +
+        'Langkah Solusi Cepat:\n' +
+        '1. Klik tombol "Pengaturan Cloud Drive" > "Panduan & Kode"\n' +
+        '2. Klik tombol "Salin Kode Script"\n' +
+        '3. Buka script.google.com, hapus kode lama dan tempel kode baru tersebut\n' +
+        '4. Klik Deploy > Manage deployments > Edit (Pensil) > Version: "New version" > Deploy!\n\n' +
+        'Setelah di-deploy, seluruh 33 anak magang akan otomatis tersambung ke cloud yang sama! ✅'
+      );
+    }
   } finally {
     if (btn && !silent) {
       btn.disabled = false;
