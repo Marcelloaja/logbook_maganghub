@@ -1406,8 +1406,6 @@ a {
   margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  break-after: avoid !important;
-  page-break-after: avoid !important;
 }
 
 .kegiatan-table {
@@ -1433,11 +1431,6 @@ a {
   line-height: 1.55;
 }
 
-.kegiatan-table tr {
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
-}
-
 .kegiatan-table td:last-child,
 .kegiatan-table td.kg-desc-cell {
   text-align: justify;
@@ -1459,8 +1452,7 @@ a {
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   padding: 10px 12px;
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
+  page-break-inside: avoid;
 }
 
 .doc-kg-foto-title {
@@ -1490,8 +1482,6 @@ a {
 
 .doc-foto-item {
   text-align: center;
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
 }
 
 .doc-foto-item img {
@@ -1500,17 +1490,12 @@ a {
   object-fit: cover;
   border: 1px solid #bbb;
   border-radius: 4px;
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
-  display: block;
 }
 
 .doc-foto-caption {
   font-size: 10px;
   color: #555;
   margin-top: 4px;
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
 }
 
 .doc-catatan-box {
@@ -1522,16 +1507,13 @@ a {
   margin-bottom: 24px;
   text-align: justify;
   text-justify: inter-word;
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
 }
 
 .doc-footer-sign {
   display: flex;
   justify-content: space-between;
   margin-top: 30px;
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
+  page-break-inside: avoid;
 }
 
 .sign-col {
@@ -1540,8 +1522,6 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
 }
 
 .sign-role {
@@ -2480,48 +2460,4 @@ a {
   .tab-content {
     padding: 24px 16px;
   }
-}
-
-/* ============================================================
-   PDF EXPORT PRESERVATION & PAGE BREAK PROTECTION
-   ============================================================ */
-.print-pdf-mode {
-  background: #ffffff !important;
-  color: #111111 !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  margin: 0 !important;
-  box-sizing: border-box !important;
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
-}
-
-.doc-kop,
-.doc-kop-divider,
-.doc-title-bar,
-.doc-table-info,
-.doc-table-info tr,
-.doc-section-heading,
-.kegiatan-table,
-.kegiatan-table tr,
-.doc-kg-foto-group,
-.doc-foto-grid,
-.doc-foto-item,
-.doc-catatan-box,
-.doc-footer-sign,
-.sign-col,
-.sign-img-wrapper {
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
-}
-
-.doc-section-heading {
-  break-after: avoid !important;
-  page-break-after: avoid !important;
-}
-
-.doc-foto-item img,
-.sign-img-wrapper img {
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
 }

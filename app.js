@@ -1086,23 +1086,6 @@ async function generatePDFBlob(data) {
       scrollX: 0,
       scrollY: 0
     },
-    pagebreak: {
-      mode: ['css', 'legacy'],
-      avoid: [
-        '.doc-kop',
-        '.doc-kop-divider',
-        '.doc-title-bar',
-        '.doc-table-info',
-        '.doc-section-heading',
-        '.kegiatan-table tr',
-        '.doc-kg-foto-group',
-        '.doc-foto-grid',
-        '.doc-foto-item',
-        '.doc-catatan-box',
-        '.doc-footer-sign',
-        '.sign-col'
-      ]
-    },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
