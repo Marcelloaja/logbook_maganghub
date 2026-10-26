@@ -1038,35 +1038,41 @@ async function generatePDFBlob(data) {
     throw new Error('Library html2pdf belum siap. Pastikan terhubung ke internet dan refresh browser.');
   }
 
-  // Make sure preview doc in DOM is rendered
+  // 1. Render data into the actual preview DOM element
   renderPreview();
+
+  const tabPreview = document.getElementById('tab-preview');
+  const el = document.getElementById('preview-doc');
+  if (!el || !tabPreview) {
+    throw new Error('Elemen dokumen tidak ditemukan.');
+  }
 
   const cleanNama = (data.nama || 'Peserta').replace(/[^a-zA-Z0-9]/g, '_');
   const cleanDate = (data.tanggal || new Date().toISOString().split('T')[0]);
   const fileName = `Logbook_${cleanNama}_${cleanDate}.pdf`;
 
-  // Create an isolated print container at top: 0, left: 0 behind page view.
-  // This completely eliminates any blank space caused by window.scrollY / window.pageYOffset,
-  // and guarantees proper dimensions even if tab-preview is hidden.
-  const printContainer = document.createElement('div');
-  printContainer.className = 'preview-doc print-pdf-mode';
-  printContainer.id = 'print-pdf-container';
-  printContainer.style.position = 'fixed';
-  printContainer.style.top = '0';
-  printContainer.style.left = '0';
-  printContainer.style.width = '794px';
-  printContainer.style.maxWidth = '794px';
-  printContainer.style.background = '#ffffff';
-  printContainer.style.color = '#111111';
-  printContainer.style.zIndex = '-9999';
-  printContainer.style.boxShadow = 'none';
-  printContainer.style.margin = '0';
-  printContainer.style.padding = '0';
-  printContainer.innerHTML = buildDocHTML(data);
-  document.body.appendChild(printContainer);
+  // 2. Check if tab-preview is hidden (e.g. user is on Storage tab or Form tab)
+  const wasHidden = window.getComputedStyle(tabPreview).display === 'none';
+  const prevScrollY = window.scrollY;
 
-  // Wait for images and layouts to settle
-  await new Promise(r => setTimeout(r, 250));
+  // 3. If hidden, temporarily display tab-preview so html2canvas has real dimensions and styles
+  if (wasHidden) {
+    tabPreview.style.display = 'block';
+    tabPreview.style.position = 'fixed';
+    tabPreview.style.top = '0';
+    tabPreview.style.left = '0';
+    tabPreview.style.width = '100vw';
+    tabPreview.style.height = '100vh';
+    tabPreview.style.overflow = 'hidden';
+    tabPreview.style.zIndex = '9999';
+    tabPreview.style.background = '#ffffff';
+  }
+
+  // 4. Ensure scroll is at 0 so html2canvas doesn't create empty space at top
+  window.scrollTo(0, 0);
+
+  // Allow reflow and images to finish layout
+  await new Promise(r => setTimeout(r, 200));
 
   const opt = {
     margin: [10, 10, 10, 10],
@@ -1078,8 +1084,7 @@ async function generatePDFBlob(data) {
       allowTaint: true,
       logging: false,
       scrollX: 0,
-      scrollY: 0,
-      windowWidth: 800
+      scrollY: 0
     },
     pagebreak: {
       mode: ['css', 'legacy'],
@@ -1102,12 +1107,22 @@ async function generatePDFBlob(data) {
   };
 
   try {
-    const pdfBlob = await html2pdf().set(opt).from(printContainer).outputPdf('blob');
+    const pdfBlob = await html2pdf().set(opt).from(el).outputPdf('blob');
     return { blob: pdfBlob, fileName };
   } finally {
-    if (printContainer && printContainer.parentNode) {
-      printContainer.parentNode.removeChild(printContainer);
+    // 5. Cleanly restore tab-preview and previous scroll position
+    if (wasHidden) {
+      tabPreview.style.display = '';
+      tabPreview.style.position = '';
+      tabPreview.style.top = '';
+      tabPreview.style.left = '';
+      tabPreview.style.width = '';
+      tabPreview.style.height = '';
+      tabPreview.style.overflow = '';
+      tabPreview.style.zIndex = '';
+      tabPreview.style.background = '';
     }
+    window.scrollTo(0, prevScrollY);
   }
 }
 
