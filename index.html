@@ -608,7 +608,61 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // ACTION 2: SIMPAN / UPLOAD DOKUMEN LOGBOOK
+    // ACTION 2: HAPUS FILE DARI GOOGLE DRIVE
+    if (data.action === "deleteFile") {
+      var fileId = data.fileId;
+      var fileDeleted = false;
+      if (fileId && fileId.indexOf("file-") !== 0) {
+        try {
+          DriveApp.getFileById(fileId).setTrashed(true);
+          fileDeleted = true;
+        } catch (e) {}
+      }
+      if (!fileDeleted && data.fileName && data.folderName) {
+        var subFolders = rootFolder.getFoldersByName(data.folderName);
+        if (subFolders.hasNext()) {
+          var targetFolder = subFolders.next();
+          var matchFiles = targetFolder.getFilesByName(data.fileName);
+          while (matchFiles.hasNext()) {
+            matchFiles.next().setTrashed(true);
+            fileDeleted = true;
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        deleted: fileDeleted
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ACTION 3: HAPUS FOLDER BESERTA ISINYA DARI GOOGLE DRIVE
+    if (data.action === "deleteFolder") {
+      var folderId = data.folderId;
+      var folderName = (data.folderName || "").trim();
+      var folderDeleted = false;
+
+      if (folderId && folderId.indexOf("f-") !== 0) {
+        try {
+          DriveApp.getFolderById(folderId).setTrashed(true);
+          folderDeleted = true;
+        } catch (e) {}
+      }
+
+      if (!folderDeleted && folderName) {
+        var matchFolders = rootFolder.getFoldersByName(folderName);
+        while (matchFolders.hasNext()) {
+          matchFolders.next().setTrashed(true);
+          folderDeleted = true;
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        deleted: folderDeleted
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ACTION 4: SIMPAN / UPLOAD DOKUMEN LOGBOOK
     var targetFolderName = (data.folderName || "Umum").trim();
     var subFolders = rootFolder.getFoldersByName(targetFolderName);
     var targetFolder = subFolders.hasNext() ? subFolders.next() : rootFolder.createFolder(targetFolderName);

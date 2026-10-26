@@ -2148,35 +2148,89 @@ function copyFileLink(url) {
   });
 }
 
-function deleteStorageFile(fileId) {
-  if (!confirm('Apakah Anda yakin ingin menghapus berkas ini dari daftar?')) return;
+async function deleteStorageFile(fileId) {
+  const file = storageFiles.find(f => f.id === fileId);
+  if (!file) return;
+
+  const fileName = file.fileName || file.name || 'berkas ini';
+  if (!confirm(`Apakah Anda yakin ingin menghapus "${fileName}"?\n\nBerkas ini juga akan otomatis dipindahkan ke Sampah (Trash) di Google Drive.`)) {
+    return;
+  }
+
+  // Hapus dari state lokal
   storageFiles = storageFiles.filter(f => f.id !== fileId);
   saveStorageFiles();
   if (currentActiveFolderId) {
     renderFolderFiles(currentActiveFolderId);
   }
-  showToast('Berkas berhasil dihapus');
+  showToast('Menghapus berkas dari Google Drive...');
+
+  // Hapus dari Google Drive via Webhook
+  const webhookUrl = getGasWebhookUrl();
+  if (webhookUrl) {
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'deleteFile',
+          fileId: file.id,
+          fileName: file.fileName || file.name,
+          folderName: file.folderName
+        })
+      });
+      showToast('✓ Berkas berhasil dihapus dari Google Drive');
+    } catch (err) {
+      console.warn('Delete cloud file error:', err);
+      showToast('Berkas dihapus di tampilan lokal');
+    }
+  }
 }
 
-function confirmDeleteCurrentFolder() {
+async function confirmDeleteCurrentFolder() {
   if (!currentActiveFolderId) return;
   const folder = storageFolders.find(f => f.id === currentActiveFolderId);
   if (!folder) return;
 
-  const count = storageFiles.filter(f => f.folderId === folder.id).length;
-  const msg = count > 0 
-    ? `Hapus folder "${folder.name}" beserta ${count} berkas di dalamnya?` 
-    : `Hapus folder "${folder.name}"?`;
+  const filesInFolder = storageFiles.filter(f => f.folderId === folder.id || (f.folderName && folder.name && f.folderName.toLowerCase().trim() === folder.name.toLowerCase().trim()));
+  const msg = filesInFolder.length > 0 
+    ? `Hapus folder "${folder.name}" beserta ${filesInFolder.length} berkas di dalamnya?\n\nFolder dan seluruh berkasnya juga akan otomatis dipindahkan ke Sampah (Trash) di Google Drive.` 
+    : `Hapus folder "${folder.name}"?\n\nFolder ini juga akan otomatis dipindahkan ke Sampah (Trash) di Google Drive.`;
 
   if (!confirm(msg)) return;
 
-  storageFolders = storageFolders.filter(f => f.id !== folder.id);
-  storageFiles = storageFiles.filter(f => f.folderId !== folder.id);
+  const folderIdToDelete = folder.id;
+  const folderNameToDelete = folder.name;
+
+  // Hapus dari state lokal
+  storageFolders = storageFolders.filter(f => f.id !== folderIdToDelete);
+  storageFiles = storageFiles.filter(f => f.folderId !== folderIdToDelete && (!f.folderName || f.folderName.toLowerCase().trim() !== folderNameToDelete.toLowerCase().trim()));
   saveStorageFolders();
   saveStorageFiles();
 
-  showToast(`Folder "${folder.name}" berhasil dihapus`);
   showAllFoldersView();
+  showToast(`Menghapus folder "${folderNameToDelete}" dari Google Drive...`);
+
+  // Hapus dari Google Drive via Webhook
+  const webhookUrl = getGasWebhookUrl();
+  if (webhookUrl) {
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'deleteFolder',
+          folderId: folderIdToDelete,
+          folderName: folderNameToDelete
+        })
+      });
+      showToast(`✓ Folder "${folderNameToDelete}" berhasil dihapus dari Google Drive`);
+    } catch (err) {
+      console.warn('Delete cloud folder error:', err);
+    }
+  }
 }
 
 // ============================================================
