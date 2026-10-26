@@ -1451,6 +1451,47 @@ function saveScriptUrl() {
   }
 }
 
+async function testAppsScriptConnection() {
+  const url = (document.getElementById('gas-webhook-url')?.value || localStorage.getItem('gas_webhook_url') || '').trim();
+  if (!url) {
+    showToast('Masukkan URL Google Apps Script terlebih dahulu!');
+    return;
+  }
+  const btn = document.getElementById('btn-test-gas');
+  const origText = btn ? btn.textContent : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Mengetes...';
+  }
+
+  try {
+    const resp = await fetch(url, {
+      method: 'GET',
+      mode: 'cors'
+    });
+    const result = await resp.json();
+    showToast('✅ Berhasil terhubung ke Google Apps Script!');
+  } catch (err) {
+    console.error('Test connection error:', err);
+    alert(
+      '⚠️ Gagal Terhubung ke Google Apps Script (Akses Ditolak)!\n\n' +
+      'Penyebab: Saat Deploy Web App di script.google.com, kolom "Who has access" (Siapa yang memiliki akses) belum diubah menjadi "Anyone" (Siapa saja).\n\n' +
+      'Langkah Solusi (1 Menit):\n' +
+      '1. Buka script.google.com dan buka project Anda\n' +
+      '2. Klik tombol "Deploy" di kanan atas > pilih "Manage deployments" (Kelola penerapan)\n' +
+      '3. Klik ikon Pensil (Edit)\n' +
+      '4. Pada Version: pilih "New version"\n' +
+      '5. Pada Who has access: WAJIB pilih "Anyone" (Siapa saja)\n' +
+      '6. Klik "Deploy"!'
+    );
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  }
+}
+
 function toggleStorageAdminSettings() {
   const card = document.getElementById('storage-admin-card');
   if (!card) return;
@@ -1765,18 +1806,41 @@ async function saveActiveLogbookToCurrentFolder() {
         base64: base64Data
       };
 
-      const resp = await fetch(webhookUrl, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-      });
+      try {
+        const resp = await fetch(webhookUrl, {
+          method: 'POST',
+          mode: 'cors',
+          redirect: 'follow',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
 
-      const result = await resp.json();
-      if (!result.success) {
-        throw new Error(result.error || 'Gagal menyimpan ke Google Drive bersama');
+        const result = await resp.json();
+        if (!result.success) {
+          throw new Error(result.error || 'Gagal menyimpan ke Google Drive bersama');
+        }
+        finalUrl = result.url;
+        isCloud = true;
+      } catch (uploadErr) {
+        console.warn('Cloud upload failed, falling back to local storage:', uploadErr);
+        const dataUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+        finalUrl = dataUrl;
+        isCloud = false;
+
+        alert(
+          '⚠️ Google Drive Terkendala: "Failed to fetch" (Akses Ditolak)!\n\n' +
+          'Dokumen Anda TETAP TERSIMPAN AMAN di Storage Website secara lokal.\n\n' +
+          'Agar bisa tersimpan otomatis ke Google Drive:\n' +
+          '1. Buka script.google.com > Deploy > Manage deployments\n' +
+          '2. Klik Edit (Pensil) > Version: "New version"\n' +
+          '3. Who has access: WAJIB pilih "Anyone" (Siapa saja)\n' +
+          '4. Klik Deploy.'
+        );
       }
-      finalUrl = result.url;
-      isCloud = true;
     } else {
       // Local Hub Mode (Creates permanent data URL for instant sharing / preview)
       const dataUrl = await new Promise((resolve) => {

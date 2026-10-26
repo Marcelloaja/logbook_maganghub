@@ -269,9 +269,15 @@
           <label class="form-label" for="gas-webhook-url">Google Apps Script Web App URL</label>
           <div class="input-with-btn">
             <input type="url" id="gas-webhook-url" class="form-input" placeholder="https://script.google.com/macros/s/AKfycb.../exec" oninput="saveScriptUrl()" />
-            <button type="button" class="btn btn-secondary" onclick="openScriptModal()">Panduan &amp; Kode Script</button>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-test-gas" onclick="testAppsScriptConnection()">Test Koneksi</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openScriptModal()">Panduan &amp; Kode</button>
           </div>
           <span class="form-hint" id="storage-sync-hint">URL tersimpan di browser. Jika belum diisi, website otomatis menyimpan berkas di Storage Lokal Website.</span>
+        </div>
+
+        <div class="alert-box-warning">
+          <strong>⚠️ Penting agar tidak "Failed to fetch":</strong><br/>
+          Saat Deploy di <strong>script.google.com</strong>, pastikan pilihan <strong>"Who has access"</strong> (Siapa yang memiliki akses) dipilih: <strong>"Anyone" (Siapa saja)</strong>, bukan <em>"Only myself"</em>. Jika disetel "Only myself", Google akan memblokir akses dengan error <em>Failed to fetch</em>.
         </div>
       </div>
 
@@ -517,17 +523,24 @@
       error: err.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({
+    success: true,
+    message: "Google Apps Script Logbook MagangHub siap digunakan!"
+  })).setMimeType(ContentService.MimeType.JSON);
 }</code></pre>
         </div>
         <ol class="modal-steps" start="3">
-          <li>Klik tombol <strong>Deploy &gt; New deployment</strong> di pojok kanan atas.</li>
-          <li>Pilih type: <strong>Web app</strong>. Isi pengaturan penting:
+          <li>Klik tombol <strong>Deploy &gt; New deployment</strong> (atau <em>Manage deployments &gt; Edit &gt; New version</em> jika sudah pernah deploy).</li>
+          <li>Pilih type: <strong>Web app</strong>. Isi pengaturan yang <strong>WAJIB</strong>:
             <ul>
               <li><strong>Execute as:</strong> <em>Me (email koordinator)</em></li>
-              <li><strong>Who has access:</strong> <em>Anyone (siapa saja)</em></li>
+              <li><strong>Who has access:</strong> <strong style="color:var(--primary); text-decoration: underline;">Anyone (Siapa saja)</strong> &mdash; <em>Jangan pilih "Only myself" agar tidak ditolak dengan error Failed to fetch!</em></li>
             </ul>
           </li>
-          <li>Klik <strong>Deploy</strong> (berikan izin akses/Authorize Google saat diminta), lalu salin <strong>Web app URL</strong> yang berakhiran <code>/exec</code> ke kolom Pengaturan Cloud Drive di website!</li>
+          <li>Klik <strong>Deploy</strong> (berikan izin akses/Authorize Google saat pertama kali), lalu salin <strong>Web app URL</strong> yang berakhiran <code>/exec</code> ke kolom Pengaturan Cloud Drive di website!</li>
         </ol>
       </div>
       <div class="modal-footer">
