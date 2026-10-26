@@ -528,13 +528,17 @@ function handleGetSyncData() {
     var subFiles = sub.getFiles();
     while (subFiles.hasNext()) {
       var file = subFiles.next();
+      var fExt = file.getName().toLowerCase().indexOf(".docx") !== -1 ? "docx" : "pdf";
       files.push({
         id: file.getId(),
         folderId: fId,
         folderName: fName,
         name: file.getName(),
+        fileName: file.getName(),
+        format: fExt,
         url: "https://drive.google.com/file/d/" + file.getId() + "/view?usp=sharing",
         date: Utilities.formatDate(file.getDateCreated(), "Asia/Jakarta", "yyyy-MM-dd HH:mm"),
+        uploadDate: Utilities.formatDate(file.getDateCreated(), "Asia/Jakarta", "yyyy-MM-dd HH:mm"),
         size: file.getSize()
       });
     }
@@ -544,13 +548,17 @@ function handleGetSyncData() {
   var rootFiles = rootFolder.getFiles();
   while (rootFiles.hasNext()) {
     var rFile = rootFiles.next();
+    var rExt = rFile.getName().toLowerCase().indexOf(".docx") !== -1 ? "docx" : "pdf";
     files.push({
       id: rFile.getId(),
       folderId: rootFolder.getId(),
       folderName: "Umum",
       name: rFile.getName(),
+      fileName: rFile.getName(),
+      format: rExt,
       url: "https://drive.google.com/file/d/" + rFile.getId() + "/view?usp=sharing",
       date: Utilities.formatDate(rFile.getDateCreated(), "Asia/Jakarta", "yyyy-MM-dd HH:mm"),
+      uploadDate: Utilities.formatDate(rFile.getDateCreated(), "Asia/Jakarta", "yyyy-MM-dd HH:mm"),
       size: rFile.getSize()
     });
   }
@@ -612,13 +620,17 @@ function doPost(e) {
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
     var fileUrl = "https://drive.google.com/file/d/" + file.getId() + "/view?usp=sharing";
+    var docExt = file.getName().toLowerCase().indexOf(".docx") !== -1 ? "docx" : "pdf";
     var fileObj = {
       id: file.getId(),
       folderId: targetFolder.getId(),
       folderName: targetFolderName,
       name: file.getName(),
+      fileName: file.getName(),
+      format: docExt,
       url: fileUrl,
       date: Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd HH:mm"),
+      uploadDate: Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd HH:mm"),
       size: file.getSize()
     };
 

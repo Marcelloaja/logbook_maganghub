@@ -1609,14 +1609,48 @@ async function syncStorageWithCloud(silent = true) {
         changed = true;
       }
 
-      if (Array.isArray(res.files) && res.files.length > 0) {
-        const fileMap = new Map();
-        res.files.forEach(f => fileMap.set(f.id || f.url, f));
-        storageFiles.forEach(f => {
-          const key = f.id || f.url;
-          if (!fileMap.has(key)) fileMap.set(key, f);
+      if (Array.isArray(res.files)) {
+        // Normalisasi berkas dari Cloud Google Drive
+        const normalizedCloudFiles = res.files
+          .filter(c => c && (c.fileName || c.name))
+          .map(c => {
+            const fname = (c.fileName || c.name || '').trim();
+            const ext = fname.toLowerCase().endsWith('.docx') ? 'docx' : 'pdf';
+            return {
+              id: c.id || ('file-' + Date.now() + Math.random().toString(36).substr(2, 4)),
+              folderId: c.folderId,
+              folderName: c.folderName,
+              fileName: fname,
+              format: c.format || ext,
+              uploadDate: c.uploadDate || c.date || '',
+              url: c.url,
+              size: c.size,
+              isCloud: true
+            };
+          });
+
+        const seenUrls = new Set();
+        const seenNameFolder = new Set();
+        const mergedFiles = [];
+
+        normalizedCloudFiles.forEach(cf => {
+          if (cf.url) seenUrls.add(cf.url);
+          const nameKey = `${cf.folderName || ''}:::${cf.fileName}`.toLowerCase();
+          seenNameFolder.add(nameKey);
+          mergedFiles.push(cf);
         });
-        storageFiles = Array.from(fileMap.values());
+
+        // Pertahankan berkas lokal hanya jika belum ada di cloud
+        storageFiles.forEach(lf => {
+          const lName = (lf.fileName || lf.name || '').trim();
+          if (!lName) return; // buang file kosong/rusak
+          const nameKey = `${lf.folderName || ''}:::${lName}`.toLowerCase();
+          if ((!lf.url || !seenUrls.has(lf.url)) && !seenNameFolder.has(nameKey)) {
+            mergedFiles.push(lf);
+          }
+        });
+
+        storageFiles = mergedFiles;
         saveStorageFiles();
         changed = true;
       }
@@ -1679,7 +1713,17 @@ function loadStorageData() {
 
   try {
     const savedFiles = localStorage.getItem('maganghub_storage_files');
-    storageFiles = savedFiles ? JSON.parse(savedFiles) : [];
+    let parsedFiles = savedFiles ? JSON.parse(savedFiles) : [];
+    // Hapus file rusak / sampah yang namanya kosong
+    parsedFiles = parsedFiles.filter(f => f && (f.fileName || f.name) && (f.fileName || f.name).trim() !== '');
+    parsedFiles.forEach(f => {
+      if (!f.fileName && f.name) f.fileName = f.name;
+      if (!f.uploadDate && f.date) f.uploadDate = f.date;
+      const fn = f.fileName || '';
+      if (!f.format) f.format = fn.toLowerCase().endsWith('.docx') ? 'docx' : 'pdf';
+    });
+    storageFiles = parsedFiles;
+    saveStorageFiles();
   } catch {
     storageFiles = [];
   }
@@ -1886,19 +1930,21 @@ function renderFolderFiles(folderId) {
   if (emptyState) emptyState.style.display = 'none';
 
   tbody.innerHTML = files.map(file => {
-    const isPdf = file.format === 'pdf';
+    const fname = (file.fileName || file.name || 'Dokumen Logbook').trim();
+    const isPdf = file.format === 'pdf' || fname.toLowerCase().endsWith('.pdf');
     const badgeHtml = isPdf ? '<span class="badge-pdf">PDF</span>' : '<span class="badge-word">Word</span>';
     const iconColor = isPdf ? '#dc2626' : '#2563eb';
+    const uploadDateStr = file.uploadDate || file.date || '-';
     return `
       <tr>
         <td>
           <div class="file-name-cell">
             <svg viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span title="${escapeHtml(file.fileName)}">${escapeHtml(file.fileName)}</span>
+            <span title="${escapeHtml(fname)}">${escapeHtml(fname)}</span>
           </div>
         </td>
         <td>${badgeHtml}</td>
-        <td>${escapeHtml(file.uploadDate)}</td>
+        <td>${escapeHtml(uploadDateStr)}</td>
         <td>
           <div class="file-actions-cell">
             <button type="button" class="btn btn-secondary btn-sm" onclick="copyFileLink('${escapeHtml(file.url)}')" title="Salin Link Berkas">
@@ -1965,6 +2011,7 @@ async function saveActiveLogbookToCurrentFolder() {
     const webhookUrl = getGasWebhookUrl();
     let finalUrl = '';
     let isCloud = false;
+    let fileCloudId = '';
 
     if (webhookUrl) {
       btn.textContent = 'Mengunggah ke Google Drive Bersama...';
@@ -1997,6 +2044,9 @@ async function saveActiveLogbookToCurrentFolder() {
         }
         finalUrl = result.url;
         isCloud = true;
+        if (result.file && result.file.id) {
+          fileCloudId = result.file.id;
+        }
         setTimeout(() => syncStorageWithCloud(true), 1200);
       } catch (uploadErr) {
         console.warn('Cloud upload failed, falling back to local storage:', uploadErr);
@@ -2029,7 +2079,7 @@ async function saveActiveLogbookToCurrentFolder() {
     }
 
     const newFile = {
-      id: 'file-' + Date.now(),
+      id: fileCloudId || ('file-' + Date.now()),
       folderId: folder.id,
       folderName: folder.name,
       fileName: fileName,
