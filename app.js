@@ -510,26 +510,22 @@ function showLogicMeme(id) {
   const numDisplay = kegiatanIndex !== -1 ? kegiatanIndex + 1 : id;
 
   placeholder.innerHTML = `
-    <div class="kg-logic-meme-banner" id="kg-logic-meme-${id}">
-      <div class="kg-logic-meme-card">
-        <div class="kg-logic-meme-media">
-          <img src="assets/cobapikirkansecaralogika.jpg" alt="Ayo Dipikirkan Secara Logika" class="kg-logic-meme-img" />
-          <div class="kg-logic-meme-badge">
-            <span class="pulse-dot"></span>
-            <span>5 Detik Berlalu</span>
-          </div>
-        </div>
-        <div class="kg-logic-meme-info">
-          <div class="kg-logic-meme-tag">Pengingat Kegiatan #${numDisplay}</div>
-          <h4 class="kg-logic-meme-headline">Ayo, dipikirkan secara logika! 🧠</h4>
-          <p class="kg-logic-meme-caption">Nama Kegiatan &amp; Deskripsinya masih kosong nih. Yuk mulai tulis judul kegiatannya sekarang, nanti tombol <strong>Generate Deskripsi AI</strong> otomatis muncul buat bantu kamu!</p>
-        </div>
-        <button type="button" class="kg-logic-meme-dismiss-btn" onclick="dismissLogicMeme(${id})" title="Tutup pengingat santai ini">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+    <div class="kg-logic-meme-banner pure-image-mode" id="kg-logic-meme-${id}">
+      <div class="kg-logic-meme-wrap" onclick="focusNamaKegiatanAndDismiss(${id})" title="Klik untuk mulai ketik Nama Kegiatan">
+        <img src="assets/cobapikirkansecaralogika.jpg" alt="Ayo Dipikirkan Secara Logika" class="kg-logic-meme-img-standalone" />
+        <button type="button" class="kg-logic-meme-close-standalone" onclick="event.stopPropagation(); dismissLogicMeme(${id});" title="Tutup gambar">&times;</button>
       </div>
     </div>
   `;
+}
+
+function focusNamaKegiatanAndDismiss(id) {
+  dismissLogicMeme(id);
+  const input = document.getElementById(`kg-nama-${id}`);
+  if (input) {
+    input.focus();
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 }
 
 function dismissLogicMeme(id, immediate = false) {
