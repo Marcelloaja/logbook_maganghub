@@ -3226,18 +3226,19 @@ a {
   background-color: var(--bg-card) !important;
   color: var(--text) !important;
   border-radius: 14px !important;
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--border) !important;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--border) !important;
   padding: 18px 20px !important;
-  width: 380px !important;
+  width: 410px !important;
   max-width: calc(100vw - 32px) !important;
   min-width: 320px !important;
+  max-height: 88vh !important;
   box-sizing: border-box !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .driver-popover-title {
   font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
-  font-size: 15px !important;
+  font-size: 15.5px !important;
   font-weight: 700 !important;
   color: var(--text) !important;
   margin-bottom: 8px !important;
@@ -3246,14 +3247,21 @@ a {
 }
 
 .driver-popover-description {
-  font-size: 13px !important;
-  line-height: 1.55 !important;
+  font-size: 12.8px !important;
+  line-height: 1.6 !important;
   color: var(--text-muted) !important;
   margin-bottom: 14px !important;
 }
 
 .driver-popover-description strong {
   color: var(--text) !important;
+  font-weight: 700 !important;
+}
+
+.driver-popover-description em {
+  color: var(--primary) !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
 }
 
 .driver-popover-footer {

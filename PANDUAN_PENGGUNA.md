@@ -8,6 +8,8 @@
 ## 📑 DAFTAR ISI
 1. [Sekilas Tentang Aplikasi](#1-sekilas-tentang-aplikasi)
 2. [Fitur Panduan Interaktif (Tur Driver.js)](#2-fitur-panduan-interaktif-tur-driverjs)
+   - [A. Cara Mengaktifkan Tur](#a-cara-mengaktifkan-tur)
+   - [B. Rincian Alur 10 Langkah Tur Panduan](#b-rincian-alur-10-langkah-tur-panduan)
 3. [Langkah 1: Mengisi Formulir Logbook Harian (Tab 1)](#3-langkah-1-mengisi-formulir-logbook-harian-tab-1)
    - [A. Mengisi Data Peserta & Waktu](#a-mengisi-data-peserta--waktu)
    - [B. Fitur Kunci Nama Mentor (🔒)](#b-fitur-kunci-nama-mentor-)
@@ -19,10 +21,11 @@
    - [A. Memilih / Membuat Folder Nama Anda](#a-memilih--membuat-folder-nama-anda)
    - [B. Fitur Bintang (⭐) Agar Folder Selalu Terpin di Paling Atas](#b-fitur-bintang--agar-folder-selalu-terpin-di-paling-atas)
    - [C. Menyimpan Logbook & Mendapatkan Tautan Google Drive](#c-menyimpan-logbook--mendapatkan-tautan-google-drive)
+   - [D. Prosedur Revisi Dokumen jika Terjadi Kekeliruan](#d-prosedur-revisi-dokumen-jika-terjadi-kekeliruan)
 6. [Langkah 4: Format Laporan Monev Kemnaker (3 Klip Siap Salin)](#6-langkah-4-format-laporan-monev-kemnaker-3-klip-siap-salin)
    - [A. Clip 1: Uraian Aktifitas Kronologis + Link GDrive](#a-clip-1-uraian-aktifitas-kronologis--link-gdrive)
-   - [B. Clip 2: Pembelajaran yang Didapat (Refleksi & Kompetensi)](#b-clip-2-pembelajaran-yang-didapat-refleksi--kompetensi)
-   - [C. Clip 3: Kendala yang Dialami (Evaluasi Positif Otomatis)](#c-clip-3-kendala-yang-dialami-evaluasi-positif-otomatis)
+   - [B. Clip 2: Pembelajaran yang Didapat (Refleksi & Kompetensi AI Gemini)](#b-clip-2-pembelajaran-yang-didapat-refleksi--kompetensi-ai-gemini)
+   - [C. Clip 3: Kendala yang Dialami (Evaluasi Positif Otomatis jika Kosong)](#c-clip-3-kendala-yang-dialami-evaluasi-positif-otomatis-jika-kosong)
    - [D. Cara Menempel ke Website Monev Kemnaker](#d-cara-menempel-ke-website-monev-kemnaker)
 7. [Tanya Jawab & Tips Penting (FAQ)](#7-tanya-jawab--tips-penting-faq)
 
@@ -42,11 +45,25 @@ Jika Anda baru pertama kali membuka website ini atau lupa letak menu tertentu, g
 
 ![Panduan Interaktif Tur](assets/screenshots/2_panduan_tur.png)
 
-### Cara Mengaktifkan Tur:
+### A. Cara Mengaktifkan Tur:
 1. Klik tombol **"Panduan Penggunaan"** di pojok kanan atas formulir input, ATAU
 2. Klik menu **"Panduan Tur"** pada panel navigasi (sidebar kiri).
-3. Layar akan memandu Anda langkah demi langkah dengan menyorot elemen penting formulir secara interaktif.
-4. Klik tombol **Lanjut** untuk berpindah ke langkah berikutnya, atau klik **Selesai** untuk keluar dari tur.
+3. Tur otomatis berjalan dan memandu Anda langkah demi langkah dengan menyorot elemen penting formulir dan berpindah tab secara otomatis.
+4. Klik tombol **Lanjut** untuk berpindah ke langkah berikutnya, **Kembali** untuk mundur satu langkah, atau **Selesai** untuk menutup panduan.
+
+### B. Rincian Alur 10 Langkah Tur Panduan:
+| No. Langkah | Target Sorotan | Penjelasan & Tindakan |
+| :---: | :--- | :--- |
+| **1** | **Panel Sidebar Kiri** (`#sidebar`) | Pengenalan singkat aplikasi resmi Logbook MagangHub untuk 33 peserta magang Balai Bahasa Jawa Timur. |
+| **2** | **Menu Tab 1: Input Logbook** (`#nav-form`) | Halaman utama pengisian agenda. Seluruh isian otomatis disimpan ke memori browser (*Auto-save*). |
+| **3** | **Data Peserta & Waktu Pelaksanaan** (`#card-peserta-waktu`) | Pengisian Nama Peserta, Unit Divisi, Hari & Tanggal (realtime). Penggunaan fitur kunci gembok nama mentor agar tersimpan permanen. Data di card ini tidak pernah direset. |
+| **4** | **Rincian Kegiatan & Dokumentasi** (`#kegiatan-list`) | Pengisian jam mulai-selesai (WIB), deskripsi kegiatan, tombol tambah kegiatan baru, serta upload foto dokumentasi (maks 5MB). Bagian ini yang otomatis dikosongkan lewat pukul 23.59 malam. |
+| **5** | **Catatan atau Kendala Tambahan** (`#catatan`) | Catatan evaluasi kerja. **Jika tidak ada kendala, cukup dikosongkan saja**; AI Gemini akan otomatis menyusun narasi evaluasi positif untuk portal Monev Kemnaker. |
+| **6** | **Tanda Tangan Digital** (`.signature-container`) | Coretan tanda tangan langsung pada canvas atau upload foto TTD. Tanda tangan peserta dan mentor tetap tersimpan permanen dan tidak akan hilang. |
+| **7** | **Tab 2: Pratinjau & Export Dokumen** (`.export-toolbar`) | Layar otomatis berpindah ke Tab Preview. Menjelaskan pengecekan berkas berkop surat resmi serta pilihan tombol **Export ke Word (.docx)** dan **Export ke PDF (.pdf)**. |
+| **8** | **Tab 3: Penyimpanan Berkas & Drive** (`.storage-action-bar`) | Layar otomatis berpindah ke Tab Storage. Menjelaskan pembuatan folder baru untuk peserta baru, pin bintang (⭐), penyimpanan ke Google Drive bersama milik Marcello, serta **aturan revisi dokumen**. |
+| **9** | **Format Laporan Monev Kemnaker** (`#nav-monev`) | Menjelaskan 3 Klip Siap Salin: Uraian dari form + link Drive, Pembelajaran otomatis dari AI Gemini, serta Kendala yang otomatis positif jika dikosongkan. |
+| **10** | **Tombol Mode Tampilan** (`#theme-toggle-btn`) | Opsi beralih antara Mode Terang dan Mode Gelap (*Dark Mode*) untuk kenyamanan mata saat bekerja. |
 
 ---
 
@@ -139,11 +156,25 @@ Agar Anda tidak perlu mencari-cari nama folder Anda di antara 33 peserta setiap 
 
 ### C. Menyimpan Logbook & Mendapatkan Tautan Google Drive
 1. Klik folder nama Anda untuk membukanya.
+   > 💡 **DATA TIDAK AKAN HILANG:** Seluruh data yang sudah Anda isi pada Tab 1 (Input Logbook) **tetap aman tersimpan** dan tidak akan terhapus saat Anda membuka menu penyimpanan ataupun membuka folder nama Anda!
 2. Di bagian atas terdapat panel hijau **Simpan Logbook Hari Ini ke Folder Ini**.
 3. Pilih format berkas yang diinginkan: **Word (.docx)** atau **PDF (.pdf)**.
 4. Klik tombol **"Simpan & Dapatkan Link Google Drive"**.
-5. Sistem akan mengunggah berkas. Setelah selesai, muncul banner sukses lengkap dengan **Link Google Drive resmi**.
-6. Klik tombol **"Salin Link"** untuk menggunakannya sebagai lampiran bukti digital.
+5. Berkas otomatis ter-generate dan tersimpan langsung ke **Google Drive bersama milik koordinator (Marcello)**.
+6. Setelah pengunggahan berhasil, muncul banner sukses lengkap dengan **Link Google Drive resmi**.
+7. Klik tombol **"Salin Link"** untuk menggunakannya sebagai lampiran resmi.
+
+---
+
+### D. Prosedur Revisi Dokumen jika Terjadi Kekeliruan
+> ⚠️ **ATURAN PENTING REVISI FILE GOOGLE DRIVE:**  
+> File yang sudah tersimpan di Google Drive koordinator **tidak dapat diedit secara langsung** dari dalam Drive.  
+> Jika terdapat salah ketik pada kegiatan, deskripsi, atau foto dokumentasi yang keliru, ikuti alur revisi berikut:
+>
+> 1. **Hapus File Lama:** Buka folder nama Anda di Tab **Penyimpanan Berkas**, temukan file logbook yang keliru, lalu klik tombol **Hapus** (ikon tempat sampah).
+> 2. **Perbaiki Isian Data:** Klik menu **Input Logbook** (Tab 1) di sidebar. Koreksi kegiatan atau data yang keliru (seluruh isian Anda sebelumnya masih tetap ada).
+> 3. **Simpan Ulang:** Masuk kembali ke Tab **Penyimpanan Berkas**, buka folder nama Anda, lalu klik tombol **"Simpan & Dapatkan Link Google Drive"** sekali lagi.
+> 4. **Salin Tautan Baru:** Sistem akan membuat berkas baru dan menghasilkan link Google Drive baru. Klik **Salin Link**, lalu tempelkan link baru tersebut ke portal Kemnaker. Selesai!
 
 ---
 
@@ -156,24 +187,24 @@ Untuk mengisi laporan harian pada portal [https://monev.maganghub.kemnaker.go.id
 Jendela popup akan menampilkan **3 Klip Siap Salin**:
 
 ### A. Clip 1: Uraian Aktifitas Kronologis + Link GDrive
-- **Isi:** Urutan kegiatan harian berpenomoran rapi yang otomatis disusun dari jam pelaksanaan, nama kegiatan, dan deskripsi tugas Anda.
-- **Tautan Berkas:** Jika logbook sudah tersimpan ke Drive, tautan berkas Google Drive otomatis ditambahkan di bagian bawah uraian sebagai bukti lampiran.
+- **Isi:** Mengambil langsung dari input formulir logbook sebelumnya. Tersusun secara kronologis berpenomoran rapi lengkap dengan jam pelaksanaan (WIB), judul kegiatan, dan rincian uraian tugas Anda.
+- **Tautan Berkas:** Jika logbook sudah tersimpan ke penyimpanan Google Drive koordinator Marcello, tautan (*link*) berkas Google Drive otomatis disematkan di baris paling bawah sebagai lampiran bukti digital resmi.
 - Klik tombol **"Salin Uraian"**.
 
 ---
 
-### B. Clip 2: Pembelajaran yang Didapat (Refleksi & Kompetensi)
-- **Isi:** Disusun otomatis dan cerdas berdasarkan rincian tugas dan agenda kerja yang Anda lakukan hari ini.
-- Menghasilkan 2–3 poin refleksi terstruktur dengan judul kategori kompetensi (contoh: *Manajemen Acara & Literasi Daerah:*, *Pengembangan Tools Produktivitas:*, *Kolaborasi Lintas Peran:*), dan setiap poin dipisahkan oleh satu baris kosong yang rapi.
+### B. Clip 2: Pembelajaran yang Didapat (Refleksi & Kompetensi AI Gemini)
+- **Isi:** Di-generate secara otomatis dan cerdas oleh **AI Gemini** berdasarkan tugas nyata yang telah Anda inputkan di formulir logbook harian.
+- Menghasilkan 2–3 poin refleksi terstruktur dengan judul kategori kompetensi profesional (contoh: *Manajemen Acara & Literasi Daerah:*, *Pengembangan Tools Produktivitas:*, *Kolaborasi Lintas Peran:*), dan setiap poin dipisahkan oleh satu baris kosong (line break) yang rapi.
 - Tanpa tulisan pembuka atau tanda format yang mengganggu, sehingga 100% siap tempel.
 - Tersedia tombol **"Perbarui Refleksi"** jika Anda ingin variasi susunan narasi lain.
 - Klik tombol **"Salin Pembelajaran"**.
 
 ---
 
-### C. Clip 3: Kendala yang Dialami (Evaluasi Positif Otomatis)
-- **Isi:** Mengambil dari inputan *Catatan / Kendala Tambahan*.
-- **Otomatis Cerdas jika Kosong:** Jika Anda tidak mengisi kendala (atau hanya diisi tanda strip `-`), sistem otomatis menyusun evaluasi positif, contoh:
+### C. Clip 3: Kendala yang Dialami (Evaluasi Positif Otomatis jika Kosong)
+- **Isi:** Mengambil langsung dari inputan *Catatan / Kendala Tambahan*.
+- **Otomatis Cerdas jika Dikosongkan:** Jika selama kegiatan magang hari ini Anda tidak mengalami hambatan apa pun, **cukup kosongkan saja kolom catatan pada formulir input logbook**. Sistem AI Gemini akan otomatis menyusun narasi evaluasi positif dan profesional, contoh:
   > *"Tidak ada kendala. Seluruh agenda kegiatan mulai dari [kegiatan 1] hingga [kegiatan 2] berjalan dengan sangat lancar dan sesuai target waktu yang direncanakan."*
 - Klik tombol **"Salin Kendala"**.
 
@@ -204,6 +235,9 @@ Jendela popup akan menampilkan **3 Klip Siap Salin**:
 
 ### Q: Bagaimana jika laptop teman saya belum melihat folder baru yang saya buat di Google Drive?
 **J:** Sistem melakukan sinkronisasi otomatis setiap 30 detik. Anda juga bisa mengklik tombol **"Sinkronkan Berkas"** di pojok kanan atas Tab Penyimpanan Berkas untuk memperbarui daftar folder secara instan.
+
+### Q: Jika ada kesalahan isi logbook yang sudah terlanjur disimpan ke Google Drive, apakah bisa diedit langsung?
+**J:** Tidak bisa diedit langsung di Google Drive. Sesuai prosedur, silakan hapus file yang salah tersebut di folder Anda pada Tab **Penyimpanan Berkas**, lalu kembali ke Tab **Input Logbook** untuk mengoreksi isian data atau fotonya (data Anda di form tidak hilang). Setelah benar, buka kembali folder nama Anda di Tab Penyimpanan Berkas dan klik tombol **"Simpan & Dapatkan Link Google Drive"** untuk menghasilkan berkas dan link baru yang siap disalin ke portal Monev Kemnaker.
 
 ### Q: Bagaimana cara mengganti tema ke Mode Gelap?
 **J:** Klik tombol **"Mode Gelap 🌙"** di bagian bawah panel sidebar navigasi kiri (atau ikon bulan pada perangkat smartphone).

@@ -3278,15 +3278,30 @@ function initAppTour() {
     prevBtnText: 'Kembali',
     progressText: 'Langkah {{current}} dari {{total}}',
     onDestroyStarted: () => {
+      closeMonevModal();
+      switchTab('form');
       localStorage.setItem('maganghub_tour_completed', 'true');
       if (appTourDriver) appTourDriver.destroy();
+    },
+    onHighlightStarted: (element, step, { config, state }) => {
+      const activeIdx = state?.activeIndex ?? (appTourDriver ? appTourDriver.getActiveIndex() : 0);
+      if (activeIdx === 6) {
+        closeMonevModal();
+        switchTab('preview');
+      } else if (activeIdx === 7) {
+        closeMonevModal();
+        switchTab('storage');
+      } else {
+        closeMonevModal();
+        switchTab('form');
+      }
     },
     steps: [
       {
         element: '#sidebar',
         popover: {
           title: 'Selamat Datang di Logbook MagangHub',
-          description: 'Aplikasi resmi untuk mempermudah seluruh 33 peserta magang Kemendikdasmen Balai Bahasa Jawa Timur dalam mencatat kegiatan, export Word/PDF, sinkronisasi Google Drive, dan mengisi portal Monev Kemnaker.',
+          description: 'Aplikasi resmi untuk 33 peserta magang Kemendikdasmen Balai Bahasa Jawa Timur dalam mencatat kegiatan harian, export Word/PDF, sinkronisasi Google Drive koordinator, dan menyusun laporan portal Monev Kemnaker.',
           side: 'right',
           align: 'start'
         }
@@ -3295,52 +3310,25 @@ function initAppTour() {
         element: '#nav-form',
         popover: {
           title: 'Tab 1: Input Logbook Harian',
-          description: 'Halaman utama untuk mengisi aktivitas kerja harian. Semua data yang diketik tersimpan otomatis ke browser (Auto-save).',
+          description: 'Halaman utama untuk mengisi agenda kerja harian Anda. Seluruh isian otomatis disimpan ke memori browser (Auto-save) sehingga data Anda tidak akan hilang.',
           side: 'right',
           align: 'center'
         }
       },
       {
-        element: '#nama',
+        element: '#card-peserta-waktu',
         popover: {
-          title: 'Data Peserta dan Unit Kerja',
-          description: 'Ketik nama lengkap dan divisi atau unit kerja Anda. Data peserta ini tersimpan permanen dan tidak akan direset setiap hari.',
+          title: 'Data Peserta dan Waktu Pelaksanaan',
+          description: 'Isi nama lengkap dan divisi atau unit kerja Anda. Hari dan tanggal terisi otomatis secara realtime (patokan reset kegiatan pukul 23.59).<br/><br/>Jangan lupa klik tombol gembok <strong>Kunci Nama</strong> pada nama mentor agar nama pembimbing otomatis tersimpan permanen dan tidak perlu diketik ulang setiap hari. Data peserta ini tidak akan pernah direset!',
           side: 'bottom',
-          align: 'start'
-        }
-      },
-      {
-        element: '#btn-lock-mentor',
-        popover: {
-          title: 'Fitur Kunci Nama Mentor',
-          description: 'Ketik nama mentor pembimbing, lalu klik tombol gembok ini. Setelah terkunci, nama mentor Anda otomatis tersimpan setiap hari tanpa perlu mengetik ulang.',
-          side: 'left',
           align: 'center'
-        }
-      },
-      {
-        element: '#tanggal',
-        popover: {
-          title: 'Hari dan Tanggal Otomatis',
-          description: 'Sistem secara realtime mengisi hari dan tanggal hari ini. Tanggal ini juga menjadi patokan reset kegiatan harian otomatis setiap pergantian hari lewat pukul 23.59.',
-          side: 'bottom',
-          align: 'start'
         }
       },
       {
         element: '#kegiatan-list',
         popover: {
           title: 'Rincian Kegiatan dan Foto Dokumentasi',
-          description: 'Isi jam mulai dan selesai, judul kegiatan, deskripsi rincian tugas, serta upload foto dokumentasi per kegiatan (maksimal 5MB). Bagian ini yang otomatis dikosongkan setiap lewat pukul 23.59 untuk hari baru.',
-          side: 'top',
-          align: 'center'
-        }
-      },
-      {
-        element: '#btn-add',
-        popover: {
-          title: 'Tambah Kegiatan Baru',
-          description: 'Klik tombol ini jika memiliki lebih dari satu kegiatan dalam sehari untuk menambah baris kegiatan baru sebanyak yang dibutuhkan.',
+          description: 'Isi jam mulai dan selesai (format WIB), nama kegiatan, uraian tugas, serta lampirkan foto dokumentasi per kegiatan (maksimal 5MB). Jika ada lebih dari satu agenda, klik tombol <em>+ Tambah Kegiatan Baru</em> di bawah.<br/><br/><strong>Catatan Penting:</strong> Hanya rincian kegiatan inilah yang otomatis dikosongkan setiap lewat pukul 23.59 malam agar siap untuk hari baru.',
           side: 'top',
           align: 'center'
         }
@@ -3349,7 +3337,7 @@ function initAppTour() {
         element: '#catatan',
         popover: {
           title: 'Catatan atau Kendala Tambahan',
-          description: 'Tuliskan catatan khusus atau kendala kerja jika ada. Jika tidak ada kendala, dapat dibiarkan kosong karena sistem otomatis menyiapkan evaluasi positif untuk laporan Monev.',
+          description: 'Tuliskan catatan khusus atau kendala kerja jika ada. <strong>Jika selama magang hari ini tidak ada kendala, cukup kosongkan saja kolom ini</strong>. Sistem AI nantinya otomatis membuat evaluasi positif untuk laporan Monev Kemnaker bahwa seluruh agenda kegiatan berjalan lancar.',
           side: 'top',
           align: 'start'
         }
@@ -3358,45 +3346,73 @@ function initAppTour() {
         element: '.signature-container',
         popover: {
           title: 'Tanda Tangan Digital',
-          description: 'Goreskan tanda tangan langsung di canvas atau gunakan tombol upload foto tanda tangan. Tanda tangan peserta dan mentor tetap tersimpan aman saat pergantian hari.',
+          description: 'Goreskan tanda tangan langsung pada canvas atau gunakan tombol <em>Upload Foto TTD</em>. Tanda tangan peserta dan mentor tetap tersimpan aman dan tidak akan hilang saat pergantian hari.',
           side: 'top',
-          align: 'center'
+          align: 'center',
+          onNextClick: () => {
+            switchTab('preview');
+            setTimeout(() => { if (appTourDriver) appTourDriver.moveNext(); }, 60);
+          }
         }
       },
       {
-        element: '#nav-preview',
+        element: '.export-toolbar',
         popover: {
           title: 'Tab 2: Preview dan Export Dokumen',
-          description: 'Lihat lembar logbook resmi dengan Kop Surat Kemendikdasmen. Anda dapat mengunduh dokumen dalam format Word (.docx) atau PDF (.pdf).',
-          side: 'right',
-          align: 'center'
+          description: 'Pada menu ini, Anda dapat memeriksa pratinjau lembar logbook resmi berkop surat Balai Bahasa Jawa Timur.<br/><br/>Tersedia tombol <strong>Export ke PDF</strong> untuk bukti laporan/cetak, serta tombol <strong>Export ke Word (.docx)</strong> jika dokumen ingin disunting lebih lanjut di komputer Anda.',
+          side: 'bottom',
+          align: 'center',
+          onPrevClick: () => {
+            switchTab('form');
+            setTimeout(() => { if (appTourDriver) appTourDriver.movePrevious(); }, 60);
+          },
+          onNextClick: () => {
+            switchTab('storage');
+            setTimeout(() => { if (appTourDriver) appTourDriver.moveNext(); }, 60);
+          }
         }
       },
       {
-        element: '#nav-storage',
+        element: '.storage-action-bar',
         popover: {
-          title: 'Tab 3: Penyimpanan Berkas dan Folder',
-          description: 'Akses folder 33 peserta magang di Google Drive koordinator. Klik tombol bintang pada folder Anda agar selalu berada di urutan paling atas.',
-          side: 'right',
-          align: 'center'
+          title: 'Tab 3: Penyimpanan Berkas dan Google Drive',
+          description: 'Pusat penyimpanan berkas seluruh 33 peserta magang di Google Drive koordinator (Marcello):<br/><br/>1. <strong>Teman-teman baru yang belum punya folder:</strong> Klik tombol <em>Buat Folder Baru</em> dan masukkan nama lengkap Anda (folder langsung dibuatkan di Google Drive koordinator).<br/>2. <strong>Jika sudah ada folder:</strong> Cari folder nama Anda sendiri, lalu klik <em>ikon bintang (⭐)</em> agar selalu terpin di paling atas.<br/>3. <strong>Menyimpan Logbook:</strong> Klik folder nama Anda untuk membukanya (tenang, data logbook dari form tidak akan hilang), lalu klik tombol <strong>Simpan & Dapatkan Link</strong>. File logbook otomatis ter-generate dan tersimpan di Google Drive bersama milik Marcello.<br/>4. <strong>Revisi jika ada kekeliruan:</strong> Berkas di Drive tidak bisa diedit langsung. Jika salah isi, <strong>hapus berkas lama terlebih dahulu</strong> di penyimpanan, kembali ke menu <em>Input Logbook</em> untuk memperbaiki datanya, lalu masuk ke folder ini dan klik <em>Simpan & Dapatkan Link</em> lagi. Salin tautan barunya untuk dikirim ke portal Kemnaker!',
+          side: 'bottom',
+          align: 'center',
+          onPrevClick: () => {
+            switchTab('preview');
+            setTimeout(() => { if (appTourDriver) appTourDriver.movePrevious(); }, 60);
+          },
+          onNextClick: () => {
+            switchTab('form');
+            setTimeout(() => { if (appTourDriver) appTourDriver.moveNext(); }, 60);
+          }
         }
       },
       {
         element: '#nav-monev',
         popover: {
-          title: 'Format Laporan Monev Kemnaker',
-          description: 'Fitur praktis untuk menyusun 3 klip siap salin ke portal Monev Kemnaker: Uraian Kronologis beserta link Drive, Refleksi Pembelajaran, dan Evaluasi Kendala harian.',
+          title: 'Format Laporan Monev Kemnaker (3 Klip Siap Salin)',
+          description: 'Fitur praktis untuk mengisi portal <strong>monev.maganghub.kemnaker.go.id</strong> tanpa perlu mengetik ulang dari awal:<br/><br/>1. <strong>Uraian Aktifitas:</strong> Mengambil langsung dari agenda rincian kegiatan dan jam yang diisi di formulir sebelumnya, serta otomatis menyertakan link Google Drive resmi Anda jika sudah disimpan di penyimpanan.<br/>2. <strong>Pembelajaran yang Didapat:</strong> Dibuat dan dirangkum secara cerdas dan otomatis oleh <strong>AI Gemini</strong> menjadi poin-poin kompetensi profesional.<br/>3. <strong>Kendala yang Dialami:</strong> Mengambil dari catatan formulir. Jika tadi dikosongkan, AI otomatis menyusun evaluasi positif bahwa seluruh agenda berjalan lancar.<br/><br/>Tinggal klik <em>Salin</em> per klip atau <em>Salin Semua Format (3-in-1)</em>, lalu tempelkan langsung ke portal Kemnaker!',
           side: 'right',
-          align: 'center'
+          align: 'center',
+          onPrevClick: () => {
+            switchTab('storage');
+            setTimeout(() => { if (appTourDriver) appTourDriver.movePrevious(); }, 60);
+          }
         }
       },
       {
         element: '#theme-toggle-btn',
         popover: {
-          title: 'Mode Terang dan Gelap',
-          description: 'Klik tombol ini untuk beralih antara Mode Terang dan Mode Gelap sesuai kenyamanan visual Anda.',
+          title: 'Mode Tampilan dan Selesai',
+          description: 'Gunakan tombol ini untuk beralih antara Mode Terang dan Mode Gelap agar nyaman di mata saat bekerja lembur atau malam hari. Panduan tur selesai, selamat mengisi logbook harian Anda!',
           side: 'top',
-          align: 'start'
+          align: 'start',
+          onPrevClick: () => {
+            switchTab('form');
+            setTimeout(() => { if (appTourDriver) appTourDriver.movePrevious(); }, 60);
+          }
         }
       }
     ]
