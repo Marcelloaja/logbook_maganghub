@@ -718,11 +718,8 @@ function getTodayDateString() {
 }
 
 function isPastCutoffTime() {
-  const now = new Date();
-  const hour = now.getHours();
-  const minute = now.getMinutes();
-  // Cutoff mulai pukul 23:55 (23:55:00 s.d. 23:59:59)
-  return hour === 23 && minute >= 55;
+  // Hanya berlaku jika sudah lewat 23.59 (berganti ke hari baru)
+  return false;
 }
 
 function isDraftExpired(draft) {
@@ -731,23 +728,14 @@ function isDraftExpired(draft) {
   if (!draft.saveDate) return true;
 
   const today = getTodayDateString();
-  // Jika tanggal draft bukan hari ini -> kedaluwarsa (sudah ganti hari)
-  if (draft.saveDate !== today) return true;
-
-  // Jika hari ini dan waktu sekarang sudah >= 23:55
-  if (isPastCutoffTime()) return true;
-
-  return false;
+  // Jika tanggal draft berbeda dengan tanggal hari ini (sudah lewat pukul 23:59 / berganti hari baru)
+  return draft.saveDate !== today;
 }
 
 let saveTimer;
 function autoSaveDraft() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    // Jika waktu sudah >= 23.55, jangan simpan rincian kegiatan ke cache
-    if (isPastCutoffTime()) {
-      return;
-    }
     const payload = {
       saveDate: getTodayDateString(),
       saveTimestamp: Date.now(),
@@ -779,7 +767,7 @@ function loadSavedDraft() {
     }
     const data = JSON.parse(raw);
 
-    // Identitas peserta & unit tetap dipertahankan agar tidak perlu repot ketik ulang
+    // Identitas peserta & unit tetap dipertahankan aman agar tidak perlu repot ketik ulang
     if (data.nama) document.getElementById('nama').value = data.nama;
     if (data.unit) document.getElementById('unit').value = data.unit;
 
@@ -792,7 +780,9 @@ function loadSavedDraft() {
     const expired = isDraftExpired(data);
 
     if (expired) {
-      // Hari baru atau sudah melewati 23:55 -> Kosongkan kegiatan, foto dokumentasi & catatan
+      // Lewat pukul 23.59 (Hari baru):
+      // Yang di-reset HANYA Rincian Kegiatan & Foto Dokumentasi serta catatan harian.
+      // Data Peserta, Waktu/Tanggal Realtime, dan Tanda Tangan Digital TETAP DIPERTAHANKAN (TIDAK DI-RESET).
       const list = document.getElementById('kegiatan-list');
       if (list) list.innerHTML = '';
       kegiatanCounter = 0;
@@ -802,11 +792,23 @@ function loadSavedDraft() {
       const catEl = document.getElementById('catatan');
       if (catEl) catEl.value = '';
 
-      clearSignature('peserta');
-      clearSignature('mentor');
       initRealtimeDate();
 
-      // Perbarui draft tersimpan dengan rincian kegiatan kosong
+      // Pulihkan Tanda Tangan Digital peserta & mentor (TIDAK di-reset)
+      if (data.sigData) {
+        sigData = data.sigData;
+        ['peserta', 'mentor'].forEach(role => {
+          if (sigData[role]) {
+            const c = document.getElementById('sig-' + role);
+            if (c) drawDataUrlToCanvas(c, sigData[role]);
+          }
+        });
+      }
+
+      cachedAiPembelajaran = '';
+      lastAiInputHash = '';
+
+      // Perbarui draft tersimpan: kegiatan kosong, tapi Data Peserta & Tanda Tangan tetap utuh
       const cleanPayload = {
         saveDate: getTodayDateString(),
         saveTimestamp: Date.now(),
@@ -815,17 +817,17 @@ function loadSavedDraft() {
         mentor: document.getElementById('mentor')?.value || '',
         catatan: '',
         kegiatanList: [],
-        sigData: { peserta: '', mentor: '' }
+        sigData: sigData // Tanda tangan tetap tersimpan
       };
       localStorage.setItem('maganghub_logbook_draft_v2', JSON.stringify(cleanPayload));
 
       setTimeout(() => {
-        showToast('Hari baru: Rincian kegiatan & foto telah dikosongkan otomatis ✨');
+        showToast('Hari baru: Rincian kegiatan & foto dikosongkan. Data peserta & tanda tangan tetap aman ✨');
       }, 600);
       return;
     }
 
-    // Jika masih di hari yang sama dan belum 23:55, muat data
+    // Jika masih di hari yang sama (belum lewat 23.59), muat seluruh data kegiatan
     if (data.catatan) document.getElementById('catatan').value = data.catatan;
 
     const list = document.getElementById('kegiatan-list');
@@ -854,14 +856,14 @@ function loadSavedDraft() {
   }
 }
 
-// Watcher untuk mendeteksi pergantian hari atau lewat 23.55 saat tab browser dibiarkan terbuka
+// Watcher untuk mendeteksi pergantian hari setelah pukul 23.59 saat tab browser dibiarkan terbuka
 let lastCheckedDate = getTodayDateString();
 function startDailyResetWatcher() {
   setInterval(() => {
     const today = getTodayDateString();
-    const pastCutoff = isPastCutoffTime();
 
-    if (today !== lastCheckedDate || pastCutoff) {
+    if (today !== lastCheckedDate) {
+      // Waktu sudah melewati pukul 23.59 (masuk ke hari baru 00:00+)
       const hasActivities = kegiatanDataStore.some(k => 
         (k.nama && k.nama.trim() !== '-' && k.nama.trim() !== '') || 
         (k.deskripsi && k.deskripsi.trim() !== '-' && k.deskripsi.trim() !== '') ||
@@ -870,13 +872,17 @@ function startDailyResetWatcher() {
 
       if (hasActivities) {
         clearDailyActivitiesAuto();
+      } else {
+        // Tetap perbarui tanggal dan hari ke hari yang baru
+        initRealtimeDate();
       }
       lastCheckedDate = today;
     }
-  }, 30000); // Cek tiap 30 detik
+  }, 15000); // Cek tiap 15 detik
 }
 
 function clearDailyActivitiesAuto() {
+  // Hanya reset Rincian Kegiatan & Foto Dokumentasi serta catatan harian
   const list = document.getElementById('kegiatan-list');
   if (list) list.innerHTML = '';
   kegiatanCounter = 0;
@@ -886,9 +892,12 @@ function clearDailyActivitiesAuto() {
   const catatanEl = document.getElementById('catatan');
   if (catatanEl) catatanEl.value = '';
 
-  clearSignature('peserta');
-  clearSignature('mentor');
+  // Data Peserta, Waktu, dan Tanda Tangan Digital TIDAK di-reset
   initRealtimeDate();
+
+  // Reset cache AI untuk hari baru
+  cachedAiPembelajaran = '';
+  lastAiInputHash = '';
 
   const cleanPayload = {
     saveDate: getTodayDateString(),
@@ -898,13 +907,13 @@ function clearDailyActivitiesAuto() {
     mentor: document.getElementById('mentor')?.value || '',
     catatan: '',
     kegiatanList: [],
-    sigData: { peserta: '', mentor: '' }
+    sigData: sigData // Tanda tangan tetap tersimpan utuh
   };
   try {
     localStorage.setItem('maganghub_logbook_draft_v2', JSON.stringify(cleanPayload));
   } catch (e) {}
 
-  showToast('⏰ Waktu melewati 23.55: Rincian kegiatan & foto telah dikosongkan otomatis untuk hari baru.');
+  showToast('⏰ Lewat pukul 23.59: Rincian kegiatan & foto telah dikosongkan untuk hari baru. Data peserta & tanda tangan tetap tersimpan aman ✨');
 }
 
 async function resetForm() {
