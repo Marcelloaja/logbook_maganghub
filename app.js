@@ -1658,16 +1658,59 @@ function startCloudAutoSync() {
   }, CLOUD_SYNC_INTERVAL_MS);
 }
 
-function updateSyncStatusUI(status) {
+function updateSyncStatusUI(status, customMsg = '') {
   const indicator = document.getElementById('sync-live-indicator');
   const lastSyncEl = document.getElementById('sync-last-time');
+  const statusText = document.getElementById('sync-status-text');
   if (indicator) {
     indicator.className = 'sync-dot ' + (status === 'ok' ? 'sync-dot-ok' : status === 'syncing' ? 'sync-dot-syncing' : 'sync-dot-error');
   }
-  if (lastSyncEl && status === 'ok') {
-    const now = new Date();
-    lastSyncEl.textContent = `Tersinkron: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  if (lastSyncEl) {
+    if (status === 'ok') {
+      const now = new Date();
+      lastSyncEl.textContent = `Tersinkron: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+      lastSyncEl.style.color = '#10b981';
+      if (statusText) statusText.textContent = 'Sinkronisasi Cloud Realtime (Aktif)';
+    } else if (status === 'error') {
+      lastSyncEl.textContent = customMsg || '⚠️ Gagal sinkron • Skrip perlu update (Klik)';
+      lastSyncEl.style.color = '#ef4444';
+      if (statusText) statusText.textContent = 'Sinkronisasi Terkendala (Klik untuk panduan)';
+    } else if (status === 'syncing') {
+      lastSyncEl.textContent = 'Menghubungkan ke cloud...';
+      lastSyncEl.style.color = '#64748b';
+      if (statusText) statusText.textContent = 'Sedang sinkronisasi...';
+    }
   }
+}
+
+function handleSyncBarClick() {
+  const ind = document.getElementById('sync-live-indicator');
+  if (ind && ind.classList.contains('sync-dot-error')) {
+    showScriptUpdateRequiredPopup();
+  } else {
+    syncStorageWithCloud(false);
+  }
+}
+
+function showScriptUpdateRequiredPopup() {
+  showCustomConfirmDialog({
+    title: '⚠️ Skrip Google Drive Perlu Diperbarui (1 Menit)',
+    message: `
+      Google Apps Script di <strong style="color:var(--primary);">script.google.com</strong> masih versi lama, sehingga laptop teman Anda belum bisa mengambil folder &amp; dokumen dari cloud.<br/><br/>
+      <strong>Langkah Cepat (1 Menit):</strong><br/>
+      1. Klik tombol <strong>Buka Panduan &amp; Salin Kode</strong> di bawah ini<br/>
+      2. Buka project Anda di <strong>script.google.com</strong>, hapus kode lama dan tempel kode baru<br/>
+      3. Klik <strong>Deploy &gt; Manage deployments &gt; Edit (Pensil) &gt; Version: New version &gt; Deploy</strong>!
+    `,
+    subtext: 'Setelah diperbarui, data folder dan logbook akan langsung sama persis di seluruh 33 laptop peserta!',
+    confirmText: 'Buka Panduan & Salin Kode',
+    cancelText: 'Tutup',
+    isDanger: false
+  }).then(ok => {
+    if (ok) {
+      openScriptModal();
+    }
+  });
 }
 
 function loadSavedDriveConfigs() {
@@ -1708,24 +1751,22 @@ async function testAppsScriptConnection() {
 
   try {
     const resp = await fetch(url, {
-      method: 'GET',
-      mode: 'cors'
+      method: 'POST',
+      mode: 'cors',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getSyncData' })
     });
     const result = await resp.json();
-    showToast('✅ Berhasil terhubung ke Google Apps Script!');
+    if (result && result.success) {
+      showToast('✅ Berhasil terhubung ke Google Apps Script!');
+      updateSyncStatusUI('ok');
+    } else {
+      throw new Error(result ? (result.error || 'Skrip masih versi lama') : 'Skrip masih versi lama');
+    }
   } catch (err) {
     console.error('Test connection error:', err);
-    alert(
-      '⚠️ Gagal Terhubung ke Google Apps Script (Akses Ditolak)!\n\n' +
-      'Penyebab: Saat Deploy Web App di script.google.com, kolom "Who has access" (Siapa yang memiliki akses) belum diubah menjadi "Anyone" (Siapa saja).\n\n' +
-      'Langkah Solusi (1 Menit):\n' +
-      '1. Buka script.google.com dan buka project Anda\n' +
-      '2. Klik tombol "Deploy" di kanan atas > pilih "Manage deployments" (Kelola penerapan)\n' +
-      '3. Klik ikon Pensil (Edit)\n' +
-      '4. Pada Version: pilih "New version"\n' +
-      '5. Pada Who has access: WAJIB pilih "Anyone" (Siapa saja)\n' +
-      '6. Klik "Deploy"!'
-    );
+    showScriptUpdateRequiredPopup();
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -1862,21 +1903,19 @@ async function syncStorageWithCloud(silent = true) {
 
       updateSyncStatusUI('ok');
       if (!silent) showToast('✅ Data folder dan berkas berhasil disinkronkan dari Google Drive!');
+    } else {
+      const errMsg = (res && res.error) ? String(res.error) : 'Respon cloud tidak sesuai';
+      console.warn('Sync storage note:', errMsg);
+      updateSyncStatusUI('error', '⚠️ Skrip Google Drive belum di-update (Klik)');
+      if (!silent) {
+        showScriptUpdateRequiredPopup();
+      }
     }
   } catch (err) {
     console.warn('Sync storage note:', err);
-    updateSyncStatusUI('error');
+    updateSyncStatusUI('error', 'Gagal terhubung ke cloud (Klik)');
     if (!silent) {
-      alert(
-        '⚠️ Google Apps Script Perlu Diperbarui (1 Menit):\n\n' +
-        'Penyebab "Failed to fetch": Skrip Anda di script.google.com saat ini baru memiliki fungsi upload file lama, belum ada fungsi sinkronisasi cloud.\n\n' +
-        'Langkah Solusi Cepat:\n' +
-        '1. Klik tombol "Pengaturan Cloud Drive" > "Panduan & Kode"\n' +
-        '2. Klik tombol "Salin Kode Script"\n' +
-        '3. Buka script.google.com, hapus kode lama dan tempel kode baru tersebut\n' +
-        '4. Klik Deploy > Manage deployments > Edit (Pensil) > Version: "New version" > Deploy!\n\n' +
-        'Setelah di-deploy, seluruh 33 anak magang akan otomatis tersambung ke cloud yang sama! ✅'
-      );
+      showScriptUpdateRequiredPopup();
     }
   } finally {
     if (btn && !silent) {
@@ -2260,15 +2299,23 @@ async function saveActiveLogbookToCurrentFolder() {
         finalUrl = dataUrl;
         isCloud = false;
 
-        alert(
-          '⚠️ Google Drive Terkendala: "Failed to fetch" (Akses Ditolak)!\n\n' +
-          'Dokumen Anda TETAP TERSIMPAN AMAN di Storage Website secara lokal.\n\n' +
-          'Agar bisa tersimpan otomatis ke Google Drive:\n' +
-          '1. Buka script.google.com > Deploy > Manage deployments\n' +
-          '2. Klik Edit (Pensil) > Version: "New version"\n' +
-          '3. Who has access: WAJIB pilih "Anyone" (Siapa saja)\n' +
-          '4. Klik Deploy.'
-        );
+        showCustomConfirmDialog({
+          title: '⚠️ Google Drive Terkendala',
+          message: `
+            Dokumen Anda <strong>tetap tersimpan aman di Storage Website</strong>.<br/><br/>
+            Untuk mengaktifkan sinkronisasi otomatis ke Google Drive bersama:<br/>
+            1. Buka <strong>script.google.com</strong> &gt; <strong>Deploy &gt; Manage deployments</strong><br/>
+            2. Klik Edit (Pensil) &gt; Version: <strong>"New version"</strong><br/>
+            3. Who has access: WAJIB pilih <strong>"Anyone" (Siapa saja)</strong><br/>
+            4. Klik <strong>Deploy</strong>!
+          `,
+          subtext: 'Setelah diperbaiki, seluruh peserta magang bisa menyimpan berkas langsung ke cloud.',
+          confirmText: 'Buka Panduan',
+          cancelText: 'Tutup',
+          isDanger: false
+        }).then(ok => {
+          if (ok) openScriptModal();
+        });
       }
     } else {
       // Local Hub Mode (Creates permanent data URL for instant sharing / preview)
@@ -2517,7 +2564,12 @@ function showCustomConfirmDialog({
     }
 
     if (cancelBtn) {
-      cancelBtn.textContent = cancelText;
+      if (cancelText) {
+        cancelBtn.textContent = cancelText;
+        cancelBtn.style.display = '';
+      } else {
+        cancelBtn.style.display = 'none';
+      }
     }
 
     let closed = false;

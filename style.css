@@ -2703,6 +2703,13 @@ a {
   margin-bottom: 16px;
   font-size: 12px;
   gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.sync-status-bar:hover {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.04);
 }
 
 .sync-status-left {

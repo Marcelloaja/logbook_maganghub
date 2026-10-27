@@ -300,10 +300,10 @@
       </div>
 
       <!-- Live Sync Status Bar -->
-      <div class="sync-status-bar" id="sync-status-bar">
+      <div class="sync-status-bar" id="sync-status-bar" onclick="handleSyncBarClick()" title="Klik untuk sinkronisasi ulang atau cek status">
         <div class="sync-status-left">
           <span class="sync-dot sync-dot-syncing" id="sync-live-indicator"></span>
-          <span class="sync-status-label">Sinkronisasi Cloud Realtime (30 dtk sekali)</span>
+          <span class="sync-status-label" id="sync-status-text">Sinkronisasi Cloud Realtime (30 dtk sekali)</span>
         </div>
         <span class="sync-last-time" id="sync-last-time">Menghubungkan ke cloud...</span>
       </div>
