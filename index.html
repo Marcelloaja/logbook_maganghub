@@ -23,6 +23,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
   <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
   
+  <link rel="preload" as="image" href="assets/compress.png" />
+  
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -912,6 +914,47 @@ function doPost(e) {
           Buka Monev MagangHub ↗
         </button>
         <button type="button" class="btn btn-secondary" onclick="closeMonevModal()">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Stiker Sukses Submit (Marcello Yeay Berhasil Submit) -->
+  <div class="submit-sticker-overlay" id="submit-sticker-modal" onclick="handleStickerOverlayClick(event)" aria-hidden="true">
+    <div class="submit-sticker-card" id="submit-sticker-card" onclick="event.stopPropagation()">
+      <!-- Dynamic celebration confetti particles -->
+      <div class="sticker-confetti-container" id="sticker-confetti-container" aria-hidden="true"></div>
+
+      <!-- Close button -->
+      <button type="button" class="sticker-close-btn" onclick="closeSubmitStickerModal()" aria-label="Tutup" title="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+
+      <!-- Sticker Graphic with Natural Rubber-Band Pop Animation -->
+      <div class="sticker-img-wrapper">
+        <img src="assets/compress.png" alt="Yeay Berhasil Submit!" class="sticker-img" id="submit-sticker-img" />
+      </div>
+
+      <!-- Action Card -->
+      <div class="sticker-content">
+        <div class="sticker-badge" id="sticker-badge-status">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="sticker-badge-text">Tersimpan di Google Drive Bersama</span>
+        </div>
+        <p class="sticker-filename" id="sticker-filename-text">Logbook_Peserta.pdf</p>
+
+        <div class="sticker-actions">
+          <button type="button" class="btn btn-primary btn-sticker-action" id="btn-sticker-copy" onclick="copyStickerResultLink()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span id="btn-sticker-copy-text">Salin Link</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-sticker-action" id="btn-sticker-view" onclick="openCurrentResultUrl(); closeSubmitStickerModal();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <span>Buka Berkas</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-sticker-action btn-sticker-dismiss" onclick="closeSubmitStickerModal()">
+            <span>Lanjutkan</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>

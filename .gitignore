@@ -16,3 +16,6 @@ yarn-debug.log*
 # Node (if used later)
 node_modules/
 dist/
+
+# Large image backups
+assets/*-original.png

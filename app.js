@@ -2589,6 +2589,16 @@ async function saveActiveLogbookToCurrentFolder() {
     } else {
       showToast('✓ Logbook berhasil disimpan ke Storage Website!');
     }
+
+    // Tampilkan stiker perayaan "YEAY! BERHASIL SUBMIT!" di tengah layar
+    setTimeout(() => {
+      showSubmitSuccessSticker({
+        url: finalUrl,
+        fileName: fileName,
+        isCloud: isCloud,
+        folderName: folder.name
+      });
+    }, 180);
   } catch (err) {
     console.error('Save to folder error:', err);
     showToast('Gagal menyimpan: ' + err.message);
@@ -3461,4 +3471,177 @@ function checkFirstTimeTour() {
     }, 1500);
   }
 }
+
+// ============================================================
+// CELEBRATION STICKER MODAL ("YEAY! BERHASIL SUBMIT!")
+// Physical rubber-band bounce, die-cut sticker look, confetti burst
+// ============================================================
+let stickerAutoDismissTimer = null;
+let stickerAudioCtx = null;
+
+function playCelebrationChime() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!stickerAudioCtx) {
+      stickerAudioCtx = new AudioCtx();
+    }
+    if (stickerAudioCtx.state === 'suspended') {
+      stickerAudioCtx.resume();
+    }
+
+    const now = stickerAudioCtx.currentTime;
+    // Pleasant musical chord chime (C5, E5, G5, C6) with natural decay
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, idx) => {
+      const osc = stickerAudioCtx.createOscillator();
+      const gain = stickerAudioCtx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+      
+      gain.gain.setValueAtTime(0, now + idx * 0.07);
+      gain.gain.linearRampToValueAtTime(0.12, now + idx * 0.07 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 0.6);
+      
+      osc.connect(gain);
+      gain.connect(stickerAudioCtx.destination);
+      
+      osc.start(now + idx * 0.07);
+      osc.stop(now + idx * 0.07 + 0.65);
+    });
+  } catch (e) {
+    // Audio autoplay policy or unsupported
+  }
+}
+
+function spawnStickerConfetti() {
+  const container = document.getElementById('sticker-confetti-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const colors = ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6', '#ef4444', '#06b6d4'];
+  const count = 32;
+
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+
+    // Random radial trajectory
+    const angle = (i / count) * 360 + (Math.random() * 20 - 10);
+    const rad = (angle * Math.PI) / 180;
+    const distance = 140 + Math.random() * 160;
+    const dx = Math.cos(rad) * distance;
+    const dy = Math.sin(rad) * distance - (distance * 0.2); // slight upward bias
+    const rot = (Math.random() * 720 - 360) + 'deg';
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const width = 8 + Math.random() * 6;
+    const height = 10 + Math.random() * 8;
+    const delay = Math.random() * 0.08;
+
+    piece.style.setProperty('--dx', dx + 'px');
+    piece.style.setProperty('--dy', dy + 'px');
+    piece.style.setProperty('--rot', rot);
+    piece.style.backgroundColor = color;
+    piece.style.width = width + 'px';
+    piece.style.height = height + 'px';
+    piece.style.animationDelay = delay + 's';
+
+    container.appendChild(piece);
+  }
+}
+
+function showSubmitSuccessSticker(opts = {}) {
+  const modal = document.getElementById('submit-sticker-modal');
+  if (!modal) return;
+
+  const url = opts.url || currentSavedResultUrl || '';
+  const fileName = opts.fileName || currentSavedResultFileName || 'Dokumen_Logbook';
+  const isCloud = opts.isCloud !== false;
+
+  const badgeEl = document.getElementById('sticker-badge-text');
+  if (badgeEl) {
+    badgeEl.textContent = isCloud ? 'Tersimpan di Google Drive Bersama' : 'Tersimpan di Storage Website';
+  }
+
+  const fileEl = document.getElementById('sticker-filename-text');
+  if (fileEl) {
+    fileEl.textContent = fileName;
+  }
+
+  const copyBtnText = document.getElementById('btn-sticker-copy-text');
+  if (copyBtnText) {
+    copyBtnText.textContent = 'Salin Link';
+  }
+
+  // Pre-generate colorful confetti
+  spawnStickerConfetti();
+
+  // Show modal with natural bounce
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+
+  // Play celebratory chime
+  playCelebrationChime();
+
+  // Auto dismiss timer (8 seconds so user can enjoy and copy without stress)
+  if (stickerAutoDismissTimer) clearTimeout(stickerAutoDismissTimer);
+  stickerAutoDismissTimer = setTimeout(() => {
+    closeSubmitStickerModal();
+  }, 8000);
+}
+
+function closeSubmitStickerModal() {
+  const modal = document.getElementById('submit-sticker-modal');
+  if (!modal) return;
+  modal.classList.remove('active');
+  modal.setAttribute('aria-hidden', 'true');
+  if (stickerAutoDismissTimer) {
+    clearTimeout(stickerAutoDismissTimer);
+    stickerAutoDismissTimer = null;
+  }
+}
+
+function handleStickerOverlayClick(e) {
+  if (e.target && e.target.id === 'submit-sticker-modal') {
+    closeSubmitStickerModal();
+  }
+}
+
+async function copyStickerResultLink() {
+  const url = currentSavedResultUrl || '';
+  if (!url) {
+    showToast('Belum ada tautan berkas.');
+    return;
+  }
+
+  const copyBtnText = document.getElementById('btn-sticker-copy-text');
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(url);
+    } else {
+      copyToClipboardFallback(url);
+    }
+    if (copyBtnText) copyBtnText.textContent = 'Tautan Disalin!';
+    showToast('✓ Tautan Google Drive berhasil disalin ke clipboard!');
+    setTimeout(() => {
+      if (copyBtnText) copyBtnText.textContent = 'Salin Link';
+    }, 2500);
+  } catch (err) {
+    copyToClipboardFallback(url);
+    if (copyBtnText) copyBtnText.textContent = 'Tautan Disalin!';
+    showToast('✓ Tautan berhasil disalin!');
+  }
+}
+
+// Close sticker modal on Escape key press
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const stickerModal = document.getElementById('submit-sticker-modal');
+    if (stickerModal && stickerModal.classList.contains('active')) {
+      closeSubmitStickerModal();
+    }
+  }
+});
+
 
