@@ -3288,6 +3288,11 @@ a {
   flex-wrap: nowrap !important;
 }
 
+.driver-popover,
+.driver-popover * {
+  text-shadow: none !important;
+}
+
 .driver-popover-footer button,
 .driver-popover-next-btn,
 .driver-popover-prev-btn,
@@ -3313,6 +3318,9 @@ a {
   float: none !important;
   clear: none !important;
   text-align: center !important;
+  text-shadow: none !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
 }
 
 .driver-popover-next-btn {
@@ -3320,6 +3328,7 @@ a {
   color: #ffffff !important;
   border: 1px solid transparent !important;
   box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25) !important;
+  text-shadow: none !important;
 }
 
 .driver-popover-next-btn:hover {
