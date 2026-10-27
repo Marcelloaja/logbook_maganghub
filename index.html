@@ -227,12 +227,12 @@
             </div>
           </div>
           <button type="button" class="btn-ai-generate-desc btn-ai-catatan" id="btn-ai-catatan" onclick="generateCatatanKendalaAI()" title="Buat evaluasi kegiatan positif otomatis jika hari ini tidak ada kendala">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <svg id="btn-ai-catatan-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
             <span id="btn-ai-catatan-text">Generate Evaluasi AI</span>
           </button>
         </div>
         <div class="form-group">
-          <textarea id="catatan" class="form-input form-textarea" placeholder="Tuliskan catatan khusus atau kendala hari ini (kosongkan jika lancar, sistem otomatis menyusun evaluasi positif)..." oninput="autoSaveDraft()"></textarea>
+          <textarea id="catatan" class="form-input form-textarea" placeholder="Tuliskan catatan khusus atau kendala hari ini (kosongkan jika lancar, sistem otomatis menyusun evaluasi positif)..." oninput="autoSaveDraft(); updateCatatanButtonState();"></textarea>
         </div>
       </div>
 

@@ -407,12 +407,12 @@ function addNewKegiatanUI(data = null) {
       <div class="form-group">
         <div class="kg-desc-header">
           <label class="form-label" for="kg-desc-${id}">Deskripsi Rinci Kegiatan <span class="req">*</span></label>
-          <button type="button" class="btn-ai-generate-desc" id="btn-ai-desc-${id}" onclick="generateDeskripsiKegiatanAI(${id})" title="Buat narasi deskripsi otomatis berdasarkan Nama Kegiatan">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-            <span id="btn-ai-desc-text-${id}">Generate Deskripsi AI</span>
+          <button type="button" class="${itemData.deskripsi && itemData.deskripsi.trim() ? 'btn-ai-generate-desc btn-mode-refine' : 'btn-ai-generate-desc'}" id="btn-ai-desc-${id}" onclick="generateDeskripsiKegiatanAI(${id})" title="${itemData.deskripsi && itemData.deskripsi.trim() ? 'Rapikan tata bahasa dan kembangkan draf kalimat kegiatan ini' : 'Buat narasi deskripsi otomatis berdasarkan Nama Kegiatan'}">
+            <svg id="btn-ai-desc-icon-${id}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${itemData.deskripsi && itemData.deskripsi.trim() ? '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>' : '<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>'}</svg>
+            <span id="btn-ai-desc-text-${id}">${itemData.deskripsi && itemData.deskripsi.trim() ? 'Sempurnakan Kalimat' : 'Generate Deskripsi AI'}</span>
           </button>
         </div>
-        <textarea class="form-input form-textarea kg-input-desc" id="kg-desc-${id}" placeholder="Jelaskan secara detail proses, tugas, atau hasil yang dikerjakan..." oninput="updateKegiatanField(${id}, 'deskripsi', this.value)">${escapeHtml(itemData.deskripsi)}</textarea>
+        <textarea class="form-input form-textarea kg-input-desc" id="kg-desc-${id}" placeholder="Jelaskan secara detail proses, tugas, atau hasil yang dikerjakan..." oninput="updateKegiatanField(${id}, 'deskripsi', this.value); updateDescButtonState(${id});">${escapeHtml(itemData.deskripsi)}</textarea>
       </div>
 
       <!-- Foto Dokumentasi Khusus Kegiatan Ini -->
@@ -449,6 +449,7 @@ function addNewKegiatanUI(data = null) {
   container.appendChild(div);
   renderKgPhotosGrid(id);
   updateKegiatanNumbers();
+  updateDescButtonState(id);
 }
 
 function updateKegiatanField(id, field, value) {
@@ -466,8 +467,58 @@ function updateKegiatanField(id, field, value) {
 }
 
 // ============================================================
-// AI GENERATE FOR RINCIAN DESKRIPSI KEGIATAN & EVALUASI
+// AI GENERATE & SEMPURNAKAN KALIMAT (DUAL MODE)
 // ============================================================
+
+function updateDescButtonState(id) {
+  const descInput = document.getElementById(`kg-desc-${id}`);
+  const btn = document.getElementById(`btn-ai-desc-${id}`);
+  const btnText = document.getElementById(`btn-ai-desc-text-${id}`);
+  const btnIcon = document.getElementById(`btn-ai-desc-icon-${id}`);
+  if (!btn || !btnText) return;
+
+  const hasContent = descInput && descInput.value.trim().length > 0;
+  if (hasContent) {
+    btn.title = 'Rapikan tata bahasa dan kembangkan draf kalimat kegiatan ini agar lebih rinci & formal';
+    btn.classList.add('btn-mode-refine');
+    btnText.textContent = 'Sempurnakan Kalimat';
+    if (btnIcon) {
+      btnIcon.innerHTML = `<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>`;
+    }
+  } else {
+    btn.title = 'Buat narasi deskripsi otomatis berdasarkan Nama Kegiatan';
+    btn.classList.remove('btn-mode-refine');
+    btnText.textContent = 'Generate Deskripsi AI';
+    if (btnIcon) {
+      btnIcon.innerHTML = `<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>`;
+    }
+  }
+}
+
+function updateCatatanButtonState() {
+  const catatanEl = document.getElementById('catatan');
+  const btn = document.getElementById('btn-ai-catatan');
+  const btnText = document.getElementById('btn-ai-catatan-text');
+  const btnIcon = document.getElementById('btn-ai-catatan-icon');
+  if (!btn || !btnText) return;
+
+  const hasContent = catatanEl && catatanEl.value.trim().length > 0;
+  if (hasContent) {
+    btn.title = 'Rapikan dan poles kendala/catatan ini menjadi kalimat formal resmi';
+    btn.classList.add('btn-mode-refine');
+    btnText.textContent = 'Sempurnakan Kendala';
+    if (btnIcon) {
+      btnIcon.innerHTML = `<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>`;
+    }
+  } else {
+    btn.title = 'Buat evaluasi kegiatan positif otomatis jika hari ini tidak ada kendala';
+    btn.classList.remove('btn-mode-refine');
+    btnText.textContent = 'Generate Evaluasi AI';
+    if (btnIcon) {
+      btnIcon.innerHTML = `<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>`;
+    }
+  }
+}
 
 async function generateDeskripsiKegiatanAI(id) {
   const item = kegiatanDataStore.find(k => k.id === id);
@@ -479,7 +530,10 @@ async function generateDeskripsiKegiatanAI(id) {
   const waktuSelesai = document.getElementById(`kg-waktu-selesai-${id}`)?.value || (item ? item.waktuSelesai : '') || '';
 
   const namaKegiatan = (namaInput ? namaInput.value : (item ? item.nama : '')).trim();
-  if (!namaKegiatan) {
+  const currentDesc = (descInput ? descInput.value : (item ? item.deskripsi : '')).trim();
+  const isRefineMode = currentDesc.length > 0;
+
+  if (!namaKegiatan && !isRefineMode) {
     showToast('⚠️ Silakan isi Nama Kegiatan terlebih dahulu sebelum generate deskripsi!');
     if (namaInput) namaInput.focus();
     return;
@@ -489,9 +543,30 @@ async function generateDeskripsiKegiatanAI(id) {
   const data = collectData();
 
   if (btn) btn.disabled = true;
-  if (btnText) btnText.textContent = 'Menyusun Narasi...';
+  if (btnText) btnText.textContent = isRefineMode ? 'Menyempurnakan...' : 'Menyusun Narasi...';
 
-  const prompt = `Anda adalah asisten penulisan logbook resmi peserta magang di Balai Bahasa Provinsi Jawa Timur (Kemendikdasmen).
+  let prompt = '';
+  if (isRefineMode) {
+    // Mode Sempurnakan & Kembangkan Kalimat yang Ditulis Pengguna
+    prompt = `Anda adalah asisten editor naskah logbook resmi di Balai Bahasa Provinsi Jawa Timur (Kemendikdasmen).
+Peserta magang telah menuliskan gambaran umum / draf kasar kegiatan berikut:
+- Nama Kegiatan: ${namaKegiatan || 'Agenda Magang Harian'}
+- Waktu Pelaksanaan: ${timeframe}
+- Divisi/Unit: ${data.unit || 'Balai Bahasa Provinsi Jawa Timur'}
+- Peserta: ${data.nama || 'Peserta Magang'}
+- Draf Kalimat Peserta: "${currentDesc}"
+
+Tugas Anda:
+Sempurnakan, perbaiki tata bahasa (EYD/PUEBI), dan kembangkan kalimat di atas menjadi 1 paragraf padat (1-3 kalimat) yang formal kedinasan, operasional, jelas, dan profesional.
+PENTING: PERTAHANKAN seluruh poin penting, nama orang, lokasi, tools/aplikasi, atau rincian tugas yang sudah dituliskan oleh peserta, namun buat susunan kalimatnya terdengar jauh lebih tertata, lugas, dan berbobot kedinasan.
+
+Aturan Wajib:
+1. HANYA kembalikan teks hasil penyempurnaan saja.
+2. JANGAN sertakan ulang jam/waktu di depan teks, JANGAN mengulang judul kegiatan di awal kalimat, JANGAN menggunakan tanda petik pembuka/penutup, dan JANGAN menggunakan format markdown tebal (**tebal**).
+3. Gunakan Bahasa Indonesia baku yang mengalir alami dan profesional.`;
+  } else {
+    // Mode Generate Baru dari Awal Berdasarkan Nama Kegiatan
+    prompt = `Anda adalah asisten penulisan logbook resmi peserta magang di Balai Bahasa Provinsi Jawa Timur (Kemendikdasmen).
 Tuliskan narasi deskripsi rinci kegiatan (1 paragraf padat, 1-3 kalimat, formal kedinasan, profesional, operasional) untuk kegiatan berikut:
 - Nama Kegiatan: ${namaKegiatan}
 - Waktu Pelaksanaan: ${timeframe}
@@ -509,6 +584,7 @@ Aturan Wajib:
 1. HANYA kembalikan teks narasi deskripsi saja.
 2. JANGAN sertakan ulang waktu/jam, JANGAN menulis ulang judul kegiatan, JANGAN menggunakan tanda petik pembuka/penutup di luar kutipan nama acara, dan JANGAN gunakan markdown tebal (**tebal**).
 3. Tulis langsung dalam Bahasa Indonesia baku, formal kedinasan, dan profesional.`;
+  }
 
   try {
     const apiKey = getGeminiApiKey();
@@ -545,15 +621,30 @@ Aturan Wajib:
 
     aiText = cleanGeneratedDescription(aiText, namaKegiatan, timeframe);
     applyDeskripsiToItem(id, aiText);
-    showToast('✓ Deskripsi kegiatan berhasil dibuat oleh AI!');
+    updateDescButtonState(id);
+    if (isRefineMode) {
+      showToast('✓ Kalimat kegiatan berhasil disempurnakan & dirapikan!');
+    } else {
+      showToast('✓ Deskripsi kegiatan berhasil dibuat oleh AI!');
+    }
   } catch (err) {
     console.warn('Fallback to smart rule-based generator:', err);
-    const fallbackText = generateSmartFallbackDeskripsi(namaKegiatan, timeframe);
+    let fallbackText = '';
+    if (isRefineMode) {
+      fallbackText = generateSmartFallbackPenyempurnaan(namaKegiatan, currentDesc);
+    } else {
+      fallbackText = generateSmartFallbackDeskripsi(namaKegiatan, timeframe);
+    }
     applyDeskripsiToItem(id, fallbackText);
-    showToast('✓ Deskripsi kegiatan berhasil disusun otomatis!');
+    updateDescButtonState(id);
+    if (isRefineMode) {
+      showToast('✓ Kalimat kegiatan berhasil disempurnakan otomatis!');
+    } else {
+      showToast('✓ Deskripsi kegiatan berhasil disusun otomatis!');
+    }
   } finally {
     if (btn) btn.disabled = false;
-    if (btnText) btnText.textContent = 'Generate Deskripsi AI';
+    updateDescButtonState(id);
   }
 }
 
@@ -563,9 +654,11 @@ function cleanGeneratedDescription(rawText, namaKegiatan, timeframe) {
   text = text.replace(/\*\*(.*?)\*\*/g, '$1');
   text = text.replace(/^(deskripsi|uraian|kegiatan)\s*:\s*/i, '');
   text = text.replace(/^"|"$/g, '');
-  const escapedNama = namaKegiatan.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regNama = new RegExp('^' + escapedNama + '\\s*[:|-]\\s*', 'i');
-  text = text.replace(regNama, '');
+  const escapedNama = (namaKegiatan || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (escapedNama) {
+    const regNama = new RegExp('^' + escapedNama + '\\s*[:|-]\\s*', 'i');
+    text = text.replace(regNama, '');
+  }
   return text.trim();
 }
 
@@ -578,6 +671,49 @@ function applyDeskripsiToItem(id, text) {
   }
   updateKegiatanField(id, 'deskripsi', text);
   autoSaveDraft();
+}
+
+function generateSmartFallbackPenyempurnaan(nama, userText) {
+  if (!userText || !userText.trim()) {
+    return generateSmartFallbackDeskripsi(nama, '');
+  }
+
+  let text = userText.trim();
+  text = text.charAt(0).toUpperCase() + text.slice(1);
+  if (!/[.!?]$/.test(text)) text += '.';
+
+  const replacements = [
+    [/\bbareng\b/gi, 'bersama'],
+    [/\bnyiapin\b/gi, 'mempersiapkan'],
+    [/\bnyiapkan\b/gi, 'mempersiapkan'],
+    [/\btrus\b/gi, 'kemudian'],
+    [/\btadi pagi\b/gi, 'Pada awal jam kerja,'],
+    [/\btadi siang\b/gi, 'Pada sesi siang,'],
+    [/\budah\b/gi, 'telah'],
+    [/\bsudah\b/gi, 'telah'],
+    [/\bbikin\b/gi, 'membuat'],
+    [/\bngobrol\b/gi, 'berkoordinasi'],
+    [/\bngomongin\b/gi, 'membahas'],
+    [/\bngirim\b/gi, 'mengirimkan'],
+    [/\bngedit\b/gi, 'menyunting'],
+    [/\bnginput\b/gi, 'menginputkan'],
+    [/\bngecek\b/gi, 'memeriksa'],
+    [/\bpas\b/gi, 'saat'],
+    [/\blebih lanjut\b/gi, 'secara intensif'],
+    [/\bbu okta\b/gi, 'Ibu Made Oktavia Vidiyanti (Ibu Okta)'],
+    [/\bftbi\b/gi, 'Festival Tunas Bahasa Ibu (FTBI) 2026'],
+    [/\brbd\b/gi, 'Revitalisasi Bahasa Daerah (RBD)']
+  ];
+
+  for (const [pattern, rep] of replacements) {
+    text = text.replace(pattern, rep);
+  }
+
+  if (text.length < 50) {
+    text = `Melaksanakan ${nama ? nama + ' dengan ' : ''}${text.toLowerCase().replace(/^\w/, c => c.toLowerCase())} guna memastikan seluruh penugasan tercapai secara optimal sesuai arahan pembimbing.`;
+  }
+
+  return text.trim();
 }
 
 function generateSmartFallbackDeskripsi(nama, timeframe) {
@@ -609,28 +745,142 @@ function generateSmartFallbackDeskripsi(nama, timeframe) {
   return `Melaksanakan kegiatan ${nama} dengan penuh tanggung jawab sesuai arahan mentor pembimbing, berfokus pada ketepatan hasil dan efisiensi waktu kerja harian.`;
 }
 
-function generateCatatanKendalaAI() {
+function generateSmartFallbackPenyempurnaanKendala(userText) {
+  if (!userText || !userText.trim()) {
+    return 'Tidak ada kendala. Seluruh agenda kegiatan magang hari ini berjalan dengan lancar dan sesuai target waktu yang direncanakan.';
+  }
+
+  let text = userText.trim();
+  text = text.charAt(0).toUpperCase() + text.slice(1);
+  if (!/[.!?]$/.test(text)) text += '.';
+
+  const replacements = [
+    [/\blemot\b/gi, 'mengalami penurunan kecepatan operasional'],
+    [/\blag\b/gi, 'mengalami latensi'],
+    [/\beror\b/gi, 'mengalami hambatan teknis'],
+    [/\berror\b/gi, 'mengalami kendala teknis'],
+    [/\bbareng\b/gi, 'bersama'],
+    [/\bpas\b/gi, 'saat'],
+    [/\btadi\b/gi, 'pada saat pelaksanaan,'],
+    [/\btrus\b/gi, 'namun kemudian'],
+    [/\budah\b/gi, 'telah'],
+    [/\bnggak\b/gi, 'tidak'],
+    [/\bgak\b/gi, 'tidak']
+  ];
+
+  for (const [pattern, rep] of replacements) {
+    text = text.replace(pattern, rep);
+  }
+
+  if (!text.toLowerCase().includes('koordinasi') && !text.toLowerCase().includes('diatasi')) {
+    text += ' Kendala tersebut telah dikoordinasikan bersama tim dan mentor pembimbing untuk penanganan lebih lanjut.';
+  }
+
+  return text.trim();
+}
+
+async function generateCatatanKendalaAI() {
   const catatanEl = document.getElementById('catatan');
+  const btn = document.getElementById('btn-ai-catatan');
+  const btnText = document.getElementById('btn-ai-catatan-text');
   if (!catatanEl) return;
+
+  const currentCatatan = catatanEl.value.trim();
+  const isRefineMode = currentCatatan.length > 0;
   const data = collectData();
   const activities = (data.kegiatan || []).map(k => (k.nama || '').trim()).filter(Boolean);
 
-  let generated = '';
-  if (activities.length >= 2) {
-    const firstActs = activities.slice(0, -1).join(', ');
-    const lastAct = activities[activities.length - 1];
-    generated = `Tidak ada kendala. Seluruh agenda kegiatan mulai dari ${firstActs}, hingga ${lastAct} berjalan dengan sangat lancar, tertib, dan sesuai target waktu yang direncanakan.`;
-  } else if (activities.length === 1) {
-    generated = `Tidak ada kendala. Agenda kegiatan ${activities[0]} berjalan dengan sangat lancar dan sesuai target waktu yang direncanakan.`;
-  } else {
-    generated = 'Tidak ada kendala. Seluruh agenda kegiatan magang hari ini berjalan dengan sangat lancar, kondusif, dan sesuai target rencana operasional.';
+  if (!isRefineMode) {
+    // Mode Evaluasi Positif Otomatis (jika kosong)
+    let generated = '';
+    if (activities.length >= 2) {
+      const firstActs = activities.slice(0, -1).join(', ');
+      const lastAct = activities[activities.length - 1];
+      generated = `Tidak ada kendala. Seluruh agenda kegiatan mulai dari ${firstActs}, hingga ${lastAct} berjalan dengan sangat lancar, tertib, dan sesuai target waktu yang direncanakan.`;
+    } else if (activities.length === 1) {
+      generated = `Tidak ada kendala. Agenda kegiatan ${activities[0]} berjalan dengan sangat lancar dan sesuai target waktu yang direncanakan.`;
+    } else {
+      generated = 'Tidak ada kendala. Seluruh agenda kegiatan magang hari ini berjalan dengan sangat lancar, kondusif, dan sesuai target rencana operasional.';
+    }
+
+    catatanEl.value = generated;
+    catatanEl.style.height = 'auto';
+    catatanEl.style.height = (catatanEl.scrollHeight + 4) + 'px';
+    autoSaveDraft();
+    updateCatatanButtonState();
+    showToast('✓ Evaluasi harian otomatis berhasil diterapkan ke Catatan!');
+    return;
   }
 
-  catatanEl.value = generated;
-  catatanEl.style.height = 'auto';
-  catatanEl.style.height = (catatanEl.scrollHeight + 4) + 'px';
-  autoSaveDraft();
-  showToast('✓ Evaluasi harian otomatis berhasil diterapkan ke Catatan!');
+  // Mode Sempurnakan Kendala yang Ditulis Pengguna
+  if (btn) btn.disabled = true;
+  if (btnText) btnText.textContent = 'Menyempurnakan...';
+
+  const prompt = `Anda adalah asisten editor naskah laporan Monev resmi di Balai Bahasa Provinsi Jawa Timur.
+Peserta magang telah menuliskan draf kendala / catatan harian berikut:
+"${currentCatatan}"
+
+Tugas Anda:
+Sempurnakan dan poles catatan/kendala tersebut menjadi kalimat resmi kedinasan yang santun, objektif, profesional, dan konstruktif (1-2 kalimat). Jika peserta menyebutkan masalah teknis atau dinamika lapangan, jelaskan masalah tersebut secara elegan dan sertakan koordinasi/solusi penanganan yang bijak.
+
+Aturan Wajib:
+1. HANYA kembalikan kalimat hasil penyempurnaan saja.
+2. JANGAN gunakan tanda petik pembuka/penutup, dan JANGAN gunakan format markdown tebal (**tebal**).
+3. Gunakan Bahasa Indonesia baku kedinasan.`;
+
+  try {
+    const apiKey = getGeminiApiKey();
+    let aiText = '';
+
+    const modelsToTry = ['gemini-3.1-flash-lite', 'gemini-flash-latest'];
+    for (const model of modelsToTry) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.5,
+              maxOutputTokens: 300
+            }
+          })
+        });
+        if (resp.status === 200) {
+          const resJson = await resp.json();
+          aiText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (aiText) break;
+        }
+      } catch (errOne) {
+        console.warn(`Model ${model} error:`, errOne);
+      }
+    }
+
+    if (!aiText) {
+      throw new Error('API quota / network unavailable');
+    }
+
+    aiText = aiText.replace(/\*\*(.*?)\*\*/g, '$1').replace(/^"|"$/g, '').trim();
+    catatanEl.value = aiText;
+    catatanEl.style.height = 'auto';
+    catatanEl.style.height = (catatanEl.scrollHeight + 4) + 'px';
+    autoSaveDraft();
+    updateCatatanButtonState();
+    showToast('✓ Catatan kendala berhasil disempurnakan menjadi lebih formal!');
+  } catch (err) {
+    console.warn('Fallback to rule-based kendala refiner:', err);
+    const fallbackText = generateSmartFallbackPenyempurnaanKendala(currentCatatan);
+    catatanEl.value = fallbackText;
+    catatanEl.style.height = 'auto';
+    catatanEl.style.height = (catatanEl.scrollHeight + 4) + 'px';
+    autoSaveDraft();
+    updateCatatanButtonState();
+    showToast('✓ Catatan kendala berhasil disempurnakan otomatis!');
+  } finally {
+    if (btn) btn.disabled = false;
+    updateCatatanButtonState();
+  }
 }
 
 function removeKegiatan(id) {
@@ -960,6 +1210,7 @@ function loadSavedDraft() {
     const raw = localStorage.getItem('maganghub_logbook_draft_v2');
     if (!raw) {
       addNewKegiatanUI();
+      updateCatatanButtonState();
       return;
     }
     const data = JSON.parse(raw);
@@ -988,6 +1239,7 @@ function loadSavedDraft() {
 
       const catEl = document.getElementById('catatan');
       if (catEl) catEl.value = '';
+      updateCatatanButtonState();
 
       initRealtimeDate();
 
@@ -1026,6 +1278,7 @@ function loadSavedDraft() {
 
     // Jika masih di hari yang sama (belum lewat 23.59), muat seluruh data kegiatan
     if (data.catatan) document.getElementById('catatan').value = data.catatan;
+    updateCatatanButtonState();
 
     const list = document.getElementById('kegiatan-list');
     list.innerHTML = '';
@@ -1050,6 +1303,7 @@ function loadSavedDraft() {
   } catch (e) {
     console.warn('Gagal memuat draft:', e);
     addNewKegiatanUI();
+    updateCatatanButtonState();
   }
 }
 
@@ -1088,6 +1342,7 @@ function clearDailyActivitiesAuto() {
 
   const catatanEl = document.getElementById('catatan');
   if (catatanEl) catatanEl.value = '';
+  updateCatatanButtonState();
 
   // Data Peserta, Waktu, dan Tanda Tangan Digital TIDAK di-reset
   initRealtimeDate();
@@ -1131,6 +1386,7 @@ async function resetForm() {
   if (namaEl) namaEl.value = '';
   if (unitEl) unitEl.value = '';
   if (catEl) catEl.value = '';
+  updateCatatanButtonState();
 
   // If mentor is NOT locked, clear mentor
   if (!isMentorLocked) {

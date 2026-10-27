@@ -91,10 +91,14 @@ Jika Anda baru pertama kali membuka website ini atau lupa letak menu tertentu, g
 ### C. Mengisi Rincian Kegiatan & Foto Dokumentasi
 1. **Waktu Pelaksanaan:** Atur jam mulai dan selesai kegiatan (format otomatis WIB, contoh: `07:30 - 08:00 WIB`).
 2. **Nama Kegiatan:** Tuliskan judul agenda (contoh: *Persiapan Evaluasi FTBI*, *Seminar Nasional (Daring)*, atau *Pemeliharaan Website RBD*).
-3. **Fitur Generate Deskripsi AI (🤖):**
-   - Di samping label *Deskripsi Rinci Kegiatan*, terdapat tombol **"Generate Deskripsi AI"**.
-   - **Wajib isi Nama Kegiatan terlebih dahulu**, lalu klik tombol ini.
-   - AI Gemini otomatis menyusun narasi formal kedinasan 1–3 kalimat yang operasional dan terstruktur sesuai standar Balai Bahasa Jawa Timur.
+3. **Fitur Cerdas Dual-Mode: Generate Deskripsi AI & Sempurnakan Kalimat:**
+   - **Kondisi Kolom Kosong (`Generate Deskripsi AI`):**
+     - Wajib isi *Nama Kegiatan* terlebih dahulu, lalu klik tombol ini.
+     - AI Gemini otomatis menyusun narasi operasional kedinasan formal 1–3 kalimat yang runut dan terstruktur.
+   - **Kondisi Kolom Sudah Diisi Tulisan Pengguna (`Sempurnakan Kalimat`):**
+     - Tombol otomatis beralih menjadi **"Sempurnakan Kalimat"** beraksen cyan.
+     - Sangat cocok jika Anda sudah menuliskan poin inti, draf kasar, atau gambaran umum kegiatan secara mandiri.
+     - Saat diklik, AI akan merapikan tata bahasa, memperpanjang penjelasan, serta memoles kalimat menjadi lebih profesional dan formal tanpa mengubah fakta, nama pihak pembimbing (misal: Bu Okta), maupun tools/software teknis yang dicantumkan.
    - Contoh hasil narasi:
      > *"Mengawali hari kerja dengan mempersiapkan dokumen dan data pendukung untuk keperluan evaluasi Festival Tunas Bahasa Ibu (FTBI) 2026, sesuai dengan instruksi dan arahan dari Ibu Okta."*
 4. **Foto Dokumentasi (Maks. 5MB):** Klik tombol **"Upload Foto"** untuk melampirkan foto bukti kegiatan langsung pada baris agenda terkait.
@@ -102,9 +106,12 @@ Jika Anda baru pertama kali membuka website ini atau lupa letak menu tertentu, g
 
 ---
 
-### D. Catatan / Kendala Tambahan & Tombol Evaluasi AI
-- Tuliskan kendala atau catatan khusus jika ada.
-- Jika hari ini seluruh aktivitas berjalan lancar tanpa kendala, Anda dapat mengosongkannya **atau** mengklik tombol **"Generate Evaluasi AI"** di sudut kanan header catatan untuk membuat kalimat evaluasi positif otomatis secara instan.
+### D. Catatan / Kendala Tambahan & Tombol Cerdas Evaluasi / Sempurnakan Kendala
+- **Jika Kolom Kosong (`Generate Evaluasi AI`):**
+  - Jika hari ini seluruh aktivitas berjalan lancar tanpa kendala, Anda dapat mengosongkannya **atau** mengklik tombol **"Generate Evaluasi AI"** di sudut kanan header catatan untuk menghasilkan narasi evaluasi positif harian secara otomatis.
+- **Jika Sudah Menuliskan Kendala (`Sempurnakan Kendala`):**
+  - Tombol otomatis berganti menjadi **"Sempurnakan Kendala"**.
+  - Klik tombol ini untuk merapikan gambaran kendala lapangan yang Anda tulis menjadi uraian kronologis yang santun, objektif, dan formal kedinasan lengkap beserta catatan tindak lanjut solusinya.
 
 ---
 

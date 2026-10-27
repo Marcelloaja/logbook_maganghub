@@ -3727,6 +3727,34 @@ a {
   border-color: #818cf8;
 }
 
+/* Sempurnakan Mode (Distinctive refined cyan-indigo styling) */
+.btn-ai-generate-desc.btn-mode-refine {
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.08);
+  border-color: rgba(2, 132, 199, 0.28);
+}
+
+.btn-ai-generate-desc.btn-mode-refine:hover:not(:disabled) {
+  background: rgba(2, 132, 199, 0.16);
+  border-color: #0284c7;
+  box-shadow: 0 3px 8px rgba(2, 132, 199, 0.2);
+}
+
+.btn-ai-generate-desc.btn-mode-refine:hover:not(:disabled) svg {
+  transform: rotate(0deg) scale(1.15);
+}
+
+[data-theme="dark"] .btn-ai-generate-desc.btn-mode-refine {
+  color: #38bdf8;
+  background: rgba(2, 132, 199, 0.18);
+  border-color: rgba(56, 189, 248, 0.32);
+}
+
+[data-theme="dark"] .btn-ai-generate-desc.btn-mode-refine:hover:not(:disabled) {
+  background: rgba(2, 132, 199, 0.28);
+  border-color: #38bdf8;
+}
+
 /* Catatan Card Action Header */
 .catatan-action-header {
   display: flex;
