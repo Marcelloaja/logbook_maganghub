@@ -1675,15 +1675,15 @@ function updateSyncStatusUI(status, customMsg = '') {
       const now = new Date();
       lastSyncEl.textContent = `Tersinkron: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
       lastSyncEl.style.color = '#10b981';
-      if (statusText) statusText.textContent = 'Sinkronisasi Cloud Realtime (Aktif)';
+      if (statusText) statusText.textContent = 'Cloud Realtime';
     } else if (status === 'error') {
-      lastSyncEl.textContent = customMsg || '⚠️ Gagal sinkron • Skrip perlu update (Klik)';
+      lastSyncEl.textContent = customMsg || '⚠️ Terkendala (Klik)';
       lastSyncEl.style.color = '#ef4444';
-      if (statusText) statusText.textContent = 'Sinkronisasi Terkendala (Klik untuk panduan)';
+      if (statusText) statusText.textContent = 'Cloud Terkendala';
     } else if (status === 'syncing') {
-      lastSyncEl.textContent = 'Menghubungkan ke cloud...';
+      lastSyncEl.textContent = 'Menghubungkan...';
       lastSyncEl.style.color = '#64748b';
-      if (statusText) statusText.textContent = 'Sedang sinkronisasi...';
+      if (statusText) statusText.textContent = 'Sinkronisasi...';
     }
   }
 }

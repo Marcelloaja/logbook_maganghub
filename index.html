@@ -299,25 +299,24 @@
         </div>
       </div>
 
-      <!-- Live Sync Status Bar -->
-      <div class="sync-status-bar" id="sync-status-bar" onclick="handleSyncBarClick()" title="Klik untuk sinkronisasi ulang atau cek status">
-        <div class="sync-status-left">
-          <span class="sync-dot sync-dot-syncing" id="sync-live-indicator"></span>
-          <span class="sync-status-label" id="sync-status-text">Sinkronisasi Cloud Realtime (30 dtk sekali)</span>
-        </div>
-        <span class="sync-last-time" id="sync-last-time">Menghubungkan ke cloud...</span>
-      </div>
-
-      <!-- Breadcrumbs Bar -->
+      <!-- Compact Unified Toolbar: Breadcrumbs (Left) + Live Cloud Sync Status (Right) -->
       <div class="storage-breadcrumb-bar">
-        <div class="breadcrumb-item active" id="breadcrumb-home" onclick="showAllFoldersView()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-          <span>Semua Folder (33 Peserta)</span>
+        <div class="breadcrumb-left">
+          <div class="breadcrumb-item active" id="breadcrumb-home" onclick="showAllFoldersView()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            <span>Semua Folder (33 Peserta)</span>
+          </div>
+          <span class="breadcrumb-sep" id="breadcrumb-sep" style="display: none;">/</span>
+          <div class="breadcrumb-item" id="breadcrumb-current-folder" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+            <span id="breadcrumb-folder-name">Nama Folder</span>
+          </div>
         </div>
-        <span class="breadcrumb-sep" id="breadcrumb-sep" style="display: none;">/</span>
-        <div class="breadcrumb-item" id="breadcrumb-current-folder" style="display: none;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-          <span id="breadcrumb-folder-name">Nama Folder</span>
+
+        <div class="sync-status-pill" id="sync-status-bar" onclick="handleSyncBarClick()" title="Klik untuk sinkronisasi ulang atau cek status">
+          <span class="sync-dot sync-dot-syncing" id="sync-live-indicator"></span>
+          <span class="sync-status-label" id="sync-status-text">Cloud Realtime</span>
+          <span class="sync-last-time" id="sync-last-time">Menghubungkan...</span>
         </div>
       </div>
 

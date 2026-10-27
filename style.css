@@ -1759,8 +1759,8 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 12px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
 }
 
@@ -1775,15 +1775,15 @@ a {
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   color: var(--text-muted);
   pointer-events: none;
 }
 
 .storage-search-box input {
   width: 100%;
-  padding: 10px 14px 10px 42px;
+  padding: 9px 14px 9px 40px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--input-border);
   background: var(--input-bg);
@@ -1804,17 +1804,27 @@ a {
   gap: 10px;
 }
 
-/* Breadcrumbs */
+/* Breadcrumbs & Integrated Live Sync Toolbar */
 .storage-breadcrumb-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 10px 16px;
-  margin-bottom: 20px;
-  font-size: 13.5px;
+  padding: 7px 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  min-height: 42px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .breadcrumb-item {
@@ -1825,6 +1835,7 @@ a {
   font-weight: 500;
   cursor: pointer;
   transition: color 0.2s;
+  white-space: nowrap;
 }
 
 .breadcrumb-item:hover {
@@ -1838,13 +1849,56 @@ a {
 }
 
 .breadcrumb-item svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 
 .breadcrumb-sep {
   color: var(--text-dim);
   user-select: none;
+}
+
+/* Compact Cloud Sync Status Pill inside Breadcrumb */
+.sync-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: auto;
+  user-select: none;
+}
+
+[data-theme="dark"] .sync-status-pill {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+.sync-status-pill:hover {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .sync-status-pill:hover {
+  background: rgba(99, 102, 241, 0.22);
+}
+
+.sync-status-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sync-last-time {
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 /* Folders Grid */
@@ -2822,42 +2876,7 @@ a {
   }
 }
 
-/* ============================================================
-   LIVE SYNC STATUS BAR
-   ============================================================ */
-.sync-status-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  margin-bottom: 16px;
-  font-size: 12px;
-  gap: 12px;
-  cursor: pointer;
-  transition: border-color 0.2s, background-color 0.2s;
-}
-
-.sync-status-bar:hover {
-  border-color: var(--primary);
-  background: rgba(99, 102, 241, 0.04);
-}
-
-.sync-status-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.sync-last-time {
-  color: var(--text-dim);
-  font-size: 11px;
-  white-space: nowrap;
-}
+/* Live Sync dot indicators */
 
 .sync-dot {
   display: inline-block;
