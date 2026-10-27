@@ -1906,6 +1906,7 @@ a {
 .folder-card-body {
   flex: 1;
   min-width: 0;
+  padding-right: 26px;
 }
 
 .folder-card-title {
@@ -1921,6 +1922,138 @@ a {
 .folder-card-meta {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+/* Folder Star / Favorite Button */
+.folder-star-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-dim);
+  z-index: 2;
+  padding: 0;
+}
+
+.folder-star-btn svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), fill 0.2s ease, stroke 0.2s ease;
+}
+
+.folder-card:hover .folder-star-btn {
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .folder-card:hover .folder-star-btn {
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.folder-star-btn:hover {
+  transform: scale(1.18);
+  color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.15) !important;
+}
+
+.folder-star-btn.active {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.folder-star-btn.active svg {
+  fill: #f59e0b;
+  stroke: #d97706;
+  filter: drop-shadow(0 1px 3px rgba(245, 158, 11, 0.45));
+}
+
+/* Starred Folder Card Highlighting */
+.folder-card.starred {
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.12), var(--shadow);
+  background: linear-gradient(180deg, rgba(254, 243, 199, 0.25) 0%, var(--bg-card) 65%);
+}
+
+.folder-card.starred:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 6px 22px rgba(245, 158, 11, 0.2), var(--shadow-lg);
+}
+
+.folder-card.starred .folder-card-icon {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #b45309;
+}
+
+[data-theme="dark"] .folder-card.starred {
+  border-color: rgba(245, 158, 11, 0.55);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15), var(--shadow);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, var(--bg-card) 70%);
+}
+
+[data-theme="dark"] .folder-card.starred .folder-card-icon {
+  background: rgba(245, 158, 11, 0.22);
+  color: #fbbf24;
+}
+
+.folder-pinned-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 10.5px;
+}
+
+[data-theme="dark"] .folder-pinned-badge {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.45);
+}
+
+.folder-pinned-badge svg {
+  width: 11px;
+  height: 11px;
+  fill: currentColor;
+}
+
+/* Star Button inside Folder Banner */
+.btn-star-folder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-star-folder.starred {
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: #b45309 !important;
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .btn-star-folder.starred {
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.55) !important;
+}
+
+.btn-star-folder svg {
+  width: 15px;
+  height: 15px;
 }
 
 .folder-card-bottom {

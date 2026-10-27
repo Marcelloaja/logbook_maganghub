@@ -2012,6 +2012,87 @@ function saveStorageFiles() {
   localStorage.setItem('maganghub_storage_files', JSON.stringify(storageFiles));
 }
 
+// ============================================================
+// LOCAL STAR / FAVORITE FOLDERS (PINNING)
+// ============================================================
+function getStarredFolders() {
+  try {
+    return JSON.parse(localStorage.getItem('maganghub_starred_folders') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function isFolderStarred(folder) {
+  if (!folder) return false;
+  const starred = getStarredFolders();
+  const nameKey = (folder.name || '').trim().toLowerCase();
+  return starred.some(s => s === folder.id || (nameKey && String(s).trim().toLowerCase() === nameKey));
+}
+
+function toggleFolderStar(folderId, e) {
+  if (e && e.stopPropagation) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  const folder = storageFolders.find(f => f.id === folderId) 
+    || (currentActiveFolderId === folderId ? getCurrentActiveFolder() : null) 
+    || storageFolders.find(f => f.name && f.name.toLowerCase().trim() === String(folderId).toLowerCase().trim());
+  if (!folder) return;
+
+  let starred = getStarredFolders();
+  const nameKey = (folder.name || '').trim().toLowerCase();
+  const isStarred = isFolderStarred(folder);
+
+  if (isStarred) {
+    starred = starred.filter(s => s !== folder.id && String(s).trim().toLowerCase() !== nameKey);
+    localStorage.setItem('maganghub_starred_folders', JSON.stringify(starred));
+    showToast(`Bintang pada folder "${folder.name}" dilepas.`);
+  } else {
+    if (!starred.some(s => String(s).trim().toLowerCase() === nameKey)) {
+      starred.push(folder.name);
+    }
+    localStorage.setItem('maganghub_starred_folders', JSON.stringify(starred));
+    showToast(`⭐ Folder "${folder.name}" diberi bintang & dipin ke paling atas!`);
+  }
+
+  renderStorageFolders();
+  updateInsideFolderStarButton();
+}
+
+function toggleStarCurrentFolder() {
+  const folder = getCurrentActiveFolder();
+  if (!folder) {
+    showToast('Folder belum dipilih');
+    return;
+  }
+  toggleFolderStar(folder.id);
+}
+
+function updateInsideFolderStarButton() {
+  const btn = document.getElementById('btn-star-current-folder');
+  if (!btn) return;
+  const folder = getCurrentActiveFolder();
+  if (!folder) return;
+
+  const isStarred = isFolderStarred(folder);
+  if (isStarred) {
+    btn.classList.add('starred');
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="#f59e0b" stroke="#d97706" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span>⭐ Berbintang (Dipin)</span>
+    `;
+    btn.title = 'Hapus bintang dari folder ini';
+  } else {
+    btn.classList.remove('starred');
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span>Beri Bintang</span>
+    `;
+    btn.title = 'Beri bintang agar folder dipin ke paling atas';
+  }
+}
+
 function renderStorageFolders(query = '') {
   const grid = document.getElementById('folders-grid');
   const emptyState = document.getElementById('folders-empty-state');
@@ -2028,10 +2109,39 @@ function renderStorageFolders(query = '') {
 
   if (emptyState) emptyState.style.display = 'none';
 
+  // PRIORITAS: Folder berbintang (Favorit/Dipin) selalu muncul paling atas!
+  filtered.sort((a, b) => {
+    const aStarred = isFolderStarred(a) ? 1 : 0;
+    const bStarred = isFolderStarred(b) ? 1 : 0;
+    if (aStarred !== bStarred) {
+      return bStarred - aStarred; // Starred folders first!
+    }
+    return (a.name || '').localeCompare(b.name || '', 'id', { sensitivity: 'base' });
+  });
+
+  const starredCount = filtered.filter(f => isFolderStarred(f)).length;
+  const breadcrumbCountEl = document.querySelector('#breadcrumb-home span');
+  if (breadcrumbCountEl) {
+    if (starredCount > 0) {
+      breadcrumbCountEl.textContent = `Semua Folder (${filtered.length} Peserta • ⭐ ${starredCount} Dipin)`;
+    } else {
+      breadcrumbCountEl.textContent = `Semua Folder (${filtered.length} Peserta)`;
+    }
+  }
+
   grid.innerHTML = filtered.map(folder => {
+    const isStarred = isFolderStarred(folder);
     const fileCount = storageFiles.filter(f => f.folderId === folder.id || (f.folderName && folder.name && f.folderName.toLowerCase().trim() === folder.name.toLowerCase().trim())).length;
     return `
-      <div class="folder-card" onclick="openFolderView('${folder.id}')">
+      <div class="folder-card ${isStarred ? 'starred' : ''}" onclick="openFolderView('${folder.id}')">
+        <button type="button" class="folder-star-btn ${isStarred ? 'active' : ''}" 
+                onclick="toggleFolderStar('${folder.id}', event)" 
+                title="${isStarred ? 'Hapus Bintang (Lepas Pin)' : 'Beri Bintang (Pin ke Paling Atas)'}"
+                aria-label="Bintang Folder">
+          <svg viewBox="0 0 24 24" fill="${isStarred ? '#f59e0b' : 'none'}" stroke="${isStarred ? '#d97706' : 'currentColor'}" stroke-width="${isStarred ? '1.5' : '2'}">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </button>
         <div class="folder-card-top">
           <div class="folder-card-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
@@ -2042,7 +2152,10 @@ function renderStorageFolders(query = '') {
           </div>
         </div>
         <div class="folder-card-bottom">
-          <span class="folder-card-badge">${fileCount} Dokumen</span>
+          <div style="display:inline-flex;align-items:center;gap:6px;">
+            <span class="folder-card-badge">${fileCount} Dokumen</span>
+            ${isStarred ? '<span class="folder-pinned-badge"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Dipin</span>' : ''}
+          </div>
           <span>Klik untuk buka &rarr;</span>
         </div>
       </div>
@@ -2116,9 +2229,17 @@ function confirmCreateFolder() {
 
   storageFolders.unshift(newFolder);
   saveStorageFolders();
+
+  // Otomatis beri bintang pada folder baru yang dibuat di perangkat ini agar terpin paling atas
+  let starredList = getStarredFolders();
+  if (!starredList.some(s => String(s).trim().toLowerCase() === name.toLowerCase().trim())) {
+    starredList.push(name);
+    localStorage.setItem('maganghub_starred_folders', JSON.stringify(starredList));
+  }
+
   closeCreateFolderModal();
   renderStorageFolders();
-  showToast(`Folder "${name}" berhasil dibuat! 📁`);
+  showToast(`Folder "${name}" berhasil dibuat & diberi bintang! ⭐📁`);
 
   // Cloud sync to Google Drive & GAS properties
   const webhookUrl = getGasWebhookUrl();
@@ -2209,6 +2330,7 @@ function openFolderView(folderId) {
   if (resultBanner) resultBanner.style.display = 'none';
 
   updateStorageFormSummary();
+  updateInsideFolderStarButton();
   renderFolderFiles(folder.id);
 }
 
