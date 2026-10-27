@@ -405,7 +405,13 @@ function addNewKegiatanUI(data = null) {
       </div>
 
       <div class="form-group">
-        <label class="form-label">Deskripsi Rinci Kegiatan <span class="req">*</span></label>
+        <div class="kg-desc-header">
+          <label class="form-label" for="kg-desc-${id}">Deskripsi Rinci Kegiatan <span class="req">*</span></label>
+          <button type="button" class="btn-ai-generate-desc" id="btn-ai-desc-${id}" onclick="generateDeskripsiKegiatanAI(${id})" title="Buat narasi deskripsi otomatis berdasarkan Nama Kegiatan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span id="btn-ai-desc-text-${id}">Generate Deskripsi AI</span>
+          </button>
+        </div>
         <textarea class="form-input form-textarea kg-input-desc" id="kg-desc-${id}" placeholder="Jelaskan secara detail proses, tugas, atau hasil yang dikerjakan..." oninput="updateKegiatanField(${id}, 'deskripsi', this.value)">${escapeHtml(itemData.deskripsi)}</textarea>
       </div>
 
@@ -457,6 +463,174 @@ function updateKegiatanField(id, field, value) {
       renderKgPhotosGrid(id);
     }
   }
+}
+
+// ============================================================
+// AI GENERATE FOR RINCIAN DESKRIPSI KEGIATAN & EVALUASI
+// ============================================================
+
+async function generateDeskripsiKegiatanAI(id) {
+  const item = kegiatanDataStore.find(k => k.id === id);
+  const namaInput = document.getElementById(`kg-nama-${id}`);
+  const descInput = document.getElementById(`kg-desc-${id}`);
+  const btn = document.getElementById(`btn-ai-desc-${id}`);
+  const btnText = document.getElementById(`btn-ai-desc-text-${id}`);
+  const waktuMulai = document.getElementById(`kg-waktu-mulai-${id}`)?.value || (item ? item.waktuMulai : '') || '';
+  const waktuSelesai = document.getElementById(`kg-waktu-selesai-${id}`)?.value || (item ? item.waktuSelesai : '') || '';
+
+  const namaKegiatan = (namaInput ? namaInput.value : (item ? item.nama : '')).trim();
+  if (!namaKegiatan) {
+    showToast('⚠️ Silakan isi Nama Kegiatan terlebih dahulu sebelum generate deskripsi!');
+    if (namaInput) namaInput.focus();
+    return;
+  }
+
+  const timeframe = (waktuMulai ? `${waktuMulai} - ${waktuSelesai || '16:00'} WIB` : 'Sesuai jam operasional kerja');
+  const data = collectData();
+
+  if (btn) btn.disabled = true;
+  if (btnText) btnText.textContent = 'Menyusun Narasi...';
+
+  const prompt = `Anda adalah asisten penulisan logbook resmi peserta magang di Balai Bahasa Provinsi Jawa Timur (Kemendikdasmen).
+Tuliskan narasi deskripsi rinci kegiatan (1 paragraf padat, 1-3 kalimat, formal kedinasan, profesional, operasional) untuk kegiatan berikut:
+- Nama Kegiatan: ${namaKegiatan}
+- Waktu Pelaksanaan: ${timeframe}
+- Divisi/Unit: ${data.unit || 'Balai Bahasa Provinsi Jawa Timur'}
+- Peserta: ${data.nama || 'Peserta Magang'}
+
+Contoh standar kedalaman narasi yang diharapkan:
+- Persiapan Evaluasi FTBI (07.30 - 08.00 WIB): Mengawali hari kerja dengan mempersiapkan dokumen dan data pendukung untuk keperluan evaluasi Festival Tunas Bahasa Ibu (FTBI) 2026, sesuai dengan instruksi dan arahan dari Ibu Okta.
+- Seminar Nasional (Daring) (08.00 - 10.37 WIB): Mengikuti "Seminar Nasional Bahasa dan Sastra dalam Pendidikan" secara virtual melalui siaran YouTube guna menambah wawasan mengenai perkembangan literasi dan pendidikan kebahasaan.
+- Rapat Evaluasi FTBI 2026 (09.40 - 12.00 WIB): Menghadiri Rapat Evaluasi Kegiatan Festival Tunas Bahasa Ibu Tahun 2026 yang diselenggarakan di Ruang Ki Hajar. Rapat ini dipimpin langsung oleh Ibu Puji Retno Hardiningtyas (Kepala BBP Jatim) dan Ibu Made Oktavia Vidiyanti (Ketua Panitia FTBI). Dalam rapat, dilaporkan bahwa evaluasi dilakukan menggunakan kuesioner berskala 1 hingga 5 yang mencakup delapan aspek penilaian serta koordinasi dinamika teknis pelaksanaan lapangan.
+- Pengembangan UX Website Logbook (13.00 - 14.00 WIB): Melakukan perbaikan teknis pada website internal logbook. Pada sesi ini, saya mengimplementasikan library driver.js untuk menambahkan fitur tour guide interaktif guna memandu rekan-rekan magang secara visual langkah demi langkah dalam pengisian bukti logbook.
+- Pemeliharaan Website RBD (14.00 - 16.00 WIB): Melanjutkan tugas pemeliharaan sistem dengan merapikan antarmuka dan struktur kode pada website Revitalisasi Bahasa Daerah (RBD) Jawa Timur agar tampilan publiknya lebih optimal dan tertata.
+
+Aturan Wajib:
+1. HANYA kembalikan teks narasi deskripsi saja.
+2. JANGAN sertakan ulang waktu/jam, JANGAN menulis ulang judul kegiatan, JANGAN menggunakan tanda petik pembuka/penutup di luar kutipan nama acara, dan JANGAN gunakan markdown tebal (**tebal**).
+3. Tulis langsung dalam Bahasa Indonesia baku, formal kedinasan, dan profesional.`;
+
+  try {
+    const apiKey = getGeminiApiKey();
+    let aiText = '';
+
+    const modelsToTry = ['gemini-3.1-flash-lite', 'gemini-flash-latest'];
+    for (const model of modelsToTry) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.6,
+              maxOutputTokens: 600
+            }
+          })
+        });
+        if (resp.status === 200) {
+          const resJson = await resp.json();
+          aiText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (aiText) break;
+        }
+      } catch (errOne) {
+        console.warn(`Model ${model} error, trying fallback:`, errOne);
+      }
+    }
+
+    if (!aiText) {
+      throw new Error('API quota / network unavailable');
+    }
+
+    aiText = cleanGeneratedDescription(aiText, namaKegiatan, timeframe);
+    applyDeskripsiToItem(id, aiText);
+    showToast('✓ Deskripsi kegiatan berhasil dibuat oleh AI!');
+  } catch (err) {
+    console.warn('Fallback to smart rule-based generator:', err);
+    const fallbackText = generateSmartFallbackDeskripsi(namaKegiatan, timeframe);
+    applyDeskripsiToItem(id, fallbackText);
+    showToast('✓ Deskripsi kegiatan berhasil disusun otomatis!');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (btnText) btnText.textContent = 'Generate Deskripsi AI';
+  }
+}
+
+function cleanGeneratedDescription(rawText, namaKegiatan, timeframe) {
+  if (!rawText) return '';
+  let text = String(rawText).trim();
+  text = text.replace(/\*\*(.*?)\*\*/g, '$1');
+  text = text.replace(/^(deskripsi|uraian|kegiatan)\s*:\s*/i, '');
+  text = text.replace(/^"|"$/g, '');
+  const escapedNama = namaKegiatan.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regNama = new RegExp('^' + escapedNama + '\\s*[:|-]\\s*', 'i');
+  text = text.replace(regNama, '');
+  return text.trim();
+}
+
+function applyDeskripsiToItem(id, text) {
+  const descInput = document.getElementById(`kg-desc-${id}`);
+  if (descInput) {
+    descInput.value = text;
+    descInput.style.height = 'auto';
+    descInput.style.height = (descInput.scrollHeight + 4) + 'px';
+  }
+  updateKegiatanField(id, 'deskripsi', text);
+  autoSaveDraft();
+}
+
+function generateSmartFallbackDeskripsi(nama, timeframe) {
+  const n = (nama || '').toLowerCase();
+  if (n.includes('evaluasi') && (n.includes('ftbi') || n.includes('festival'))) {
+    return 'Menghadiri rapat evaluasi kegiatan Festival Tunas Bahasa Ibu (FTBI) 2026 bersama jajaran panitia dan pimpinan Balai Bahasa Jawa Timur guna meninjau hasil pelaksanaan, dinamika lapangan, serta merumuskan rencana tindak lanjut kegiatan mendatang.';
+  }
+  if (n.includes('persiapan') && (n.includes('ftbi') || n.includes('evaluasi'))) {
+    return 'Mengawali jam kerja dengan mempersiapkan dokumen rekapitulasi, data pendukung, dan bahan presentasi untuk keperluan evaluasi kegiatan sesuai arahan dari mentor pembimbing.';
+  }
+  if (n.includes('seminar') || n.includes('webinar') || n.includes('kuliah') || n.includes('workshop')) {
+    return `Mengikuti ${nama} secara seksama guna menambah wawasan keilmuan, literasi, serta kompetensi kebahasaan dan kesastraan yang relevan dengan penugasan instansi.`;
+  }
+  if (n.includes('rapat') || n.includes('koordinasi') || n.includes('briefing') || n.includes('apel')) {
+    return `Menghadiri ${nama} bersama tim kerja untuk mendiskusikan rencana kerja harian, pembagian tanggung jawab penugasan, serta penyelarasan target operasional di Balai Bahasa Provinsi Jawa Timur.`;
+  }
+  if (n.includes('ux') || n.includes('logbook') || n.includes('driver')) {
+    return 'Melakukan perbaikan teknis pada website internal logbook dengan mengoptimalkan tata letak antarmuka dan memvalidasi fitur panduan interaktif guna memudahkan seluruh peserta magang dalam pencatatan berkas.';
+  }
+  if (n.includes('rbd') || n.includes('website') || n.includes('web') || n.includes('sistem')) {
+    return `Melanjutkan pemeliharaan sistem dengan merapikan antarmuka dan struktur kode pada ${nama} agar performa website optimal, responsif, dan siap diakses oleh publik.`;
+  }
+  if (n.includes('administrasi') || n.includes('surat') || n.includes('arsip') || n.includes('naskah')) {
+    return `Melaksanakan penataan administrasi dokumen dan pengelolaan persuratan terkait ${nama} secara rapi, teliti, dan sesuai ketentuan tata kelola kearsipan instansi.`;
+  }
+  if (n.includes('input') || n.includes('data') || n.includes('rekap') || n.includes('excel')) {
+    return `Melakukan penginputan dan verifikasi validitas data pada ${nama} untuk memastikan seluruh informasi terarsip secara akurat dan mutakhir dalam basis data kerja.`;
+  }
+  return `Melaksanakan kegiatan ${nama} dengan penuh tanggung jawab sesuai arahan mentor pembimbing, berfokus pada ketepatan hasil dan efisiensi waktu kerja harian.`;
+}
+
+function generateCatatanKendalaAI() {
+  const catatanEl = document.getElementById('catatan');
+  if (!catatanEl) return;
+  const data = collectData();
+  const activities = (data.kegiatan || []).map(k => (k.nama || '').trim()).filter(Boolean);
+
+  let generated = '';
+  if (activities.length >= 2) {
+    const firstActs = activities.slice(0, -1).join(', ');
+    const lastAct = activities[activities.length - 1];
+    generated = `Tidak ada kendala. Seluruh agenda kegiatan mulai dari ${firstActs}, hingga ${lastAct} berjalan dengan sangat lancar, tertib, dan sesuai target waktu yang direncanakan.`;
+  } else if (activities.length === 1) {
+    generated = `Tidak ada kendala. Agenda kegiatan ${activities[0]} berjalan dengan sangat lancar dan sesuai target waktu yang direncanakan.`;
+  } else {
+    generated = 'Tidak ada kendala. Seluruh agenda kegiatan magang hari ini berjalan dengan sangat lancar, kondusif, dan sesuai target rencana operasional.';
+  }
+
+  catatanEl.value = generated;
+  catatanEl.style.height = 'auto';
+  catatanEl.style.height = (catatanEl.scrollHeight + 4) + 'px';
+  autoSaveDraft();
+  showToast('✓ Evaluasi harian otomatis berhasil diterapkan ke Catatan!');
 }
 
 function removeKegiatan(id) {
@@ -3004,8 +3178,70 @@ function getGeminiApiKey() {
 let cachedAiPembelajaran = '';
 let lastAiInputHash = '';
 
+function getDynamicMonevOpening(data) {
+  // Format tanggal Indonesia: hari, tanggal bulan tahun
+  let dateObj = new Date();
+  if (data && data.tanggal) {
+    const parts = data.tanggal.split('-');
+    if (parts.length === 3) {
+      const parsed = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      if (!isNaN(parsed.getTime())) dateObj = parsed;
+    }
+  }
+
+  const dateStr = dateObj.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }); // e.g. "Selasa, 27 Oktober 2026"
+
+  // Analisis topik kegiatan hari ini secara kontekstual
+  const rawTexts = [];
+  if (Array.isArray(data.kegiatan)) {
+    data.kegiatan.forEach(k => {
+      if (k.nama) rawTexts.push(k.nama.toLowerCase());
+      if (k.deskripsi) rawTexts.push(k.deskripsi.toLowerCase());
+    });
+  }
+  const combined = rawTexts.join(' ');
+
+  const topics = [];
+  if (combined.includes('evaluasi') || combined.includes('ftbi') || combined.includes('rapat') || combined.includes('koordinasi') || combined.includes('monev')) {
+    topics.push('evaluasi acara instansi');
+  }
+  if (combined.includes('seminar') || combined.includes('webinar') || combined.includes('diklat') || combined.includes('pelatihan') || combined.includes('literasi') || combined.includes('kapasitas') || combined.includes('belajar')) {
+    topics.push('peningkatan kapasitas diri');
+  }
+  if (combined.includes('website') || combined.includes('web') || combined.includes('ux') || combined.includes('driver') || combined.includes('rbd') || combined.includes('sistem') || combined.includes('coding')) {
+    topics.push('pengembangan website');
+  }
+  if (combined.includes('administrasi') || combined.includes('surat') || combined.includes('arsip') || combined.includes('naskah') || combined.includes('rekap') || combined.includes('input data')) {
+    topics.push('tata kelola administrasi dokumen');
+  }
+  if (combined.includes('bahasa') || combined.includes('sastra') || combined.includes('kamus') || combined.includes('leksikografi') || combined.includes('glosarium') || combined.includes('terjemah')) {
+    topics.push('pengkajian kebahasaan');
+  }
+  if (combined.includes('dokumentasi') || combined.includes('foto') || combined.includes('publikasi') || combined.includes('konten') || combined.includes('media')) {
+    topics.push('publikasi dan dokumentasi kegiatan');
+  }
+
+  let topicSentence = 'pelaksanaan tugas operasional dan koordinasi kegiatan instansi';
+  if (topics.length === 1) {
+    topicSentence = topics[0];
+  } else if (topics.length === 2) {
+    topicSentence = `${topics[0]} dan ${topics[1]}`;
+  } else if (topics.length >= 3) {
+    const head = topics.slice(0, -1).join(', ');
+    topicSentence = `${head}, dan ${topics[topics.length - 1]}`;
+  }
+
+  return `Pada hari ini, ${dateStr}, saya melaksanakan serangkaian kegiatan yang berfokus pada ${topicSentence}, dengan rincian sebagai berikut:`;
+}
+
 function buildMonevUraian() {
   const data = collectData();
+  const opening = getDynamicMonevOpening(data);
   const items = [];
 
   if (Array.isArray(data.kegiatan) && data.kegiatan.length > 0) {
@@ -3017,11 +3253,11 @@ function buildMonevUraian() {
 
       let line = '';
       if (waktu) {
-        line += `${waktu}: `;
+        line += `${waktu} | `;
       }
       line += nama;
       if (desc && desc !== '-' && desc !== nama) {
-        line += ` - ${desc}`;
+        line += `: ${desc}`;
       }
       items.push(`${idx + 1}. ${line}`);
     });
@@ -3031,9 +3267,14 @@ function buildMonevUraian() {
     items.push('1. Melaksanakan aktivitas dan tugas magang sesuai instruksi pembimbing.');
   }
 
-  let text = items.join('\n');
-  if (currentSavedResultUrl && (currentSavedResultUrl.startsWith('http://') || currentSavedResultUrl.startsWith('https://'))) {
-    text += `\n\nLink Bukti Logbook Digital (Google Drive):\n${currentSavedResultUrl}`;
+  let text = opening + '\n\n' + items.join('\n\n');
+
+  // Google Drive Link
+  const driveUrl = currentSavedResultUrl || localStorage.getItem('maganghub_last_saved_url') || '';
+  if (driveUrl && (driveUrl.startsWith('http://') || driveUrl.startsWith('https://'))) {
+    text += `\n\nLink Bukti Logbook Digital (Google Drive):\n${driveUrl}`;
+  } else {
+    text += `\n\nLink Bukti Logbook Digital (Google Drive):\n(Berkas belum disimpan ke Google Drive. Klik "Simpan & Dapatkan Link" di tab Penyimpanan Berkas untuk menautkan link otomatis)`;
   }
   return text;
 }
@@ -3145,24 +3386,32 @@ Aturan Wajib:
 
   try {
     const apiKey = getGeminiApiKey();
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.6,
-          maxOutputTokens: 2500,
-          thinkingConfig: {
-            thinkingBudget: 256
-          }
-        }
-      })
-    });
+    let aiText = '';
+    const modelsToTry = ['gemini-3.1-flash-lite', 'gemini-flash-latest'];
 
-    const resJson = await resp.json();
-    let aiText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    for (const model of modelsToTry) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.6,
+              maxOutputTokens: 2500
+            }
+          })
+        });
+        if (resp.status === 200) {
+          const resJson = await resp.json();
+          aiText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (aiText) break;
+        }
+      } catch (errOne) {
+        console.warn(`Model ${model} error, trying fallback:`, errOne);
+      }
+    }
 
     if (aiText) {
       aiText = formatPembelajaranText(aiText);
@@ -3171,7 +3420,7 @@ Aturan Wajib:
       textEl.value = aiText;
       showToast('✓ Pembelajaran & kompetensi berhasil dirangkum!');
     } else {
-      throw new Error(resJson?.error?.message || 'Gagal generate AI');
+      throw new Error('Gagal memproses AI model, menggunakan fallback pintar');
     }
   } catch (err) {
     console.warn('Gemini API fallback to rule-based:', err);
@@ -3551,6 +3800,14 @@ function spawnStickerConfetti() {
   }
 }
 
+function proceedFromStickerToMonev() {
+  closeSubmitStickerModal();
+  setTimeout(() => {
+    openMonevModal();
+    showToast('📋 Format Monev siap! Link Google Drive telah disertakan di akhir Uraian.');
+  }, 120);
+}
+
 function showSubmitSuccessSticker(opts = {}) {
   const modal = document.getElementById('submit-sticker-modal');
   if (!modal) return;
@@ -3558,6 +3815,13 @@ function showSubmitSuccessSticker(opts = {}) {
   const url = opts.url || currentSavedResultUrl || '';
   const fileName = opts.fileName || currentSavedResultFileName || 'Dokumen_Logbook';
   const isCloud = opts.isCloud !== false;
+
+  if (url) {
+    currentSavedResultUrl = url;
+    try {
+      localStorage.setItem('maganghub_last_saved_url', url);
+    } catch (e) {}
+  }
 
   const badgeEl = document.getElementById('sticker-badge-text');
   if (badgeEl) {
@@ -3584,11 +3848,25 @@ function showSubmitSuccessSticker(opts = {}) {
   // Play celebratory chime
   playCelebrationChime();
 
-  // Auto dismiss timer (8 seconds so user can enjoy and copy without stress)
-  if (stickerAutoDismissTimer) clearTimeout(stickerAutoDismissTimer);
-  stickerAutoDismissTimer = setTimeout(() => {
-    closeSubmitStickerModal();
-  }, 8000);
+  // Automatic countdown timer directing to Format Laporan Monev Kemnaker
+  let countdownSecs = 4;
+  const timerNumEl = document.getElementById('sticker-timer-num');
+  if (timerNumEl) timerNumEl.textContent = countdownSecs;
+
+  if (stickerAutoDismissTimer) {
+    clearInterval(stickerAutoDismissTimer);
+    stickerAutoDismissTimer = null;
+  }
+
+  stickerAutoDismissTimer = setInterval(() => {
+    countdownSecs--;
+    if (timerNumEl) timerNumEl.textContent = countdownSecs;
+    if (countdownSecs <= 0) {
+      clearInterval(stickerAutoDismissTimer);
+      stickerAutoDismissTimer = null;
+      proceedFromStickerToMonev();
+    }
+  }, 1000);
 }
 
 function closeSubmitStickerModal() {
@@ -3597,7 +3875,7 @@ function closeSubmitStickerModal() {
   modal.classList.remove('active');
   modal.setAttribute('aria-hidden', 'true');
   if (stickerAutoDismissTimer) {
-    clearTimeout(stickerAutoDismissTimer);
+    clearInterval(stickerAutoDismissTimer);
     stickerAutoDismissTimer = null;
   }
 }

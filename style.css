@@ -3653,5 +3653,148 @@ a {
   }
 }
 
+/* ============================================================
+   AI GENERATE BUTTONS & ENHANCED FLOW STYLES
+   ============================================================ */
 
+/* Activity Description Header with Inline AI Button */
+.kg-desc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
+.kg-desc-header .form-label {
+  margin-bottom: 0;
+}
+
+/* Elegant AI Generate Action Button (Non-robotic, clear typography) */
+.btn-ai-generate-desc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.btn-ai-generate-desc svg {
+  width: 13.5px;
+  height: 13.5px;
+  stroke-width: 2.2;
+  transition: transform 0.3s ease;
+}
+
+.btn-ai-generate-desc:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.16);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(99, 102, 241, 0.18);
+}
+
+.btn-ai-generate-desc:hover:not(:disabled) svg {
+  transform: rotate(45deg);
+}
+
+.btn-ai-generate-desc:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-ai-generate-desc:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+[data-theme="dark"] .btn-ai-generate-desc {
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(165, 180, 252, 0.28);
+}
+
+[data-theme="dark"] .btn-ai-generate-desc:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.28);
+  border-color: #818cf8;
+}
+
+/* Catatan Card Action Header */
+.catatan-action-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.catatan-action-header .card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-ai-catatan {
+  padding: 6px 14px;
+  font-size: 12.5px;
+  border-radius: 9px;
+}
+
+/* Sticker Auto-redirect Countdown Notice */
+.sticker-redirect-countdown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="dark"] .sticker-redirect-countdown {
+  background: rgba(255, 255, 255, 0.04);
+  color: #94a3b8;
+}
+
+.sticker-timer-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulseDot 1.4s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+
+/* Prominent Monev Button in Sticker Modal */
+.btn-sticker-monev {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.btn-sticker-monev:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
+}

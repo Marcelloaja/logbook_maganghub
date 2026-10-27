@@ -89,15 +89,26 @@ Jika Anda baru pertama kali membuka website ini atau lupa letak menu tertentu, g
 ---
 
 ### C. Mengisi Rincian Kegiatan & Foto Dokumentasi
-1. **Waktu Pelaksanaan:** Atur jam mulai dan selesai kegiatan (format otomatis WIB, contoh: `08:00 - 09:30 WIB`).
-2. **Nama Kegiatan:** Tuliskan judul agenda (contoh: *Presentasi Pagi Sistem SEMERU* atau *Rapat Koordinasi Kemah Cerpen*).
-3. **Deskripsi:** Tuliskan penjelasan aktivitas secara rinci.
-4. **Foto Dokumentasi (Maks. 5MB):** Klik tombol **"Upload Foto Dokumentasi"** untuk melampirkan foto kegiatan langsung pada baris agenda terkait.
+1. **Waktu Pelaksanaan:** Atur jam mulai dan selesai kegiatan (format otomatis WIB, contoh: `07:30 - 08:00 WIB`).
+2. **Nama Kegiatan:** Tuliskan judul agenda (contoh: *Persiapan Evaluasi FTBI*, *Seminar Nasional (Daring)*, atau *Pemeliharaan Website RBD*).
+3. **Fitur Generate Deskripsi AI (🤖):**
+   - Di samping label *Deskripsi Rinci Kegiatan*, terdapat tombol **"Generate Deskripsi AI"**.
+   - **Wajib isi Nama Kegiatan terlebih dahulu**, lalu klik tombol ini.
+   - AI Gemini otomatis menyusun narasi formal kedinasan 1–3 kalimat yang operasional dan terstruktur sesuai standar Balai Bahasa Jawa Timur.
+   - Contoh hasil narasi:
+     > *"Mengawali hari kerja dengan mempersiapkan dokumen dan data pendukung untuk keperluan evaluasi Festival Tunas Bahasa Ibu (FTBI) 2026, sesuai dengan instruksi dan arahan dari Ibu Okta."*
+4. **Foto Dokumentasi (Maks. 5MB):** Klik tombol **"Upload Foto"** untuk melampirkan foto bukti kegiatan langsung pada baris agenda terkait.
 5. **Menambah Kegiatan:** Jika dalam sehari Anda memiliki lebih dari 1 agenda, klik tombol biru **"Tambah Kegiatan Baru"** di bagian bawah.
 
 ---
 
-### D. Tanda Tangan Digital (Peserta & Mentor)
+### D. Catatan / Kendala Tambahan & Tombol Evaluasi AI
+- Tuliskan kendala atau catatan khusus jika ada.
+- Jika hari ini seluruh aktivitas berjalan lancar tanpa kendala, Anda dapat mengosongkannya **atau** mengklik tombol **"Generate Evaluasi AI"** di sudut kanan header catatan untuk membuat kalimat evaluasi positif otomatis secara instan.
+
+---
+
+### E. Tanda Tangan Digital (Peserta & Mentor)
 1. **Goreskan Tanda Tangan:** Coretkan tanda tangan langsung pada kotak canvas putih menggunakan mouse, touchpad, atau stylus pen pada layar sentuh.
 2. **Upload Foto TTD:** Jika Anda memiliki file foto tanda tangan (PNG/JPG), klik tombol **"Upload Foto TTD"** di sudut kanan atas kotak.
 3. Tombol **"Hapus"** hanya digunakan jika Anda ingin menggambar ulang tanda tangan dari awal.
@@ -106,7 +117,7 @@ Jika Anda baru pertama kali membuka website ini atau lupa letak menu tertentu, g
 
 ---
 
-### E. Aturan Reset Otomatis Lewat Pukul 23.59
+### F. Aturan Reset Otomatis Lewat Pukul 23.59
 Website memiliki sistem manajemen waktu cerdas untuk kenyamanan seluruh peserta magang:
 
 | Komponen Formulir | Setelah Lewat Pukul 23.59 | Alasan & Manfaat |
@@ -154,15 +165,17 @@ Agar Anda tidak perlu mencari-cari nama folder Anda di antara 33 peserta setiap 
 
 ---
 
-### C. Menyimpan Logbook & Mendapatkan Tautan Google Drive
+### C. Menyimpan Logbook, Animasi Perayaan & Otomatisasi ke Monev
 1. Klik folder nama Anda untuk membukanya.
    > 💡 **DATA TIDAK AKAN HILANG:** Seluruh data yang sudah Anda isi pada Tab 1 (Input Logbook) **tetap aman tersimpan** dan tidak akan terhapus saat Anda membuka menu penyimpanan ataupun membuka folder nama Anda!
 2. Di bagian atas terdapat panel hijau **Simpan Logbook Hari Ini ke Folder Ini**.
 3. Pilih format berkas yang diinginkan: **Word (.docx)** atau **PDF (.pdf)**.
-4. Klik tombol **"Simpan & Dapatkan Link Google Drive"**.
+4. Klik tombol **"Simpan & Dapatkan Link"**.
 5. Berkas otomatis ter-generate dan tersimpan langsung ke **Google Drive bersama milik koordinator (Marcello)**.
-6. Setelah pengunggahan berhasil, muncul banner sukses lengkap dengan **Link Google Drive resmi**.
-7. Klik tombol **"Salin Link"** untuk menggunakannya sebagai lampiran resmi.
+6. **Animasi Perayaan & Alur Otomatis Menuju Monev Kemnaker:**
+   - Setelah sukses tersimpan, stiker perayaan selebrasi akan muncul di tengah layar disertai animasi konfeti dan nada lonceng sukses.
+   - Sistem akan menghitung mundur **4 detik** dan **secara otomatis mengarahkan Anda langsung ke jendela Format Laporan Monev Kemnaker** (atau Anda dapat langsung mengklik tombol **"Lanjut ke Format Monev ↗"**).
+   - Tautan (*link*) Google Drive resmi yang baru saja Anda hasilkan sudah langsung terpasang otomatis di bagian akhir teks Uraian Aktifitas!
 
 ---
 
@@ -173,7 +186,7 @@ Agar Anda tidak perlu mencari-cari nama folder Anda di antara 33 peserta setiap 
 >
 > 1. **Hapus File Lama:** Buka folder nama Anda di Tab **Penyimpanan Berkas**, temukan file logbook yang keliru, lalu klik tombol **Hapus** (ikon tempat sampah).
 > 2. **Perbaiki Isian Data:** Klik menu **Input Logbook** (Tab 1) di sidebar. Koreksi kegiatan atau data yang keliru (seluruh isian Anda sebelumnya masih tetap ada).
-> 3. **Simpan Ulang:** Masuk kembali ke Tab **Penyimpanan Berkas**, buka folder nama Anda, lalu klik tombol **"Simpan & Dapatkan Link Google Drive"** sekali lagi.
+> 3. **Simpan Ulang:** Masuk kembali ke Tab **Penyimpanan Berkas**, buka folder nama Anda, lalu klik tombol **"Simpan & Dapatkan Link"** sekali lagi.
 > 4. **Salin Tautan Baru:** Sistem akan membuat berkas baru dan menghasilkan link Google Drive baru. Klik **Salin Link**, lalu tempelkan link baru tersebut ke portal Kemnaker. Selesai!
 
 ---
@@ -186,9 +199,12 @@ Untuk mengisi laporan harian pada portal [https://monev.maganghub.kemnaker.go.id
 
 Jendela popup akan menampilkan **3 Klip Siap Salin**:
 
-### A. Clip 1: Uraian Aktifitas Kronologis + Link GDrive
-- **Isi:** Mengambil langsung dari input formulir logbook sebelumnya. Tersusun secara kronologis berpenomoran rapi lengkap dengan jam pelaksanaan (WIB), judul kegiatan, dan rincian uraian tugas Anda.
-- **Tautan Berkas:** Jika logbook sudah tersimpan ke penyimpanan Google Drive koordinator Marcello, tautan (*link*) berkas Google Drive otomatis disematkan di baris paling bawah sebagai lampiran bukti digital resmi.
+### A. Clip 1: Uraian Aktifitas Kronologis + Kalimat Pembuka Resmi + Link GDrive
+- **Kalimat Pembuka Dinamis:** Mengawali narasi secara resmi dengan hari, tanggal realtime, dan fokus topik kegiatan hari ini, contoh:
+  > *"Pada hari ini, Selasa, 27 Oktober 2026, saya melaksanakan serangkaian kegiatan yang berfokus pada evaluasi acara instansi, peningkatan kapasitas diri, dan pengembangan website, dengan rincian sebagai berikut:"*
+- **Rincian Kronologis Kegiatan:** Disusun berurutan dengan penomoran rapi dan pemisah yang tegas:
+  > *1. 07.30 - 08.00 WIB | Persiapan Evaluasi FTBI: Mengawali hari kerja dengan mempersiapkan dokumen dan data pendukung...*
+- **Tautan Berkas Google Drive:** Otomatis disematkan di baris paling bawah setelah Anda menyimpan dokumen di Tab Penyimpanan Berkas.
 - Klik tombol **"Salin Uraian"**.
 
 ---

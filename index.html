@@ -218,15 +218,21 @@
 
       <!-- Catatan Tambahan -->
       <div class="card">
-        <div class="card-header">
-          <div class="card-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
-          <div>
-            <h2 class="card-title">Catatan / Kendala Tambahan</h2>
-            <p class="card-desc">Tuliskan kendala, catatan khusus, atau evaluasi harian (opsional)</p>
+        <div class="card-header catatan-action-header">
+          <div class="card-header-left">
+            <div class="card-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+            <div>
+              <h2 class="card-title">Catatan / Kendala Tambahan</h2>
+              <p class="card-desc">Tuliskan kendala, catatan khusus, atau evaluasi harian (opsional)</p>
+            </div>
           </div>
+          <button type="button" class="btn-ai-generate-desc btn-ai-catatan" id="btn-ai-catatan" onclick="generateCatatanKendalaAI()" title="Buat evaluasi kegiatan positif otomatis jika hari ini tidak ada kendala">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span id="btn-ai-catatan-text">Generate Evaluasi AI</span>
+          </button>
         </div>
         <div class="form-group">
-          <textarea id="catatan" class="form-input form-textarea" placeholder="Tuliskan catatan khusus atau ringkasan evaluasi hari ini..." oninput="autoSaveDraft()"></textarea>
+          <textarea id="catatan" class="form-input form-textarea" placeholder="Tuliskan catatan khusus atau kendala hari ini (kosongkan jika lancar, sistem otomatis menyusun evaluasi positif)..." oninput="autoSaveDraft()"></textarea>
         </div>
       </div>
 
@@ -942,17 +948,23 @@ function doPost(e) {
         </div>
         <p class="sticker-filename" id="sticker-filename-text">Logbook_Peserta.pdf</p>
 
+        <div class="sticker-redirect-countdown" id="sticker-redirect-countdown">
+          <span class="sticker-timer-pulse"></span>
+          <span>Mengarahkan ke Format Monev dalam <strong id="sticker-timer-num">4</strong> detik...</span>
+        </div>
+
         <div class="sticker-actions">
-          <button type="button" class="btn btn-primary btn-sticker-action" id="btn-sticker-copy" onclick="copyStickerResultLink()">
+          <button type="button" class="btn btn-primary btn-sticker-action btn-sticker-monev" id="btn-sticker-monev" onclick="proceedFromStickerToMonev()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+            <span>Lanjut ke Format Monev ↗</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-sticker-action" id="btn-sticker-copy" onclick="copyStickerResultLink()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 0 1 2 2v1"/></svg>
             <span id="btn-sticker-copy-text">Salin Link</span>
           </button>
           <button type="button" class="btn btn-secondary btn-sticker-action" id="btn-sticker-view" onclick="openCurrentResultUrl(); closeSubmitStickerModal();">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             <span>Buka Berkas</span>
-          </button>
-          <button type="button" class="btn btn-secondary btn-sticker-action btn-sticker-dismiss" onclick="closeSubmitStickerModal()">
-            <span>Lanjutkan</span>
           </button>
         </div>
       </div>
