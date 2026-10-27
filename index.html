@@ -564,6 +564,7 @@ function handleGetSyncData() {
   while (subFolders.hasNext()) {
     var sub = subFolders.next();
     var fName = sub.getName();
+    if (fName.toLowerCase() === "umum") continue;
     var fId = sub.getId();
     folders.push({
       id: fId,
@@ -710,10 +711,13 @@ function doPost(e) {
     }
 
     // ACTION 4: SIMPAN / UPLOAD DOKUMEN LOGBOOK
-    var targetFolderName = (data.folderName || "Umum").trim();
-    var subFolders = rootFolder.getFoldersByName(targetFolderName);
-    var targetFolder = subFolders.hasNext() ? subFolders.next() : rootFolder.createFolder(targetFolderName);
-    targetFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var targetFolderName = (data.folderName || "").trim();
+    var targetFolder = rootFolder;
+    if (targetFolderName && targetFolderName.toLowerCase() !== "umum") {
+      var subFolders = rootFolder.getFoldersByName(targetFolderName);
+      targetFolder = subFolders.hasNext() ? subFolders.next() : rootFolder.createFolder(targetFolderName);
+      targetFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    }
 
     var decoded = Utilities.base64Decode(data.base64);
     var blob = Utilities.newBlob(decoded, data.mimeType, data.fileName);

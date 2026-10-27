@@ -1816,9 +1816,22 @@ async function syncStorageWithCloud(silent = true) {
       if (Array.isArray(res.folders)) {
         const cloudFolderMap = new Map();
 
+        // Otomatis bersihkan jika ada folder 'Umum' di Google Drive
+        const umumFolder = res.folders.find(f => f && f.name && f.name.toLowerCase().trim() === 'umum');
+        if (umumFolder && url) {
+          fetch(url, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'deleteFolder', folderId: umumFolder.id, folderName: umumFolder.name })
+          }).catch(() => {});
+        }
+
         res.folders.forEach(f => {
           if (f && f.name && !['f-1', 'f-2', 'f-3', 'f-4'].includes(f.id)) {
             const k = f.name.toLowerCase().trim();
+            // Abaikan folder 'Umum' agar tidak pernah tampil di website
+            if (k === 'umum') return;
             // Cegah duplikasi jika ada folder kembar di Drive
             if (!cloudFolderMap.has(k)) {
               cloudFolderMap.set(k, {
@@ -1944,8 +1957,8 @@ function loadStorageData() {
     const savedFolders = localStorage.getItem('maganghub_storage_folders');
     if (savedFolders) {
       let parsed = JSON.parse(savedFolders);
-      // Clean up legacy dummy folders (f-1, f-2, f-3, f-4)
-      parsed = parsed.filter(f => !['f-1', 'f-2', 'f-3', 'f-4'].includes(f.id));
+      // Clean up legacy dummy folders (f-1, f-2, f-3, f-4) dan folder 'umum'
+      parsed = parsed.filter(f => f && f.name && !['f-1', 'f-2', 'f-3', 'f-4'].includes(f.id) && f.name.toLowerCase().trim() !== 'umum');
       if (parsed.length === 0) {
         parsed = [...DEFAULT_FOLDERS];
       }
@@ -1991,7 +2004,7 @@ function renderStorageFolders(query = '') {
   if (!grid) return;
 
   const q = (query || '').toLowerCase().trim();
-  const filtered = storageFolders.filter(f => f.name.toLowerCase().includes(q));
+  const filtered = storageFolders.filter(f => f && f.name && f.name.toLowerCase().trim() !== 'umum' && f.name.toLowerCase().includes(q));
 
   if (filtered.length === 0) {
     grid.innerHTML = '';
