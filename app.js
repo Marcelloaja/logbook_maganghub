@@ -3019,9 +3019,26 @@ function buildMonevKendala() {
 }
 
 function generateSmartFallbackPembelajaran(data) {
-  const activities = (data.kegiatan || []).map(k => (k.nama || '').trim()).filter(Boolean);
-  const actsJoined = activities.slice(0, 3).join(', ');
-  return `Melalui pelaksanaan kegiatan hari ini, khususnya dalam ${actsJoined || 'tugas harian magang'}, saya memperoleh pemahaman mendalam mengenai pentingnya koordinasi tim yang efektif, ketelitian teknis, dan manajemen waktu yang terstruktur. Rangkaian aktivitas ini juga memperkuat kemampuan komunikasi profesional serta kemampuan beradaptasi dalam menyelesaikan tanggung jawab kerja di lingkungan Balai Bahasa Jawa Timur.`;
+  const activities = (data.kegiatan || []).map(k => ({
+    nama: (k.nama || '').trim(),
+    desc: (k.deskripsi || '').trim()
+  })).filter(k => k.nama || k.desc);
+
+  const lines = ['Pembelajaran yang Diperoleh:'];
+  if (activities.length >= 3) {
+    lines.push(`Tata Kelola & Koordinasi Tugas: Melalui ${activities[0].nama || 'kegiatan pagi'}, saya memperoleh wawasan mengenai alur kerja terstruktur, ketelitian operasional, dan komunikasi profesional dalam lingkup instansi.`);
+    lines.push(`Pelaksanaan Teknis & Solusi Nyata: Mengasah kemampuan dalam ${activities[1].nama || 'agenda kerja harian'} dengan berfokus pada penyelesaian tugas teknis yang akurat, efektif, dan mendukung efisiensi kerja.`);
+    lines.push(`Kolaborasi Lintas Peran: Terlibat dalam ${activities[2].nama || 'tugas kolaboratif tim'} melatih adaptabilitas dalam berganti peran kerja serta memperkuat koordinasi bersama mentor dan rekan kerja.`);
+  } else if (activities.length === 2) {
+    lines.push(`Manajemen Waktu & Alur Kerja: Melalui pelaksanaan ${activities[0].nama || 'kegiatan harian'}, saya mengasah kedisiplinan kerja dan keterampilan koordinasi operasional.`);
+    lines.push(`Penyelesaian Tugas Teknis & Kolaborasi: Melalui ${activities[1].nama || 'agenda kerja harian'}, saya memperkuat kompetensi praktis dan komunikasi kerja di lingkungan Balai Bahasa Provinsi Jawa Timur.`);
+  } else if (activities.length === 1) {
+    lines.push(`Pengembangan Kompetensi & Tanggung Jawab: Melalui pelaksanaan ${activities[0].nama || 'agenda kegiatan hari ini'}, saya memperdalam pemahaman praktis mengenai alur tugas di instansi, ketelitian dalam bekerja, dan manajemen waktu yang efektif.`);
+  } else {
+    lines.push(`Kedisiplinan & Budaya Kerja Profesional: Melalui rangkaian aktivitas magang hari ini, saya mempraktikkan manajemen waktu kerja yang efektif serta koordinasi aktif dengan mentor pembimbing.`);
+    lines.push(`Pengembangan Kompetensi Praktis: Melaksanakan seluruh tugas harian yang didelegasikan dengan fokus pada ketepatan hasil dan standar kerja di Balai Bahasa Provinsi Jawa Timur.`);
+  }
+  return lines.join('\n');
 }
 
 async function generatePembelajaranAI(force = false) {
@@ -3042,7 +3059,25 @@ async function generatePembelajaranAI(force = false) {
   if (loadingEl) loadingEl.style.display = 'flex';
   if (btnRegen) btnRegen.disabled = true;
 
-  const prompt = `Anda adalah asisten pembuat laporan Monev MagangHub Kemnaker untuk peserta magang (${data.nama || 'Peserta Magang'}) di ${data.unit || 'Balai Bahasa Provinsi Jawa Timur'}.\nBerdasarkan rincian kegiatan hari ini:\n${kegiatanList}\n\nTuliskan 1 paragraf ringkas (3-4 kalimat, bahasa Indonesia formal, tanpa bullet points, tanpa tanda kutip, tanpa kata pengantar seperti "Berikut adalah...") untuk kolom 'Pembelajaran yang didapat' pada portal Monev MagangHub Kemnaker. Fokus pada pengembangan kompetensi teknis, komunikasi kerja, kolaborasi tim, dan kedisiplinan kerja.`;
+  const prompt = `Anda adalah asisten pembuat laporan Monev MagangHub Kemnaker untuk peserta magang (${data.nama || 'Peserta Magang'}) di ${data.unit || 'Balai Bahasa Provinsi Jawa Timur'}.
+Berdasarkan rincian kegiatan hari ini:
+${kegiatanList}
+
+Tuliskan poin-poin 'Pembelajaran yang Diperoleh' untuk kolom 'Pembelajaran yang didapat' pada portal Monev MagangHub Kemnaker.
+Gaya penulisan dan format HARUS persis seperti contoh berikut:
+
+Contoh format yang diharapkan:
+Pembelajaran yang Diperoleh:
+Manajemen Acara & Literasi Daerah: Melalui rapat Kemah Cerpen, saya mendapatkan wawasan mengenai tata kelola program peningkatan literasi (sastra daerah) untuk anak-anak, mulai dari penyusunan jadwal, penyesuaian target publikasi ber-ISBN, hingga teknis pelaksanaan acara secara hybrid.
+Pengembangan Tools Produktivitas: Mengasah kemampuan teknis (coding dan deployment) dengan menciptakan solusi nyata berupa aplikasi logbook berbasis web yang dapat meningkatkan efisiensi kerja dan pelaporan bagi seluruh peserta magang.
+Kolaborasi Lintas Peran: Belajar beradaptasi dengan cepat saat berganti peran, mulai dari menjadi pemateri presentasi teknis (SEMERU), menjadi notulis/peserta rapat divisi, hingga berkolaborasi dalam ranah desain visual bersama tim grafis.
+
+Aturan Penting:
+1. Analisis seluruh kegiatan yang dilakukan hari ini, lalu buat 2 sampai 3 poin pembelajaran yang relevan dan mendalam.
+2. Setiap poin WAJIB diawali dengan judul kategori ringkas diikuti tanda titik dua (contoh: 'Judul Kategori: Penjelasan refleksi...').
+3. Pada penjelasan, sebutkan secara konkret nama kegiatan dan pembelajaran/wawasan/keterampilan nyata yang diperoleh.
+4. JANGAN gunakan format markdown tebal (**tebal**) atau bullet asterisk (*), karena portal Monev Kemnaker menggunakan plain text murni. Tulis langsung plain text seperti contoh di atas.
+5. Awali dengan baris 'Pembelajaran yang Diperoleh:' lalu lanjutkan dengan poin-poin di baris berikutnya. Jangan tambahkan kata pembuka atau penutup lain.`;
 
   try {
     const apiKey = getGeminiApiKey();
@@ -3053,20 +3088,25 @@ async function generatePembelajaranAI(force = false) {
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 300
+          temperature: 0.6,
+          maxOutputTokens: 2500,
+          thinkingConfig: {
+            thinkingBudget: 256
+          }
         }
       })
     });
 
     const resJson = await resp.json();
-    const aiText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    let aiText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
     if (aiText) {
+      // Bersihkan jika ada sisa markdown asterisk tebal agar plain text bersih untuk Monev
+      aiText = aiText.replace(/\*\*(.*?)\*\*/g, '$1').replace(/^\*\s+/gm, '');
       cachedAiPembelajaran = aiText;
       lastAiInputHash = inputHash;
       textEl.value = aiText;
-      showToast('✨ Pembelajaran berhasil disusun oleh AI Gemini!');
+      showToast('✨ Pembelajaran terstruktur berhasil disusun oleh AI Gemini!');
     } else {
       throw new Error(resJson?.error?.message || 'Gagal generate AI');
     }
