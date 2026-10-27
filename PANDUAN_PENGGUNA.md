@@ -19,9 +19,9 @@
    - [A. Memilih / Membuat Folder Nama Anda](#a-memilih--membuat-folder-nama-anda)
    - [B. Fitur Bintang (⭐) Agar Folder Selalu Terpin di Paling Atas](#b-fitur-bintang--agar-folder-selalu-terpin-di-paling-atas)
    - [C. Menyimpan Logbook & Mendapatkan Tautan Google Drive](#c-menyimpan-logbook--mendapatkan-tautan-google-drive)
-6. [Langkah 4: Format Monev Kemnaker (3 Clip Siap Salin AI)](#6-langkah-4-format-monev-kemnaker-3-clip-siap-salin-ai)
+6. [Langkah 4: Format Laporan Monev Kemnaker (3 Klip Siap Salin)](#6-langkah-4-format-laporan-monev-kemnaker-3-klip-siap-salin)
    - [A. Clip 1: Uraian Aktifitas Kronologis + Link GDrive](#a-clip-1-uraian-aktifitas-kronologis--link-gdrive)
-   - [B. Clip 2: Pembelajaran yang Didapat (AI Gemini)](#b-clip-2-pembelajaran-yang-didapat-ai-gemini)
+   - [B. Clip 2: Pembelajaran yang Didapat (Refleksi & Kompetensi)](#b-clip-2-pembelajaran-yang-didapat-refleksi--kompetensi)
    - [C. Clip 3: Kendala yang Dialami (Evaluasi Positif Otomatis)](#c-clip-3-kendala-yang-dialami-evaluasi-positif-otomatis)
    - [D. Cara Menempel ke Website Monev Kemnaker](#d-cara-menempel-ke-website-monev-kemnaker)
 7. [Tanya Jawab & Tips Penting (FAQ)](#7-tanya-jawab--tips-penting-faq)
@@ -33,7 +33,7 @@ Website Logbook MagangHub adalah platform pelaporan terpadu yang dirancang untuk
 1. **Pencatatan Harian Rapi:** Otomatis dilengkapi jam mulai-selesai WIB, deskripsi kegiatan terjustifikasi, foto dokumentasi, dan tanda tangan digital.
 2. **Export Dokumen Resmi:** Langsung menghasilkan lembar logbook resmi dengan Kop Surat Kemendikdasmen dalam format **Word (.docx)** dan **PDF (.pdf)**.
 3. **Penyimpanan Cloud Terpusat:** Sinkronisasi langsung ke Google Drive koordinator dengan folder khusus untuk masing-masing peserta.
-4. **Asisten AI Monev Kemnaker:** Menyusun ringkasan 3 klip siap salin untuk portal [https://monev.maganghub.kemnaker.go.id/](https://monev.maganghub.kemnaker.go.id/).
+4. **Rangkuman Laporan Monev Kemnaker:** Menyusun ringkasan 3 klip siap salin untuk portal [https://monev.maganghub.kemnaker.go.id/](https://monev.maganghub.kemnaker.go.id/).
 
 ---
 
@@ -147,26 +147,26 @@ Agar Anda tidak perlu mencari-cari nama folder Anda di antara 33 peserta setiap 
 
 ---
 
-## 6. Langkah 4: Format Monev Kemnaker (3 Clip Siap Salin AI)
+## 6. Langkah 4: Format Laporan Monev Kemnaker (3 Klip Siap Salin)
 
 ![Modal Format Monev Kemnaker](assets/screenshots/5_format_monev_ai.png)
 
-Untuk mengisi laporan harian pada portal [https://monev.maganghub.kemnaker.go.id/](https://monev.maganghub.kemnaker.go.id/), Anda tidak perlu mengetik satu per satu dari awal! Cukup klik tombol **"Format Monev AI"** di sidebar atau tombol ungu bergradien **Format Monev (3 Clip)**.
+Untuk mengisi laporan harian pada portal [https://monev.maganghub.kemnaker.go.id/](https://monev.maganghub.kemnaker.go.id/), Anda tidak perlu mengetik satu per satu dari awal! Cukup klik tombol **"Format Monev Kemnaker"** di sidebar atau tombol **Format Monev (3 Clip)** di formulir.
 
 Jendela popup akan menampilkan **3 Klip Siap Salin**:
 
 ### A. Clip 1: Uraian Aktifitas Kronologis + Link GDrive
-- **Isi:** Urutan kegiatan harian berpenomoran rapi yang otomatis diambil dari jam pelaksanaan, nama kegiatan, dan deskripsi tugas Anda.
-- **Tautan Berkas:** Jika logbook sudah tersimpan ke Drive, link berkas Google Drive otomatis ditambahkan di bagian bawah uraian.
+- **Isi:** Urutan kegiatan harian berpenomoran rapi yang otomatis disusun dari jam pelaksanaan, nama kegiatan, dan deskripsi tugas Anda.
+- **Tautan Berkas:** Jika logbook sudah tersimpan ke Drive, tautan berkas Google Drive otomatis ditambahkan di bagian bawah uraian sebagai bukti lampiran.
 - Klik tombol **"Salin Uraian"**.
 
 ---
 
-### B. Clip 2: Pembelajaran yang Didapat (AI Gemini)
-- **Isi:** Disusun otomatis oleh kecerdasan buatan **AI Google Gemini** menggunakan token resmi.
-- Menghasilkan 2-3 poin pembelajaran terstruktur dengan judul kategori kompetensi (contoh: *Manajemen Acara & Literasi Daerah:*, *Pengembangan Tools Produktivitas:*, *Kolaborasi Lintas Peran:*), dan setiap poin dipisahkan oleh satu baris kosong yang rapi.
-- Tanpa tulisan pembuka atau tanda markdown yang mengganggu, sehingga 100% siap tempel.
-- Tersedia tombol **"✨ Generate Ulang AI"** jika Anda ingin variasi narasi lain.
+### B. Clip 2: Pembelajaran yang Didapat (Refleksi & Kompetensi)
+- **Isi:** Disusun otomatis dan cerdas berdasarkan rincian tugas dan agenda kerja yang Anda lakukan hari ini.
+- Menghasilkan 2–3 poin refleksi terstruktur dengan judul kategori kompetensi (contoh: *Manajemen Acara & Literasi Daerah:*, *Pengembangan Tools Produktivitas:*, *Kolaborasi Lintas Peran:*), dan setiap poin dipisahkan oleh satu baris kosong yang rapi.
+- Tanpa tulisan pembuka atau tanda format yang mengganggu, sehingga 100% siap tempel.
+- Tersedia tombol **"Perbarui Refleksi"** jika Anda ingin variasi susunan narasi lain.
 - Klik tombol **"Salin Pembelajaran"**.
 
 ---

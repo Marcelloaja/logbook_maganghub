@@ -2936,8 +2936,8 @@ a {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-  color: #7c3aed;
+  background: #eef2ff;
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2945,8 +2945,8 @@ a {
 }
 
 [data-theme="dark"] .monev-title-icon {
-  background: rgba(124, 58, 237, 0.2);
-  color: #a78bfa;
+  background: var(--primary-glow);
+  color: var(--primary-light);
 }
 
 .monev-title-icon svg {
@@ -2991,13 +2991,13 @@ a {
 }
 
 .monev-ai-card {
-  border-color: rgba(124, 58, 237, 0.35);
-  background: linear-gradient(180deg, rgba(124, 58, 237, 0.03) 0%, var(--bg) 100%);
+  border-color: rgba(79, 70, 229, 0.25);
+  background: var(--bg);
 }
 
 [data-theme="dark"] .monev-ai-card {
-  border-color: rgba(167, 139, 250, 0.3);
-  background: linear-gradient(180deg, rgba(124, 58, 237, 0.08) 0%, var(--bg) 100%);
+  border-color: rgba(99, 102, 241, 0.3);
+  background: var(--bg);
 }
 
 .monev-clip-top {
@@ -3029,7 +3029,7 @@ a {
 }
 
 .monev-badge-num.ai {
-  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+  background: var(--primary);
 }
 
 .monev-clip-heading {
@@ -3040,25 +3040,28 @@ a {
 }
 
 .monev-clip-source {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--text-dim);
 }
 
-.monev-clip-source.ai-sparkle {
-  color: #7c3aed;
+.monev-clip-source.ai-sparkle,
+.monev-clip-source.monev-source-accent {
+  color: var(--primary);
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
 }
 
-[data-theme="dark"] .monev-clip-source.ai-sparkle {
-  color: #a78bfa;
+[data-theme="dark"] .monev-clip-source.ai-sparkle,
+[data-theme="dark"] .monev-clip-source.monev-source-accent {
+  color: var(--primary-light);
 }
 
-.monev-clip-source.ai-sparkle svg {
-  width: 11px;
-  height: 11px;
+.monev-clip-source.ai-sparkle svg,
+.monev-clip-source.monev-source-accent svg {
+  width: 13px;
+  height: 13px;
 }
 
 .monev-clip-actions {
@@ -3092,21 +3095,21 @@ a {
 .monev-ai-loading-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(2px);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-size: 12.5px;
-  color: #7c3aed;
+  font-size: 13px;
+  color: var(--primary);
   font-weight: 600;
 }
 
 [data-theme="dark"] .monev-ai-loading-overlay {
-  background: rgba(15, 23, 42, 0.9);
-  color: #a78bfa;
+  background: rgba(15, 23, 42, 0.92);
+  color: var(--primary-light);
 }
 
 .monev-clip-desc {
@@ -3218,14 +3221,16 @@ a {
   color: #c4b5fd !important;
 }
 
-/* Driver.js Popover Polish */
+/* Driver.js Popover Polish & Responsive Layout */
 .driver-popover.driverjs-theme {
   background-color: var(--bg-card) !important;
   color: var(--text) !important;
   border-radius: 14px !important;
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--border) !important;
   padding: 18px 20px !important;
-  max-width: 380px !important;
+  max-width: min(440px, calc(100vw - 32px)) !important;
+  width: auto !important;
+  box-sizing: border-box !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
@@ -3236,6 +3241,7 @@ a {
   color: var(--text) !important;
   margin-bottom: 8px !important;
   line-height: 1.35 !important;
+  letter-spacing: -0.3px !important;
 }
 
 .driver-popover-description {
@@ -3246,52 +3252,79 @@ a {
 }
 
 .driver-popover-description strong {
-  color: var(--text);
+  color: var(--text) !important;
 }
 
 .driver-popover-footer {
   margin-top: 14px !important;
   display: flex !important;
+  flex-direction: row !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 8px !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
   border-top: 1px solid var(--border) !important;
   padding-top: 12px !important;
+  box-sizing: border-box !important;
 }
 
 .driver-popover-progress-text {
-  font-size: 11.5px !important;
+  font-size: 12px !important;
   font-weight: 700 !important;
   color: var(--text-muted) !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .driver-popover-navigation-btns {
-  display: flex !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
   gap: 8px !important;
+  flex-shrink: 0 !important;
+  flex-wrap: nowrap !important;
 }
 
+.driver-popover-footer button,
 .driver-popover-next-btn,
 .driver-popover-prev-btn,
 .driver-popover-close-btn {
   font-family: inherit !important;
   border-radius: 8px !important;
-  padding: 6px 14px !important;
-  font-size: 12.5px !important;
+  padding: 8px 16px !important;
+  font-size: 13px !important;
   font-weight: 700 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  flex-shrink: 0 !important;
+  line-height: 1.2 !important;
+  min-height: 38px !important;
+  box-sizing: border-box !important;
+  text-decoration: none !important;
+  float: none !important;
+  clear: none !important;
+  text-align: center !important;
 }
 
 .driver-popover-next-btn {
   background: var(--primary) !important;
   color: #ffffff !important;
-  border: none !important;
+  border: 1px solid transparent !important;
   box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3) !important;
 }
 
 .driver-popover-next-btn:hover {
   background: var(--primary-hover) !important;
   transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4) !important;
 }
 
 .driver-popover-prev-btn {
@@ -3302,10 +3335,13 @@ a {
 
 .driver-popover-prev-btn:hover {
   background: var(--border) !important;
+  color: var(--text) !important;
 }
 
 .driver-popover-close-btn {
   color: var(--text-muted) !important;
+  padding: 6px 10px !important;
+  min-height: auto !important;
 }
 
 .driver-popover-close-btn:hover {

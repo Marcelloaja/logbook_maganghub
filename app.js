@@ -845,7 +845,7 @@ function loadSavedDraft() {
       localStorage.setItem('maganghub_logbook_draft_v2', JSON.stringify(cleanPayload));
 
       setTimeout(() => {
-        showToast('Hari baru: Rincian kegiatan & foto dikosongkan. Data peserta & tanda tangan tetap aman ✨');
+        showToast('Hari baru: Rincian kegiatan & foto dikosongkan. Data peserta & tanda tangan tetap tersimpan aman.');
       }, 600);
       return;
     }
@@ -936,7 +936,7 @@ function clearDailyActivitiesAuto() {
     localStorage.setItem('maganghub_logbook_draft_v2', JSON.stringify(cleanPayload));
   } catch (e) {}
 
-  showToast('⏰ Lewat pukul 23.59: Rincian kegiatan & foto telah dikosongkan untuk hari baru. Data peserta & tanda tangan tetap tersimpan aman ✨');
+  showToast('⏰ Lewat pukul 23.59: Rincian kegiatan & foto telah dikosongkan untuk hari baru. Data peserta & tanda tangan tetap tersimpan aman.');
 }
 
 async function resetForm() {
@@ -3159,7 +3159,7 @@ Aturan Wajib:
       cachedAiPembelajaran = aiText;
       lastAiInputHash = inputHash;
       textEl.value = aiText;
-      showToast('✨ Pembelajaran berhasil disusun oleh AI Gemini!');
+      showToast('✓ Pembelajaran & kompetensi berhasil dirangkum!');
     } else {
       throw new Error(resJson?.error?.message || 'Gagal generate AI');
     }
@@ -3273,9 +3273,9 @@ function initAppTour() {
     animate: true,
     allowClose: true,
     overlayOpacity: 0.65,
-    doneBtnText: 'Selesai 🚀',
-    nextBtnText: 'Lanjut &rarr;',
-    prevBtnText: '&larr; Kembali',
+    doneBtnText: 'Selesai',
+    nextBtnText: 'Lanjut&nbsp;&rarr;',
+    prevBtnText: '&larr;&nbsp;Kembali',
     progressText: 'Langkah {{current}} dari {{total}}',
     onDestroyStarted: () => {
       localStorage.setItem('maganghub_tour_completed', 'true');
@@ -3285,7 +3285,7 @@ function initAppTour() {
       {
         element: '#sidebar',
         popover: {
-          title: '🌟 Selamat Datang di Logbook MagangHub!',
+          title: 'Selamat Datang di Logbook MagangHub',
           description: 'Aplikasi resmi untuk mempermudah seluruh 33 peserta magang Kemendikdasmen Balai Bahasa Jawa Timur dalam mencatat kegiatan, export Word/PDF, sinkronisasi Google Drive, dan mengisi portal Monev Kemnaker.',
           side: 'right',
           align: 'start'
@@ -3349,7 +3349,7 @@ function initAppTour() {
         element: '#catatan',
         popover: {
           title: '💡 Catatan / Kendala Tambahan',
-          description: 'Tuliskan catatan khusus atau kendala (jika ada). Jika tidak ada kendala, Anda boleh membiarkannya kosong karena sistem AI akan otomatis membuat evaluasi positif untuk laporan Monev Anda.',
+          description: 'Tuliskan catatan khusus atau kendala (jika ada). Jika tidak ada kendala, Anda boleh membiarkannya kosong karena sistem akan otomatis membuat narasi evaluasi positif untuk laporan Monev Anda.',
           side: 'top',
           align: 'start'
         }
@@ -3384,8 +3384,8 @@ function initAppTour() {
       {
         element: '#nav-monev',
         popover: {
-          title: '🤖 Format Monev AI (3 Clip Siap Salin)',
-          description: 'Fitur paling praktis! Klik menu ini untuk menyusun 3 klip siap salin ke portal <strong>monev.maganghub.kemnaker.go.id</strong>: Uraian Kronologis + Link Drive, Pembelajaran otomatis AI Gemini, dan Kendala otomatis positif.',
+          title: '📋 Format Laporan Monev Kemnaker (3 Klip)',
+          description: 'Fitur praktis untuk menyusun 3 klip siap salin ke portal <strong>monev.maganghub.kemnaker.go.id</strong>: Uraian Kronologis + Link Drive, Refleksi Pembelajaran & Kompetensi yang dirangkum dari agenda, serta Evaluasi Kendala harian.',
           side: 'right',
           align: 'center'
         }
