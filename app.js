@@ -1620,7 +1620,7 @@ let storageFiles = [];
 let currentActiveFolderId = null;
 
 // Official Default Google Apps Script URL for all 33 interns
-const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbw3lngPgPRjMGFCTQCaNcMxRKXp4iBEsnXBMVslLQmCH7aZhzOUG-1AcI5BGaElZPVl/exec';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbx305dI0GvWD682LGaj39_f0vd0rRHZXLL_4rDexzz0NeqHkqPGEO7VOvddkGvkPvei/exec';
 
 // Real default folder for Marcello (no more dummy folders)
 const DEFAULT_FOLDERS = [
@@ -1631,6 +1631,11 @@ function getGasWebhookUrl() {
   const inputEl = document.getElementById('gas-webhook-url');
   const fromInput = inputEl ? inputEl.value.trim() : '';
   const fromStorage = (localStorage.getItem('gas_webhook_url') || '').trim();
+  // Jika URL di storage masih versi lama (AKfycbw3lng...), otomatis gantikan ke DEFAULT_GAS_URL baru
+  if (fromStorage.includes('AKfycbw3lngPgPRjMGFCTQCaNcMxRKXp4iBEsnXBMVslLQmCH7aZhzOUG-1AcI5BGaElZPVl') || !fromStorage) {
+    localStorage.setItem('gas_webhook_url', DEFAULT_GAS_URL);
+    return DEFAULT_GAS_URL;
+  }
   return fromInput || fromStorage || DEFAULT_GAS_URL;
 }
 
