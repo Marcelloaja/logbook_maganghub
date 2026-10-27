@@ -2948,3 +2948,217 @@ function showToast(msg) {
     t.classList.remove('show');
   }, 3200);
 }
+
+function getGeminiApiKey() {
+  const fromStorage = localStorage.getItem('gemini_api_key');
+  if (fromStorage && fromStorage.trim()) return fromStorage.trim();
+  // Token default Gemini untuk asisten AI Monev MagangHub
+  try {
+    return atob('QVEuQWI4Uk42SWoxaWs1UWhrSDhZbmlyX0QtR2YzM085NzBHZUNrTjg2VXhtTWxOcUtXcVE=');
+  } catch {
+    return '';
+  }
+}
+let cachedAiPembelajaran = '';
+let lastAiInputHash = '';
+
+function buildMonevUraian() {
+  const data = collectData();
+  const items = [];
+
+  if (Array.isArray(data.kegiatan) && data.kegiatan.length > 0) {
+    data.kegiatan.forEach((kg, idx) => {
+      const waktu = (kg.waktu || (kg.waktuMulai ? `${kg.waktuMulai} - ${kg.waktuSelesai || '16:00'} WIB` : '')).trim();
+      const nama = (kg.nama || '').trim();
+      const desc = (kg.deskripsi || '').trim();
+      if (!nama && !desc) return;
+
+      let line = '';
+      if (waktu) {
+        line += `${waktu}: `;
+      }
+      line += nama;
+      if (desc && desc !== '-' && desc !== nama) {
+        line += ` - ${desc}`;
+      }
+      items.push(`${idx + 1}. ${line}`);
+    });
+  }
+
+  if (items.length === 0) {
+    items.push('1. Melaksanakan aktivitas dan tugas magang sesuai instruksi pembimbing.');
+  }
+
+  let text = items.join('\n');
+  if (currentSavedResultUrl && (currentSavedResultUrl.startsWith('http://') || currentSavedResultUrl.startsWith('https://'))) {
+    text += `\n\nLink Bukti Logbook Digital (Google Drive):\n${currentSavedResultUrl}`;
+  }
+  return text;
+}
+
+function buildMonevKendala() {
+  const data = collectData();
+  const catatan = (data.catatan || '').trim();
+
+  // Jika peserta mengisi catatan/kendala sendiri
+  if (catatan && catatan.toLowerCase() !== '-' && catatan.toLowerCase() !== 'tidak ada' && catatan.toLowerCase() !== 'nihil') {
+    return catatan;
+  }
+
+  // Jika kosong, susun evaluasi positif otomatis sesuai aktivitas
+  const activities = (data.kegiatan || []).map(k => (k.nama || '').trim()).filter(Boolean);
+  if (activities.length >= 2) {
+    const firstActs = activities.slice(0, -1).join(', ');
+    const lastAct = activities[activities.length - 1];
+    return `Tidak ada kendala. Seluruh agenda kegiatan mulai dari ${firstActs}, hingga ${lastAct} berjalan dengan sangat lancar dan sesuai target waktu yang direncanakan.`;
+  } else if (activities.length === 1) {
+    return `Tidak ada kendala. Agenda kegiatan ${activities[0]} berjalan dengan sangat lancar dan sesuai target waktu yang direncanakan.`;
+  } else {
+    return 'Tidak ada kendala. Seluruh agenda kegiatan magang hari ini berjalan dengan sangat lancar dan sesuai target waktu yang direncanakan.';
+  }
+}
+
+function generateSmartFallbackPembelajaran(data) {
+  const activities = (data.kegiatan || []).map(k => (k.nama || '').trim()).filter(Boolean);
+  const actsJoined = activities.slice(0, 3).join(', ');
+  return `Melalui pelaksanaan kegiatan hari ini, khususnya dalam ${actsJoined || 'tugas harian magang'}, saya memperoleh pemahaman mendalam mengenai pentingnya koordinasi tim yang efektif, ketelitian teknis, dan manajemen waktu yang terstruktur. Rangkaian aktivitas ini juga memperkuat kemampuan komunikasi profesional serta kemampuan beradaptasi dalam menyelesaikan tanggung jawab kerja di lingkungan Balai Bahasa Jawa Timur.`;
+}
+
+async function generatePembelajaranAI(force = false) {
+  const textEl = document.getElementById('monev-pembelajaran-text');
+  const loadingEl = document.getElementById('monev-ai-loading');
+  const btnRegen = document.getElementById('btn-regen-ai');
+  if (!textEl) return;
+
+  const data = collectData();
+  const kegiatanList = (data.kegiatan || []).map(k => `- ${k.waktu || ''} ${k.nama || ''}: ${k.deskripsi || ''}`).join('\n');
+  const inputHash = (data.nama || '') + '|' + (data.unit || '') + '|' + kegiatanList;
+
+  if (!force && cachedAiPembelajaran && lastAiInputHash === inputHash) {
+    textEl.value = cachedAiPembelajaran;
+    return;
+  }
+
+  if (loadingEl) loadingEl.style.display = 'flex';
+  if (btnRegen) btnRegen.disabled = true;
+
+  const prompt = `Anda adalah asisten pembuat laporan Monev MagangHub Kemnaker untuk peserta magang (${data.nama || 'Peserta Magang'}) di ${data.unit || 'Balai Bahasa Provinsi Jawa Timur'}.\nBerdasarkan rincian kegiatan hari ini:\n${kegiatanList}\n\nTuliskan 1 paragraf ringkas (3-4 kalimat, bahasa Indonesia formal, tanpa bullet points, tanpa tanda kutip, tanpa kata pengantar seperti "Berikut adalah...") untuk kolom 'Pembelajaran yang didapat' pada portal Monev MagangHub Kemnaker. Fokus pada pengembangan kompetensi teknis, komunikasi kerja, kolaborasi tim, dan kedisiplinan kerja.`;
+
+  try {
+    const apiKey = getGeminiApiKey();
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 300
+        }
+      })
+    });
+
+    const resJson = await resp.json();
+    const aiText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+    if (aiText) {
+      cachedAiPembelajaran = aiText;
+      lastAiInputHash = inputHash;
+      textEl.value = aiText;
+      showToast('✨ Pembelajaran berhasil disusun oleh AI Gemini!');
+    } else {
+      throw new Error(resJson?.error?.message || 'Gagal generate AI');
+    }
+  } catch (err) {
+    console.warn('Gemini API fallback to rule-based:', err);
+    const fallback = generateSmartFallbackPembelajaran(data);
+    textEl.value = fallback;
+    cachedAiPembelajaran = fallback;
+    lastAiInputHash = inputHash;
+  } finally {
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (btnRegen) btnRegen.disabled = false;
+  }
+}
+
+function copyMonevClip(type) {
+  let text = '';
+  let label = '';
+  let btnId = '';
+  if (type === 'uraian') {
+    text = document.getElementById('monev-uraian-text')?.value || '';
+    label = 'Uraian Aktifitas';
+    btnId = 'btn-copy-uraian';
+  } else if (type === 'pembelajaran') {
+    text = document.getElementById('monev-pembelajaran-text')?.value || '';
+    label = 'Pembelajaran yang Didapat';
+    btnId = 'btn-copy-pembelajaran';
+  } else if (type === 'kendala') {
+    text = document.getElementById('monev-kendala-text')?.value || '';
+    label = 'Kendala yang Dialami';
+    btnId = 'btn-copy-kendala';
+  }
+
+  if (!text) {
+    showToast('Teks masih kosong');
+    return;
+  }
+
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`✓ ${label} berhasil disalin! Siap ditempel ke Monev Kemnaker 📋`);
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      const origHtml = btn.innerHTML;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> <span>Tersalin!</span>`;
+      btn.style.borderColor = '#16a34a';
+      btn.style.color = '#16a34a';
+      setTimeout(() => {
+        btn.innerHTML = origHtml;
+        btn.style.borderColor = '';
+        btn.style.color = '';
+      }, 2000);
+    }
+  }).catch(() => {
+    showToast('Gagal menyalin teks');
+  });
+}
+
+function copyAllMonevFormat() {
+  const uraian = document.getElementById('monev-uraian-text')?.value || '';
+  const pembelajaran = document.getElementById('monev-pembelajaran-text')?.value || '';
+  const kendala = document.getElementById('monev-kendala-text')?.value || '';
+
+  const full = `[1. URAIAN AKTIFITAS]\n${uraian}\n\n[2. PEMBELAJARAN YANG DIDAPAT]\n${pembelajaran}\n\n[3. KENDALA YANG DIALAMI]\n${kendala}`;
+
+  navigator.clipboard.writeText(full).then(() => {
+    showToast('✓ Seluruh format Monev (3-in-1) berhasil disalin ke clipboard! 📋');
+  }).catch(() => {
+    showToast('Gagal menyalin format');
+  });
+}
+
+function openMonevModal() {
+  const modal = document.getElementById('monev-summary-modal');
+  if (!modal) return;
+
+  const uraianEl = document.getElementById('monev-uraian-text');
+  if (uraianEl) uraianEl.value = buildMonevUraian();
+
+  const kendalaEl = document.getElementById('monev-kendala-text');
+  if (kendalaEl) kendalaEl.value = buildMonevKendala();
+
+  generatePembelajaranAI(false);
+
+  modal.classList.add('open');
+}
+
+function closeMonevModal(e) {
+  if (e && e.target !== e.currentTarget && !e.target.classList.contains('modal-close') && !e.target.classList.contains('btn-secondary')) return;
+  const modal = document.getElementById('monev-summary-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function openMonevWebsite() {
+  window.open('https://monev.maganghub.kemnaker.go.id/', '_blank');
+}

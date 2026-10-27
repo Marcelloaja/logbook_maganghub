@@ -44,6 +44,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
         <span>Penyimpanan Berkas</span>
       </a>
+      <a href="#" class="nav-item" id="nav-monev" onclick="openMonevModal(); return false;" title="Format Laporan Monev MagangHub Kemnaker (3 Clip)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+        <span>Format Monev AI</span>
+      </a>
     </nav>
 
     <div class="sidebar-theme-toggle">
@@ -207,6 +211,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
           Reset Form
         </button>
+        <button type="button" class="btn btn-secondary" onclick="openMonevModal()" title="Salin Uraian, Pembelajaran AI, dan Kendala untuk portal Monev Kemnaker">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+          Format Monev (3 Clip)
+        </button>
         <button type="button" class="btn btn-primary" onclick="goToPreview()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           Lihat Preview &amp; Export
@@ -233,6 +241,10 @@
         <button type="button" class="btn btn-storage" onclick="goToStorageWithActiveLogbook()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
           Simpan ke Storage Website
+        </button>
+        <button type="button" class="btn btn-primary" onclick="openMonevModal()" style="background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%); border: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+          Format Monev Kemnaker (3 Clip)
         </button>
       </div>
 
@@ -418,6 +430,10 @@
               <button type="button" id="storage-result-open-btn" class="btn btn-secondary" onclick="openCurrentResultUrl()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 Buka Berkas
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="openMonevModal()" style="border-color: #8b5cf6; color: #7c3aed;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+                Format Monev (3 Clip)
               </button>
             </div>
           </div>
@@ -769,6 +785,110 @@ function doPost(e) {
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" onclick="closeScriptModal()">Saya Mengerti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Format Laporan Monev Kemnaker (3 Clip Siap Tempel) -->
+  <div class="modal-backdrop monev-modal-backdrop" id="monev-summary-modal" onclick="closeMonevModal(event)">
+    <div class="modal-content monev-modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header monev-modal-header">
+        <div class="monev-modal-title-box">
+          <div class="monev-title-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+          </div>
+          <div>
+            <h3 class="modal-title">Format Laporan Monev Kemnaker</h3>
+            <p class="monev-modal-sub">Siap salin &amp; tempel langsung ke portal <a href="https://monev.maganghub.kemnaker.go.id/" target="_blank" rel="noopener noreferrer">monev.maganghub.kemnaker.go.id</a></p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" onclick="closeMonevModal()">✕</button>
+      </div>
+
+      <div class="modal-body monev-modal-body">
+        <!-- CLIP 1: URAIAN AKTIFITAS -->
+        <div class="monev-clip-card">
+          <div class="monev-clip-top">
+            <div class="monev-clip-title-group">
+              <span class="monev-badge-num">1</span>
+              <div>
+                <h4 class="monev-clip-heading">Uraian Aktifitas</h4>
+                <span class="monev-clip-source">Rincian Kegiatan &amp; Jam Pelaksanaan</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm btn-clip-copy" id="btn-copy-uraian" onclick="copyMonevClip('uraian')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Salin Uraian</span>
+            </button>
+          </div>
+          <textarea id="monev-uraian-text" class="monev-textarea" rows="4" placeholder="Memuat rincian kegiatan..."></textarea>
+          <div class="monev-clip-desc">Format kronologis waktu &amp; penjelasan tugas yang siap ditempel ke kolom <strong>Uraian Aktifitas</strong>.</div>
+        </div>
+
+        <!-- CLIP 2: PEMBELAJARAN YANG DIDAPAT (AI GEMINI) -->
+        <div class="monev-clip-card monev-ai-card">
+          <div class="monev-clip-top">
+            <div class="monev-clip-title-group">
+              <span class="monev-badge-num ai">2</span>
+              <div>
+                <h4 class="monev-clip-heading">Pembelajaran yang Didapat</h4>
+                <span class="monev-clip-source ai-sparkle">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                  Disusun Otomatis oleh AI Gemini
+                </span>
+              </div>
+            </div>
+            <div class="monev-clip-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-regen-ai" onclick="generatePembelajaranAI(true)" title="Generate ulang teks pembelajaran">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <span>Generate Ulang AI</span>
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm btn-clip-copy" id="btn-copy-pembelajaran" onclick="copyMonevClip('pembelajaran')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>Salin Pembelajaran</span>
+              </button>
+            </div>
+          </div>
+          <div class="monev-textarea-wrapper">
+            <textarea id="monev-pembelajaran-text" class="monev-textarea" rows="4" placeholder="AI Gemini sedang menyusun refleksi pembelajaran profesional..."></textarea>
+            <div class="monev-ai-loading-overlay" id="monev-ai-loading" style="display: none;">
+              <div class="loading-spinner-ring small"></div>
+              <span>AI Gemini sedang merangkum kompetensi &amp; pembelajaran...</span>
+            </div>
+          </div>
+          <div class="monev-clip-desc">Refleksi kompetensi, soft skills &amp; wawasan kerja. Anda dapat menyunting teks di atas sesuai kebutuhan.</div>
+        </div>
+
+        <!-- CLIP 3: KENDALA YANG DIALAMI -->
+        <div class="monev-clip-card">
+          <div class="monev-clip-top">
+            <div class="monev-clip-title-group">
+              <span class="monev-badge-num">3</span>
+              <div>
+                <h4 class="monev-clip-heading">Kendala yang Dialami</h4>
+                <span class="monev-clip-source">Dari Catatan Form / Auto Evaluasi Positif</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm btn-clip-copy" id="btn-copy-kendala" onclick="copyMonevClip('kendala')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Salin Kendala</span>
+            </button>
+          </div>
+          <textarea id="monev-kendala-text" class="monev-textarea" rows="3" placeholder="Memuat status kendala kerja..."></textarea>
+          <div class="monev-clip-desc">Jika catatan form kosong, otomatis dibuatkan kalimat evaluasi positif bahwa seluruh agenda berjalan lancar.</div>
+        </div>
+      </div>
+
+      <div class="modal-footer monev-modal-footer">
+        <button type="button" class="btn btn-primary" onclick="copyAllMonevFormat()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Salin Semua Format (3-in-1)
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="openMonevWebsite()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Buka Monev MagangHub ↗
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeMonevModal()">Tutup</button>
       </div>
     </div>
   </div>
