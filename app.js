@@ -3274,8 +3274,8 @@ function initAppTour() {
     allowClose: true,
     overlayOpacity: 0.65,
     doneBtnText: 'Selesai',
-    nextBtnText: 'Lanjut&nbsp;&rarr;',
-    prevBtnText: '&larr;&nbsp;Kembali',
+    nextBtnText: 'Lanjut',
+    prevBtnText: 'Kembali',
     progressText: 'Langkah {{current}} dari {{total}}',
     onDestroyStarted: () => {
       localStorage.setItem('maganghub_tour_completed', 'true');
@@ -3294,8 +3294,8 @@ function initAppTour() {
       {
         element: '#nav-form',
         popover: {
-          title: '📝 Tab 1: Input Logbook Harian',
-          description: 'Ini halaman utama untuk mengisi aktivitas kerja Anda. Semua yang Anda ketik otomatis disimpan ke memori browser (Auto-save), jadi tidak perlu khawatir data hilang!',
+          title: 'Tab 1: Input Logbook Harian',
+          description: 'Halaman utama untuk mengisi aktivitas kerja harian. Semua data yang diketik tersimpan otomatis ke browser (Auto-save).',
           side: 'right',
           align: 'center'
         }
@@ -3303,8 +3303,8 @@ function initAppTour() {
       {
         element: '#nama',
         popover: {
-          title: '👤 Data Peserta & Unit Kerja',
-          description: 'Ketik nama lengkap dan divisi/unit Anda. <strong>Penting:</strong> Data peserta ini TERSIMPAN PERMANEN dan tidak akan pernah di-reset setiap hari.',
+          title: 'Data Peserta dan Unit Kerja',
+          description: 'Ketik nama lengkap dan divisi atau unit kerja Anda. Data peserta ini tersimpan permanen dan tidak akan direset setiap hari.',
           side: 'bottom',
           align: 'start'
         }
@@ -3312,8 +3312,8 @@ function initAppTour() {
       {
         element: '#btn-lock-mentor',
         popover: {
-          title: '🔒 Fitur Kunci Nama Mentor',
-          description: 'Ketik nama mentor pembimbing Anda, lalu klik tombol gembok ini. Setelah terkunci, nama mentor Anda otomatis tersimpan setiap hari tanpa perlu mengetik ulang!',
+          title: 'Fitur Kunci Nama Mentor',
+          description: 'Ketik nama mentor pembimbing, lalu klik tombol gembok ini. Setelah terkunci, nama mentor Anda otomatis tersimpan setiap hari tanpa perlu mengetik ulang.',
           side: 'left',
           align: 'center'
         }
@@ -3321,7 +3321,7 @@ function initAppTour() {
       {
         element: '#tanggal',
         popover: {
-          title: '📅 Hari & Tanggal Otomatis',
+          title: 'Hari dan Tanggal Otomatis',
           description: 'Sistem secara realtime mengisi hari dan tanggal hari ini. Tanggal ini juga menjadi patokan reset kegiatan harian otomatis setiap pergantian hari lewat pukul 23.59.',
           side: 'bottom',
           align: 'start'
@@ -3330,8 +3330,8 @@ function initAppTour() {
       {
         element: '#kegiatan-list',
         popover: {
-          title: '📋 Rincian Kegiatan & Foto Dokumentasi',
-          description: 'Isi jam mulai & selesai (format WIB), judul kegiatan, penjelasan tugas, serta upload foto dokumentasi per kegiatan (maks 5MB).<br/><br/>⚠️ <em>Catatan: Bagian inilah yang otomatis dikosongkan setiap lewat pukul 23.59 agar siap untuk hari baru.</em>',
+          title: 'Rincian Kegiatan dan Foto Dokumentasi',
+          description: 'Isi jam mulai dan selesai, judul kegiatan, deskripsi rincian tugas, serta upload foto dokumentasi per kegiatan (maksimal 5MB). Bagian ini yang otomatis dikosongkan setiap lewat pukul 23.59 untuk hari baru.',
           side: 'top',
           align: 'center'
         }
@@ -3339,8 +3339,8 @@ function initAppTour() {
       {
         element: '#btn-add',
         popover: {
-          title: '➕ Tambah Kegiatan Baru',
-          description: 'Jika ada lebih dari 1 kegiatan dalam sehari, klik tombol ini untuk menambah baris kegiatan baru sebanyak yang dibutuhkan.',
+          title: 'Tambah Kegiatan Baru',
+          description: 'Klik tombol ini jika memiliki lebih dari satu kegiatan dalam sehari untuk menambah baris kegiatan baru sebanyak yang dibutuhkan.',
           side: 'top',
           align: 'center'
         }
@@ -3348,8 +3348,8 @@ function initAppTour() {
       {
         element: '#catatan',
         popover: {
-          title: '💡 Catatan / Kendala Tambahan',
-          description: 'Tuliskan catatan khusus atau kendala (jika ada). Jika tidak ada kendala, Anda boleh membiarkannya kosong karena sistem akan otomatis membuat narasi evaluasi positif untuk laporan Monev Anda.',
+          title: 'Catatan atau Kendala Tambahan',
+          description: 'Tuliskan catatan khusus atau kendala kerja jika ada. Jika tidak ada kendala, dapat dibiarkan kosong karena sistem otomatis menyiapkan evaluasi positif untuk laporan Monev.',
           side: 'top',
           align: 'start'
         }
@@ -3357,8 +3357,8 @@ function initAppTour() {
       {
         element: '.signature-container',
         popover: {
-          title: '✍️ Tanda Tangan Digital',
-          description: 'Goreskan tanda tangan langsung di canvas atau klik "Upload Foto TTD". <strong>Tenang saja:</strong> Tanda tangan peserta dan mentor TERSIMPAN AMAN dan tidak akan hilang saat pergantian hari.',
+          title: 'Tanda Tangan Digital',
+          description: 'Goreskan tanda tangan langsung di canvas atau gunakan tombol upload foto tanda tangan. Tanda tangan peserta dan mentor tetap tersimpan aman saat pergantian hari.',
           side: 'top',
           align: 'center'
         }
@@ -3366,8 +3366,8 @@ function initAppTour() {
       {
         element: '#nav-preview',
         popover: {
-          title: '👁️ Tab 2: Preview & Export Dokumen',
-          description: 'Klik tab ini untuk melihat lembar logbook resmi dengan Kop Surat Kemendikdasmen. Dari sini Anda bisa langsung mendownload dokumen dalam bentuk <strong>Word (.docx)</strong> atau <strong>PDF (.pdf)</strong>.',
+          title: 'Tab 2: Preview dan Export Dokumen',
+          description: 'Lihat lembar logbook resmi dengan Kop Surat Kemendikdasmen. Anda dapat mengunduh dokumen dalam format Word (.docx) atau PDF (.pdf).',
           side: 'right',
           align: 'center'
         }
@@ -3375,8 +3375,8 @@ function initAppTour() {
       {
         element: '#nav-storage',
         popover: {
-          title: '📁 Tab 3: Penyimpanan Berkas & 33 Folder',
-          description: 'Buka tab ini untuk mengakses folder masing-masing dari 33 peserta magang di Google Drive koordinator. Klik ikon bintang (⭐) pada folder Anda agar selalu dipin di urutan paling atas!',
+          title: 'Tab 3: Penyimpanan Berkas dan Folder',
+          description: 'Akses folder 33 peserta magang di Google Drive koordinator. Klik tombol bintang pada folder Anda agar selalu berada di urutan paling atas.',
           side: 'right',
           align: 'center'
         }
@@ -3384,8 +3384,8 @@ function initAppTour() {
       {
         element: '#nav-monev',
         popover: {
-          title: '📋 Format Laporan Monev Kemnaker (3 Klip)',
-          description: 'Fitur praktis untuk menyusun 3 klip siap salin ke portal <strong>monev.maganghub.kemnaker.go.id</strong>: Uraian Kronologis + Link Drive, Refleksi Pembelajaran & Kompetensi yang dirangkum dari agenda, serta Evaluasi Kendala harian.',
+          title: 'Format Laporan Monev Kemnaker',
+          description: 'Fitur praktis untuk menyusun 3 klip siap salin ke portal Monev Kemnaker: Uraian Kronologis beserta link Drive, Refleksi Pembelajaran, dan Evaluasi Kendala harian.',
           side: 'right',
           align: 'center'
         }
@@ -3393,8 +3393,8 @@ function initAppTour() {
       {
         element: '#theme-toggle-btn',
         popover: {
-          title: '🌙 Mode Terang & Gelap',
-          description: 'Klik tombol ini untuk beralih antara Mode Terang dan Mode Gelap yang nyaman untuk mata saat bekerja malam hari.',
+          title: 'Mode Terang dan Gelap',
+          description: 'Klik tombol ini untuk beralih antara Mode Terang dan Mode Gelap sesuai kenyamanan visual Anda.',
           side: 'top',
           align: 'start'
         }

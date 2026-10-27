@@ -43,10 +43,10 @@ Jika Anda baru pertama kali membuka website ini atau lupa letak menu tertentu, g
 ![Panduan Interaktif Tur](assets/screenshots/2_panduan_tur.png)
 
 ### Cara Mengaktifkan Tur:
-1. Klik tombol **"Cara Pakai (Tur) 🎯"** di pojok kanan atas formulir input, ATAU
-2. Klik menu **"Panduan Tur 🎯"** pada panel navigasi (sidebar kiri).
+1. Klik tombol **"Panduan Penggunaan"** di pojok kanan atas formulir input, ATAU
+2. Klik menu **"Panduan Tur"** pada panel navigasi (sidebar kiri).
 3. Layar akan memandu Anda langkah demi langkah dengan menyorot elemen penting formulir secara interaktif.
-4. Klik tombol **Lanjut →** untuk berpindah ke langkah berikutnya, atau klik **Selesai 🚀** untuk keluar dari tur.
+4. Klik tombol **Lanjut** untuk berpindah ke langkah berikutnya, atau klik **Selesai** untuk keluar dari tur.
 
 ---
 
