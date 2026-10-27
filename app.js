@@ -1810,83 +1810,91 @@ async function syncStorageWithCloud(silent = true) {
       let changed = false;
 
       // =====================================================================
-      // FOLDER SYNC: Cloud selalu prioritas — gabungkan dengan folder lokal
+      // FOLDER SYNC: Google Drive adalah Pusat Tunggal (Single Source of Truth)
+      // Hanya tampilkan folder resmi yang ada di Google Drive koordinator
       // =====================================================================
-      const cloudFolderMap = new Map();
-
       if (Array.isArray(res.folders)) {
+        const cloudFolderMap = new Map();
+
         res.folders.forEach(f => {
           if (f && f.name && !['f-1', 'f-2', 'f-3', 'f-4'].includes(f.id)) {
-            cloudFolderMap.set(f.name.toLowerCase().trim(), f);
+            const k = f.name.toLowerCase().trim();
+            // Cegah duplikasi jika ada folder kembar di Drive
+            if (!cloudFolderMap.has(k)) {
+              cloudFolderMap.set(k, {
+                id: f.id,
+                name: f.name.trim(),
+                createdAt: f.createdAt || 'Google Drive'
+              });
+            }
           }
         });
-      }
 
-      // Tambahkan folder lokal yang belum ada di cloud (baru dibuat, belum tersinkron)
-      storageFolders.forEach(f => {
-        const k = f.name.toLowerCase().trim();
-        if (!['f-1', 'f-2', 'f-3', 'f-4'].includes(f.id) && !cloudFolderMap.has(k)) {
-          cloudFolderMap.set(k, f);
+        // Pertahankan folder lokal HANYA jika baru dibuat dalam 15 detik terakhir (sedang proses dibuat ke Drive)
+        const nowMs = Date.now();
+        storageFolders.forEach(f => {
+          if (f && f.id && String(f.id).startsWith('f-') && f.createdAtMs && (nowMs - f.createdAtMs < 15000)) {
+            const k = f.name.toLowerCase().trim();
+            if (!cloudFolderMap.has(k)) {
+              cloudFolderMap.set(k, f);
+            }
+          }
+        });
+
+        const newFolders = Array.from(cloudFolderMap.values());
+        newFolders.sort((a, b) => a.name.localeCompare(b.name));
+
+        const oldKeys = storageFolders.map(f => (f.id || '') + '::' + (f.name || '')).sort().join('|');
+        const newKeys = newFolders.map(f => (f.id || '') + '::' + (f.name || '')).sort().join('|');
+
+        if (oldKeys !== newKeys) {
+          changed = true;
+          storageFolders = newFolders;
+          saveStorageFolders();
         }
-      });
-
-      const newFolders = Array.from(cloudFolderMap.values());
-      // Tandai sebagai changed jika jumlah folder berbeda atau ada nama baru
-      if (JSON.stringify(newFolders.map(f => f.name).sort()) !== JSON.stringify(storageFolders.map(f => f.name).sort())) {
-        changed = true;
       }
-      storageFolders = newFolders;
-      saveStorageFolders();
 
       // =====================================================================
-      // FILE SYNC: Cloud selalu prioritas — lokal hanya sebagai pelengkap
+      // FILE SYNC: Google Drive adalah Pusat Tunggal (Single Source of Truth)
       // =====================================================================
       if (Array.isArray(res.files)) {
-        // Normalisasi berkas dari Cloud Google Drive
-        const normalizedCloudFiles = res.files
-          .filter(c => c && (c.fileName || c.name))
-          .map(c => {
-            const fname = (c.fileName || c.name || '').trim();
-            const ext = fname.toLowerCase().endsWith('.docx') ? 'docx' : 'pdf';
-            return {
-              id: c.id || ('file-' + Date.now() + Math.random().toString(36).substr(2, 4)),
-              folderId: c.folderId,
-              folderName: c.folderName,
-              fileName: fname,
-              format: c.format || ext,
-              uploadDate: c.uploadDate || c.date || '',
-              url: c.url,
-              size: c.size,
-              isCloud: true
-            };
+        const cloudFileMap = new Map();
+
+        res.files.forEach(c => {
+          if (!c || (!c.fileName && !c.name)) return;
+          const fname = (c.fileName || c.name || '').trim();
+          const ext = fname.toLowerCase().endsWith('.docx') ? 'docx' : 'pdf';
+          const fileId = c.id || ('file-' + fname);
+
+          cloudFileMap.set(fileId, {
+            id: fileId,
+            folderId: c.folderId,
+            folderName: (c.folderName || '').trim(),
+            fileName: fname,
+            format: c.format || ext,
+            uploadDate: c.uploadDate || c.date || '',
+            url: c.url,
+            size: c.size,
+            isCloud: true
           });
-
-        const seenUrls = new Set();
-        const seenNameFolder = new Set();
-        const mergedFiles = [];
-
-        normalizedCloudFiles.forEach(cf => {
-          if (cf.url) seenUrls.add(cf.url);
-          const nameKey = `${cf.folderName || ''}:::${cf.fileName}`.toLowerCase();
-          seenNameFolder.add(nameKey);
-          mergedFiles.push(cf);
         });
 
-        // Pertahankan berkas lokal hanya jika belum ada di cloud
+        // Pertahankan berkas lokal HANYA jika berkas offline murni (bukan cloud)
         storageFiles.forEach(lf => {
-          const lName = (lf.fileName || lf.name || '').trim();
-          if (!lName) return;
-          const nameKey = `${lf.folderName || ''}:::${lName}`.toLowerCase();
-          if ((!lf.url || !seenUrls.has(lf.url)) && !seenNameFolder.has(nameKey)) {
-            mergedFiles.push(lf);
+          if (lf && lf.url && lf.url.startsWith('data:') && !lf.isCloud) {
+            cloudFileMap.set(lf.id, lf);
           }
         });
 
-        if (JSON.stringify(mergedFiles.length) !== JSON.stringify(storageFiles.length)) {
+        const newFiles = Array.from(cloudFileMap.values());
+        const oldFileKeys = storageFiles.map(f => f.id).sort().join('|');
+        const newFileKeys = newFiles.map(f => f.id).sort().join('|');
+
+        if (oldFileKeys !== newFileKeys) {
           changed = true;
+          storageFiles = newFiles;
+          saveStorageFiles();
         }
-        storageFiles = mergedFiles;
-        saveStorageFiles();
       }
 
       if (changed) {
@@ -2066,7 +2074,8 @@ function confirmCreateFolder() {
   const newFolder = {
     id: 'f-' + Date.now(),
     name: name,
-    createdAt: new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
+    createdAt: new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }),
+    createdAtMs: Date.now()
   };
 
   storageFolders.unshift(newFolder);
@@ -2088,6 +2097,7 @@ function confirmCreateFolder() {
         newFolder.id = res.folder.id || newFolder.id;
         saveStorageFolders();
         renderStorageFolders();
+        setTimeout(() => syncStorageWithCloud(true), 1500);
       }
     }).catch(err => console.warn('Cloud folder create error:', err));
   }
@@ -2694,6 +2704,7 @@ async function confirmDeleteCurrentFolder() {
         })
       });
       showToast(`✓ Folder "${folderNameToDelete}" berhasil dihapus dari Google Drive`);
+      setTimeout(() => syncStorageWithCloud(true), 1200);
     } catch (err) {
       console.warn('Delete cloud folder error:', err);
     }
