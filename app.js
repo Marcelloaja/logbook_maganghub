@@ -1867,6 +1867,15 @@ async function syncStorageWithCloud(silent = true) {
 
         if (oldKeys !== newKeys) {
           changed = true;
+          // PENTING: Perbarui currentActiveFolderId jika ID berubah karena sinkronisasi
+          if (currentActiveFolderId) {
+            const activeObj = storageFolders.find(f => f.id === currentActiveFolderId);
+            const activeName = activeObj ? activeObj.name.toLowerCase().trim() : '';
+            const matched = newFolders.find(f => f.id === currentActiveFolderId || (activeName && f.name.toLowerCase().trim() === activeName));
+            if (matched) {
+              currentActiveFolderId = matched.id;
+            }
+          }
           storageFolders = newFolders;
           saveStorageFolders();
         }
@@ -2089,6 +2098,15 @@ function confirmCreateFolder() {
     return;
   }
 
+  // Jika nama peserta di form utama masih kosong, otomatis isi dengan nama dari folder ini
+  const namaInput = document.getElementById('nama');
+  if (namaInput && !namaInput.value.trim()) {
+    const inferred = name.includes('-') ? name.split('-')[0].trim() : name.trim();
+    if (inferred) {
+      namaInput.value = inferred;
+    }
+  }
+
   const newFolder = {
     id: 'f-' + Date.now(),
     name: name,
@@ -2112,7 +2130,11 @@ function confirmCreateFolder() {
       body: JSON.stringify({ action: 'createFolder', folderName: name })
     }).then(r => r.json()).then(res => {
       if (res.success && res.folder) {
+        const oldId = newFolder.id;
         newFolder.id = res.folder.id || newFolder.id;
+        if (currentActiveFolderId === oldId) {
+          currentActiveFolderId = newFolder.id;
+        }
         saveStorageFolders();
         renderStorageFolders();
         setTimeout(() => syncStorageWithCloud(true), 1500);
@@ -2143,11 +2165,31 @@ function showAllFoldersView() {
   renderStorageFolders();
 }
 
+function getCurrentActiveFolder() {
+  if (currentActiveFolderId) {
+    const f = storageFolders.find(folder => folder.id === currentActiveFolderId);
+    if (f) return f;
+  }
+  const titleEl = document.getElementById('active-folder-title');
+  const titleName = titleEl ? titleEl.textContent.trim().toLowerCase() : '';
+  if (titleName) {
+    const found = storageFolders.find(folder => folder.name.toLowerCase().trim() === titleName);
+    if (found) {
+      currentActiveFolderId = found.id;
+      return found;
+    }
+  }
+  return null;
+}
+
 function openFolderView(folderId) {
-  const folder = storageFolders.find(f => f.id === folderId);
+  let folder = storageFolders.find(f => f.id === folderId);
+  if (!folder) {
+    folder = storageFolders.find(f => f.name && f.name.toLowerCase().trim() === String(folderId).toLowerCase().trim());
+  }
   if (!folder) return;
 
-  currentActiveFolderId = folderId;
+  currentActiveFolderId = folder.id;
   const foldersView = document.getElementById('storage-folders-view');
   const contentView = document.getElementById('storage-folder-content-view');
   const breadcrumbHome = document.getElementById('breadcrumb-home');
@@ -2167,7 +2209,7 @@ function openFolderView(folderId) {
   if (resultBanner) resultBanner.style.display = 'none';
 
   updateStorageFormSummary();
-  renderFolderFiles(folderId);
+  renderFolderFiles(folder.id);
 }
 
 function updateStorageFormSummary() {
@@ -2185,7 +2227,7 @@ function renderFolderFiles(folderId) {
   const metaEl = document.getElementById('active-folder-meta');
   if (!tbody) return;
 
-  const currentFolder = storageFolders.find(f => f.id === folderId);
+  const currentFolder = getCurrentActiveFolder() || storageFolders.find(f => f.id === folderId);
   const files = storageFiles.filter(f => f.folderId === folderId || (currentFolder && f.folderName && f.folderName.toLowerCase().trim() === currentFolder.name.toLowerCase().trim()));
   if (metaEl) metaEl.textContent = `${files.length} Berkas tersimpan`;
 
@@ -2235,21 +2277,37 @@ function renderFolderFiles(folderId) {
 
 // 1-Click Save Logbook to Current Folder
 async function saveActiveLogbookToCurrentFolder() {
-  if (!currentActiveFolderId) {
+  const folder = getCurrentActiveFolder();
+  if (!folder) {
     showToast('Pilih atau buka folder terlebih dahulu!');
     return;
   }
 
-  const folder = storageFolders.find(f => f.id === currentActiveFolderId);
-  if (!folder) return;
+  // Jika nama di input form masih kosong, otomatis gunakan nama dari folder
+  const namaInput = document.getElementById('nama');
+  if (namaInput && !namaInput.value.trim() && folder && folder.name) {
+    const inferred = folder.name.includes('-') ? folder.name.split('-')[0].trim() : folder.name.trim();
+    if (inferred) {
+      namaInput.value = inferred;
+    }
+  }
+
+  // Jika tanggal kosong, default ke hari ini
+  const tglInput = document.getElementById('tanggal');
+  if (tglInput && !tglInput.value) {
+    tglInput.value = new Date().toISOString().split('T')[0];
+  }
 
   const data = collectData();
-  if (!data.nama.trim()) {
-    showToast('Nama peserta di form masih kosong! Silakan isi terlebih dahulu di tab Input Logbook.');
-    switchTab('form', null);
-    const namaInput = document.getElementById('nama');
-    if (namaInput) namaInput.focus();
-    return;
+
+  if (!data.nama.trim() || data.nama === 'Peserta Magang') {
+    if (!document.getElementById('nama')?.value.trim()) {
+      showToast('Nama peserta di form masih kosong! Silakan isi terlebih dahulu di tab Input Logbook.');
+      switchTab('form', null);
+      const input = document.getElementById('nama');
+      if (input) input.focus();
+      return;
+    }
   }
 
   const btn = document.getElementById('btn-save-to-folder');
@@ -2505,9 +2563,11 @@ function copyStorageResultLink() {
 }
 
 function copyActiveFolderLink() {
-  if (!currentActiveFolderId) return;
-  const folder = storageFolders.find(f => f.id === currentActiveFolderId);
-  if (!folder) return;
+  const folder = getCurrentActiveFolder();
+  if (!folder) {
+    showToast('Pilih folder terlebih dahulu');
+    return;
+  }
   const currentUrl = window.location.origin + window.location.pathname + '#folder=' + encodeURIComponent(folder.name);
   navigator.clipboard.writeText(currentUrl).then(() => {
     showToast(`Tautan folder "${folder.name}" berhasil disalin!`);
@@ -2675,9 +2735,11 @@ async function deleteStorageFile(fileId) {
 }
 
 async function confirmDeleteCurrentFolder() {
-  if (!currentActiveFolderId) return;
-  const folder = storageFolders.find(f => f.id === currentActiveFolderId);
-  if (!folder) return;
+  const folder = getCurrentActiveFolder();
+  if (!folder) {
+    showToast('Pilih folder terlebih dahulu');
+    return;
+  }
 
   const filesInFolder = storageFiles.filter(f => f.folderId === folder.id || (f.folderName && folder.name && f.folderName.toLowerCase().trim() === folder.name.toLowerCase().trim()));
   const msg = filesInFolder.length > 0 
