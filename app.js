@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await preloadLogo();
   loadSavedDraft();
   initStorageHub();
+  startDailyResetWatcher();
 });
 
 // ============================================================
@@ -704,13 +705,50 @@ function drawDataUrlToCanvas(canvas, dataUrl) {
 }
 
 // ============================================================
-// AUTO-SAVE & RESTORE DRAFT
+// AUTO-SAVE & RESTORE DRAFT (WITH 23:55 & DAILY AUTO-CLEAR)
 // ============================================================
+function getTodayDateString() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function isPastCutoffTime() {
+  const now = new Date();
+  const hour = now.getHours();
+  const minute = now.getMinutes();
+  // Cutoff mulai pukul 23:55 (23:55:00 s.d. 23:59:59)
+  return hour === 23 && minute >= 55;
+}
+
+function isDraftExpired(draft) {
+  if (!draft) return false;
+  // Jika draft belum memiliki field saveDate, langsung anggap kedaluwarsa (data kemarin)
+  if (!draft.saveDate) return true;
+
+  const today = getTodayDateString();
+  // Jika tanggal draft bukan hari ini -> kedaluwarsa (sudah ganti hari)
+  if (draft.saveDate !== today) return true;
+
+  // Jika hari ini dan waktu sekarang sudah >= 23:55
+  if (isPastCutoffTime()) return true;
+
+  return false;
+}
+
 let saveTimer;
 function autoSaveDraft() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
+    // Jika waktu sudah >= 23.55, jangan simpan rincian kegiatan ke cache
+    if (isPastCutoffTime()) {
+      return;
+    }
     const payload = {
+      saveDate: getTodayDateString(),
+      saveTimestamp: Date.now(),
       nama: document.getElementById('nama')?.value || '',
       unit: document.getElementById('unit')?.value || '',
       mentor: document.getElementById('mentor')?.value || '',
@@ -738,15 +776,55 @@ function loadSavedDraft() {
       return;
     }
     const data = JSON.parse(raw);
+
+    // Identitas peserta & unit tetap dipertahankan agar tidak perlu repot ketik ulang
     if (data.nama) document.getElementById('nama').value = data.nama;
     if (data.unit) document.getElementById('unit').value = data.unit;
-    if (data.catatan) document.getElementById('catatan').value = data.catatan;
 
-    // Load mentor if not already locked
+    // Load mentor if not locked
     if (!isMentorLocked && data.mentor) {
       const mentorInput = document.getElementById('mentor');
       if (mentorInput) mentorInput.value = data.mentor;
     }
+
+    const expired = isDraftExpired(data);
+
+    if (expired) {
+      // Hari baru atau sudah melewati 23:55 -> Kosongkan kegiatan, foto dokumentasi & catatan
+      const list = document.getElementById('kegiatan-list');
+      if (list) list.innerHTML = '';
+      kegiatanCounter = 0;
+      kegiatanDataStore = [];
+      addNewKegiatanUI(); // Sediakan 1 baris kegiatan baru yang kosong
+
+      const catEl = document.getElementById('catatan');
+      if (catEl) catEl.value = '';
+
+      clearSignature('peserta');
+      clearSignature('mentor');
+      initRealtimeDate();
+
+      // Perbarui draft tersimpan dengan rincian kegiatan kosong
+      const cleanPayload = {
+        saveDate: getTodayDateString(),
+        saveTimestamp: Date.now(),
+        nama: document.getElementById('nama')?.value || '',
+        unit: document.getElementById('unit')?.value || '',
+        mentor: document.getElementById('mentor')?.value || '',
+        catatan: '',
+        kegiatanList: [],
+        sigData: { peserta: '', mentor: '' }
+      };
+      localStorage.setItem('maganghub_logbook_draft_v2', JSON.stringify(cleanPayload));
+
+      setTimeout(() => {
+        showToast('Hari baru: Rincian kegiatan & foto telah dikosongkan otomatis ✨');
+      }, 600);
+      return;
+    }
+
+    // Jika masih di hari yang sama dan belum 23:55, muat data
+    if (data.catatan) document.getElementById('catatan').value = data.catatan;
 
     const list = document.getElementById('kegiatan-list');
     list.innerHTML = '';
@@ -772,6 +850,59 @@ function loadSavedDraft() {
     console.warn('Gagal memuat draft:', e);
     addNewKegiatanUI();
   }
+}
+
+// Watcher untuk mendeteksi pergantian hari atau lewat 23.55 saat tab browser dibiarkan terbuka
+let lastCheckedDate = getTodayDateString();
+function startDailyResetWatcher() {
+  setInterval(() => {
+    const today = getTodayDateString();
+    const pastCutoff = isPastCutoffTime();
+
+    if (today !== lastCheckedDate || pastCutoff) {
+      const hasActivities = kegiatanDataStore.some(k => 
+        (k.nama && k.nama.trim() !== '-' && k.nama.trim() !== '') || 
+        (k.deskripsi && k.deskripsi.trim() !== '-' && k.deskripsi.trim() !== '') ||
+        (k.fotos && k.fotos.length > 0)
+      );
+
+      if (hasActivities) {
+        clearDailyActivitiesAuto();
+      }
+      lastCheckedDate = today;
+    }
+  }, 30000); // Cek tiap 30 detik
+}
+
+function clearDailyActivitiesAuto() {
+  const list = document.getElementById('kegiatan-list');
+  if (list) list.innerHTML = '';
+  kegiatanCounter = 0;
+  kegiatanDataStore = [];
+  addNewKegiatanUI();
+
+  const catatanEl = document.getElementById('catatan');
+  if (catatanEl) catatanEl.value = '';
+
+  clearSignature('peserta');
+  clearSignature('mentor');
+  initRealtimeDate();
+
+  const cleanPayload = {
+    saveDate: getTodayDateString(),
+    saveTimestamp: Date.now(),
+    nama: document.getElementById('nama')?.value || '',
+    unit: document.getElementById('unit')?.value || '',
+    mentor: document.getElementById('mentor')?.value || '',
+    catatan: '',
+    kegiatanList: [],
+    sigData: { peserta: '', mentor: '' }
+  };
+  try {
+    localStorage.setItem('maganghub_logbook_draft_v2', JSON.stringify(cleanPayload));
+  } catch (e) {}
+
+  showToast('⏰ Waktu melewati 23.55: Rincian kegiatan & foto telah dikosongkan otomatis untuk hari baru.');
 }
 
 async function resetForm() {
@@ -1081,6 +1212,7 @@ async function generatePDFBlob(data) {
     tabPreview.style.width = '100%';
     tabPreview.style.zIndex = '9999';
     tabPreview.style.background = '#ffffff';
+    tabPreview.style.pointerEvents = 'none';
   }
 
   // 4. Ensure scroll is at 0 so html2canvas doesn't create empty space at top
@@ -1118,6 +1250,7 @@ async function generatePDFBlob(data) {
       tabPreview.style.width = '';
       tabPreview.style.zIndex = '';
       tabPreview.style.background = '';
+      tabPreview.style.pointerEvents = '';
     }
     window.scrollTo(0, prevScrollY);
   }
@@ -1959,10 +2092,10 @@ function renderFolderFiles(folderId) {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
               Salin Link
             </button>
-            <a href="${escapeHtml(file.url)}" target="_blank" class="btn btn-secondary btn-sm" title="Buka Berkas">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openStorageFile('${file.id}')" title="Buka Berkas">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               Buka
-            </a>
+            </button>
             <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteStorageFile('${file.id}')" title="Hapus Berkas">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>
             </button>
@@ -1996,6 +2129,7 @@ async function saveActiveLogbookToCurrentFolder() {
   const origHtml = btn.innerHTML;
   btn.disabled = true;
   btn.textContent = 'Memproses dokumen...';
+  showSaveLoadingOverlay('Menyimpan Dokumen Logbook...', 'Sedang memproses berkas dan mengunggah ke Google Drive...');
 
   try {
     const format = document.querySelector('input[name="folder-save-format"]:checked')?.value || 'pdf';
@@ -2100,7 +2234,7 @@ async function saveActiveLogbookToCurrentFolder() {
     storageFiles.unshift(newFile);
     saveStorageFiles();
 
-    displayStorageResult(finalUrl, fileName, isCloud);
+    displayStorageResult(finalUrl, fileName, isCloud, blob);
     renderFolderFiles(folder.id);
 
     if (isCloud) {
@@ -2112,21 +2246,121 @@ async function saveActiveLogbookToCurrentFolder() {
     console.error('Save to folder error:', err);
     showToast('Gagal menyimpan: ' + err.message);
   } finally {
+    hideSaveLoadingOverlay();
     btn.disabled = false;
     btn.innerHTML = origHtml;
   }
 }
 
-function displayStorageResult(url, fileName, isCloud) {
+let currentSavedResultUrl = '';
+let currentSavedResultBlob = null;
+let currentSavedResultFileName = '';
+
+function showSaveLoadingOverlay(title = 'Memproses Dokumen...', desc = 'Sedang menyiapkan dokumen logbook...') {
+  const overlay = document.getElementById('app-save-loading-overlay');
+  const titleEl = document.getElementById('loading-overlay-title');
+  const descEl = document.getElementById('loading-overlay-desc');
+  if (titleEl) titleEl.textContent = title;
+  if (descEl) descEl.textContent = desc;
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function hideSaveLoadingOverlay() {
+  const overlay = document.getElementById('app-save-loading-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function displayStorageResult(url, fileName, isCloud, blob = null) {
   const banner = document.getElementById('storage-result-banner');
   const input = document.getElementById('storage-result-link-input');
-  const openBtn = document.getElementById('storage-result-open-btn');
   if (!banner || !input) return;
+
+  currentSavedResultUrl = url;
+  currentSavedResultBlob = blob;
+  currentSavedResultFileName = fileName || 'Dokumen_Logbook';
 
   banner.style.display = 'block';
   input.value = url;
-  if (openBtn) openBtn.href = url;
   banner.scrollIntoView({ behavior: 'smooth' });
+}
+
+function openCurrentResultUrl() {
+  if (!currentSavedResultUrl && !currentSavedResultBlob) {
+    showToast('Belum ada berkas yang disimpan.');
+    return;
+  }
+
+  // Jika berupa tautan Google Drive / Web Cloud
+  if (currentSavedResultUrl && (currentSavedResultUrl.startsWith('http://') || currentSavedResultUrl.startsWith('https://'))) {
+    window.open(currentSavedResultUrl, '_blank');
+    return;
+  }
+
+  // Jika berupa Blob hasil generate
+  if (currentSavedResultBlob) {
+    const blobUrl = URL.createObjectURL(currentSavedResultBlob);
+    window.open(blobUrl, '_blank');
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    return;
+  }
+
+  // Jika berupa data URL base64
+  if (currentSavedResultUrl && currentSavedResultUrl.startsWith('data:')) {
+    try {
+      const arr = currentSavedResultUrl.split(',');
+      const mime = arr[0].match(/:(.*?);/)[1] || 'application/pdf';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const b = new Blob([u8arr], { type: mime });
+      const bUrl = URL.createObjectURL(b);
+      window.open(bUrl, '_blank');
+      setTimeout(() => URL.revokeObjectURL(bUrl), 60000);
+      return;
+    } catch (e) {
+      console.warn('Gagal membuka data URL:', e);
+    }
+  }
+
+  if (currentSavedResultUrl) {
+    window.open(currentSavedResultUrl, '_blank');
+  }
+}
+
+function openStorageFile(fileId) {
+  const file = storageFiles.find(f => f.id === fileId);
+  if (!file || !file.url) {
+    showToast('Berkas tidak ditemukan.');
+    return;
+  }
+  const url = file.url;
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    window.open(url, '_blank');
+    return;
+  }
+  if (url.startsWith('data:')) {
+    try {
+      const arr = url.split(',');
+      const mime = arr[0].match(/:(.*?);/)[1] || 'application/pdf';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const b = new Blob([u8arr], { type: mime });
+      const bUrl = URL.createObjectURL(b);
+      window.open(bUrl, '_blank');
+      setTimeout(() => URL.revokeObjectURL(bUrl), 60000);
+      return;
+    } catch (e) {
+      console.warn('Gagal membuka data URL:', e);
+    }
+  }
+  window.open(url, '_blank');
 }
 
 function copyStorageResultLink() {

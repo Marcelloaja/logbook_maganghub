@@ -403,10 +403,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                 Salin Link
               </button>
-              <a href="#" id="storage-result-open-btn" target="_blank" class="btn btn-secondary">
+              <button type="button" id="storage-result-open-btn" class="btn btn-secondary" onclick="openCurrentResultUrl()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 Buka Berkas
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -444,6 +444,15 @@
       </div>
     </section>
   </main>
+
+  <!-- Loading Overlay Saat Memproses Dokumen / Simpan -->
+  <div class="app-save-loading-overlay" id="app-save-loading-overlay" style="display: none;">
+    <div class="loading-modal-card">
+      <div class="loading-spinner-ring"></div>
+      <h3 class="loading-modal-title" id="loading-overlay-title">Memproses Dokumen...</h3>
+      <p class="loading-modal-desc" id="loading-overlay-desc">Sedang menyiapkan dokumen logbook &amp; mengunggah ke Google Drive...</p>
+    </div>
+  </div>
 
   <!-- Modal Konfirmasi Kustom (Modern Modal) -->
   <div class="modal-backdrop custom-dialog-backdrop" id="custom-dialog-modal">
