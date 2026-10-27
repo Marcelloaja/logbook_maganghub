@@ -3018,13 +3018,28 @@ function buildMonevKendala() {
   }
 }
 
+function formatPembelajaranText(rawText) {
+  if (!rawText) return '';
+  let text = String(rawText).trim();
+  // Bersihkan sisa format markdown tebal atau bullet list
+  text = text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/^\s*[\*\-•]\s*/gm, '');
+
+  const rawLines = text.split(/\r?\n/)
+    .map(l => l.trim())
+    // Buang header seperti 'Pembelajaran yang Diperoleh:' agar langsung masuk ke poin isi
+    .filter(l => l && !/^pembelajaran\s*(yang\s+)?(diperoleh|didapat)[\s:]*$/i.test(l));
+
+  // Berikan jeda 1 baris kosong (line break ganda) antar setiap poin pembelajaran
+  return rawLines.join('\n\n');
+}
+
 function generateSmartFallbackPembelajaran(data) {
   const activities = (data.kegiatan || []).map(k => ({
     nama: (k.nama || '').trim(),
     desc: (k.deskripsi || '').trim()
   })).filter(k => k.nama || k.desc);
 
-  const lines = ['Pembelajaran yang Diperoleh:'];
+  const lines = [];
   if (activities.length >= 3) {
     lines.push(`Tata Kelola & Koordinasi Tugas: Melalui ${activities[0].nama || 'kegiatan pagi'}, saya memperoleh wawasan mengenai alur kerja terstruktur, ketelitian operasional, dan komunikasi profesional dalam lingkup instansi.`);
     lines.push(`Pelaksanaan Teknis & Solusi Nyata: Mengasah kemampuan dalam ${activities[1].nama || 'agenda kerja harian'} dengan berfokus pada penyelesaian tugas teknis yang akurat, efektif, dan mendukung efisiensi kerja.`);
@@ -3038,7 +3053,7 @@ function generateSmartFallbackPembelajaran(data) {
     lines.push(`Kedisiplinan & Budaya Kerja Profesional: Melalui rangkaian aktivitas magang hari ini, saya mempraktikkan manajemen waktu kerja yang efektif serta koordinasi aktif dengan mentor pembimbing.`);
     lines.push(`Pengembangan Kompetensi Praktis: Melaksanakan seluruh tugas harian yang didelegasikan dengan fokus pada ketepatan hasil dan standar kerja di Balai Bahasa Provinsi Jawa Timur.`);
   }
-  return lines.join('\n');
+  return lines.join('\n\n');
 }
 
 async function generatePembelajaranAI(force = false) {
@@ -3050,6 +3065,11 @@ async function generatePembelajaranAI(force = false) {
   const data = collectData();
   const kegiatanList = (data.kegiatan || []).map(k => `- ${k.waktu || ''} ${k.nama || ''}: ${k.deskripsi || ''}`).join('\n');
   const inputHash = (data.nama || '') + '|' + (data.unit || '') + '|' + kegiatanList;
+
+  // Jika cache masih ada teks format lama (dengan header atau tanpa line break), bersihkan dulu
+  if (cachedAiPembelajaran) {
+    cachedAiPembelajaran = formatPembelajaranText(cachedAiPembelajaran);
+  }
 
   if (!force && cachedAiPembelajaran && lastAiInputHash === inputHash) {
     textEl.value = cachedAiPembelajaran;
@@ -3063,21 +3083,23 @@ async function generatePembelajaranAI(force = false) {
 Berdasarkan rincian kegiatan hari ini:
 ${kegiatanList}
 
-Tuliskan poin-poin 'Pembelajaran yang Diperoleh' untuk kolom 'Pembelajaran yang didapat' pada portal Monev MagangHub Kemnaker.
+Tuliskan poin-poin pembelajaran untuk kolom 'Pembelajaran yang didapat' pada portal Monev MagangHub Kemnaker.
 Gaya penulisan dan format HARUS persis seperti contoh berikut:
 
 Contoh format yang diharapkan:
-Pembelajaran yang Diperoleh:
-Manajemen Acara & Literasi Daerah: Melalui rapat Kemah Cerpen, saya mendapatkan wawasan mengenai tata kelola program peningkatan literasi (sastra daerah) untuk anak-anak, mulai dari penyusunan jadwal, penyesuaian target publikasi ber-ISBN, hingga teknis pelaksanaan acara secara hybrid.
-Pengembangan Tools Produktivitas: Mengasah kemampuan teknis (coding dan deployment) dengan menciptakan solusi nyata berupa aplikasi logbook berbasis web yang dapat meningkatkan efisiensi kerja dan pelaporan bagi seluruh peserta magang.
-Kolaborasi Lintas Peran: Belajar beradaptasi dengan cepat saat berganti peran, mulai dari menjadi pemateri presentasi teknis (SEMERU), menjadi notulis/peserta rapat divisi, hingga berkolaborasi dalam ranah desain visual bersama tim grafis.
+Wawasan Kebahasaan & Kesadaran Nasional: Melalui Seminar Nasional Bahasa dan Sastra dalam Pendidikan, saya memperdalam pemahaman mengenai sejarah dan peran penting gerakan kebahasaan tokoh Sanusi Pane dalam membangun kesadaran berbangsa, serta bagaimana sastra dan bahasa diintegrasikan dalam sistem pendidikan untuk memperkuat identitas nasional.
 
-Aturan Penting:
-1. Analisis seluruh kegiatan yang dilakukan hari ini, lalu buat 2 sampai 3 poin pembelajaran yang relevan dan mendalam.
+Evaluasi & Keberlanjutan Program Daerah: Lewat kegiatan Evaluasi FTBI (Festival Tunas Bahasa Ibu) 2026, saya mempelajari pentingnya proses pemantauan dan peninjauan kritis terhadap pelaksanaan program pelestarian bahasa daerah guna mengukur efektivitas kegiatan serta merumuskan perbaikan untuk keberlanjutan program ke depan.
+
+Pengembangan Tools Produktivitas: Mengasah kemampuan teknis (coding dan deployment) dengan menciptakan solusi nyata berupa aplikasi web yang dapat meningkatkan efisiensi kerja dan pelaporan bagi seluruh peserta magang.
+
+Aturan Wajib:
+1. JANGAN menuliskan judul pembuka seperti "Pembelajaran yang Diperoleh:" atau apapun. Langsung mulai dari baris pertama dengan poin pembelajaran pertama.
 2. Setiap poin WAJIB diawali dengan judul kategori ringkas diikuti tanda titik dua (contoh: 'Judul Kategori: Penjelasan refleksi...').
 3. Pada penjelasan, sebutkan secara konkret nama kegiatan dan pembelajaran/wawasan/keterampilan nyata yang diperoleh.
-4. JANGAN gunakan format markdown tebal (**tebal**) atau bullet asterisk (*), karena portal Monev Kemnaker menggunakan plain text murni. Tulis langsung plain text seperti contoh di atas.
-5. Awali dengan baris 'Pembelajaran yang Diperoleh:' lalu lanjutkan dengan poin-poin di baris berikutnya. Jangan tambahkan kata pembuka atau penutup lain.`;
+4. Pisahkan setiap poin dengan SATU BARIS KOSONG (line break / enter ganda) agar ada pemisah antar paragraf yang rapi dan nyaman dibaca.
+5. JANGAN gunakan format markdown tebal (**tebal**) atau bullet asterisk (*), karena portal Monev Kemnaker menggunakan plain text murni. Tulis langsung plain text.
+6. Buat 2 sampai 3 poin pembelajaran yang paling relevan dengan kegiatan hari ini.`;
 
   try {
     const apiKey = getGeminiApiKey();
@@ -3101,12 +3123,11 @@ Aturan Penting:
     let aiText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
     if (aiText) {
-      // Bersihkan jika ada sisa markdown asterisk tebal agar plain text bersih untuk Monev
-      aiText = aiText.replace(/\*\*(.*?)\*\*/g, '$1').replace(/^\*\s+/gm, '');
+      aiText = formatPembelajaranText(aiText);
       cachedAiPembelajaran = aiText;
       lastAiInputHash = inputHash;
       textEl.value = aiText;
-      showToast('✨ Pembelajaran terstruktur berhasil disusun oleh AI Gemini!');
+      showToast('✨ Pembelajaran berhasil disusun oleh AI Gemini!');
     } else {
       throw new Error(resJson?.error?.message || 'Gagal generate AI');
     }
