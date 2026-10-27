@@ -19,6 +19,10 @@
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   
+  <!-- Driver.js CSS & JS for Interactive Guided Tour -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
+  <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
+  
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -48,6 +52,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
         <span>Format Monev AI</span>
       </a>
+      <a href="#" class="nav-item btn-tour-nav" id="nav-tour" onclick="startAppTour(event); return false;" title="Panduan Interaktif Penggunaan Website">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <span>Panduan Tur 🎯</span>
+      </a>
     </nav>
 
     <div class="sidebar-theme-toggle">
@@ -75,16 +83,27 @@
         <span></span><span></span><span></span>
       </button>
       <span class="mobile-title">Logbook MagangHub</span>
-      <button type="button" class="btn-theme-mobile" onclick="toggleTheme()" aria-label="Toggle theme" title="Ganti Tema">
-        <span id="theme-icon-mobile">🌙</span>
-      </button>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <button type="button" class="btn-theme-mobile" onclick="startAppTour(event)" aria-label="Buka panduan tur" title="Panduan Tur">
+          <span>🎯</span>
+        </button>
+        <button type="button" class="btn-theme-mobile" onclick="toggleTheme()" aria-label="Toggle theme" title="Ganti Tema">
+          <span id="theme-icon-mobile">🌙</span>
+        </button>
+      </div>
     </header>
 
     <!-- Tab 1: Form Input -->
     <section class="tab-content active" id="tab-form">
-      <div class="page-header">
-        <h1 class="page-title">Input Logbook Harian</h1>
-        <p class="page-sub">Isi data aktivitas magang harian untuk lembar verifikasi resmi Kemendikdasmen</p>
+      <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h1 class="page-title">Input Logbook Harian</h1>
+          <p class="page-sub">Isi data aktivitas magang harian untuk lembar verifikasi resmi Kemendikdasmen</p>
+        </div>
+        <button type="button" class="btn-start-tour-header" id="btn-header-tour" onclick="startAppTour(event)" title="Panduan Interaktif Langkah Demi Langkah">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          <span>Cara Pakai (Tur) 🎯</span>
+        </button>
       </div>
 
       <!-- Data Peserta & Waktu -->

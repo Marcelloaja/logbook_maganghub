@@ -33,7 +33,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadSavedDraft();
   initStorageHub();
   startDailyResetWatcher();
+  handleUrlParams();
+  checkFirstTimeTour();
 });
+
+function handleUrlParams() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    const modal = params.get('modal');
+    const tour = params.get('tour');
+
+    if (tab && ['form', 'preview', 'storage'].includes(tab)) {
+      switchTab(tab);
+    }
+    if (modal === 'monev') {
+      setTimeout(() => openMonevModal(), 400);
+    }
+    if (tour === '1' || tour === 'true') {
+      setTimeout(() => startAppTour(), 500);
+    }
+  } catch (e) {
+    console.warn('URL param error:', e);
+  }
+}
 
 // ============================================================
 // THEME SWITCHER (LIGHT THEME DEFAULT)
@@ -3232,3 +3255,194 @@ function closeMonevModal(e) {
 function openMonevWebsite() {
   window.open('https://monev.maganghub.kemnaker.go.id/', '_blank');
 }
+
+// ============================================================
+// INTERACTIVE TOUR WITH DRIVER.JS
+// ============================================================
+let appTourDriver = null;
+
+function initAppTour() {
+  if (typeof window.driver === 'undefined' || !window.driver.js || !window.driver.js.driver) {
+    return;
+  }
+
+  const driverFn = window.driver.js.driver;
+
+  appTourDriver = driverFn({
+    showProgress: true,
+    animate: true,
+    allowClose: true,
+    overlayOpacity: 0.65,
+    doneBtnText: 'Selesai 🚀',
+    nextBtnText: 'Lanjut &rarr;',
+    prevBtnText: '&larr; Kembali',
+    progressText: 'Langkah {{current}} dari {{total}}',
+    onDestroyStarted: () => {
+      localStorage.setItem('maganghub_tour_completed', 'true');
+      if (appTourDriver) appTourDriver.destroy();
+    },
+    steps: [
+      {
+        element: '#sidebar',
+        popover: {
+          title: '🌟 Selamat Datang di Logbook MagangHub!',
+          description: 'Aplikasi resmi untuk mempermudah seluruh 33 peserta magang Kemendikdasmen Balai Bahasa Jawa Timur dalam mencatat kegiatan, export Word/PDF, sinkronisasi Google Drive, dan mengisi portal Monev Kemnaker.',
+          side: 'right',
+          align: 'start'
+        }
+      },
+      {
+        element: '#nav-form',
+        popover: {
+          title: '📝 Tab 1: Input Logbook Harian',
+          description: 'Ini halaman utama untuk mengisi aktivitas kerja Anda. Semua yang Anda ketik otomatis disimpan ke memori browser (Auto-save), jadi tidak perlu khawatir data hilang!',
+          side: 'right',
+          align: 'center'
+        }
+      },
+      {
+        element: '#nama',
+        popover: {
+          title: '👤 Data Peserta & Unit Kerja',
+          description: 'Ketik nama lengkap dan divisi/unit Anda. <strong>Penting:</strong> Data peserta ini TERSIMPAN PERMANEN dan tidak akan pernah di-reset setiap hari.',
+          side: 'bottom',
+          align: 'start'
+        }
+      },
+      {
+        element: '#btn-lock-mentor',
+        popover: {
+          title: '🔒 Fitur Kunci Nama Mentor',
+          description: 'Ketik nama mentor pembimbing Anda, lalu klik tombol gembok ini. Setelah terkunci, nama mentor Anda otomatis tersimpan setiap hari tanpa perlu mengetik ulang!',
+          side: 'left',
+          align: 'center'
+        }
+      },
+      {
+        element: '#tanggal',
+        popover: {
+          title: '📅 Hari & Tanggal Otomatis',
+          description: 'Sistem secara realtime mengisi hari dan tanggal hari ini. Tanggal ini juga menjadi patokan reset kegiatan harian otomatis setiap pergantian hari lewat pukul 23.59.',
+          side: 'bottom',
+          align: 'start'
+        }
+      },
+      {
+        element: '#kegiatan-list',
+        popover: {
+          title: '📋 Rincian Kegiatan & Foto Dokumentasi',
+          description: 'Isi jam mulai & selesai (format WIB), judul kegiatan, penjelasan tugas, serta upload foto dokumentasi per kegiatan (maks 5MB).<br/><br/>⚠️ <em>Catatan: Bagian inilah yang otomatis dikosongkan setiap lewat pukul 23.59 agar siap untuk hari baru.</em>',
+          side: 'top',
+          align: 'center'
+        }
+      },
+      {
+        element: '#btn-add',
+        popover: {
+          title: '➕ Tambah Kegiatan Baru',
+          description: 'Jika ada lebih dari 1 kegiatan dalam sehari, klik tombol ini untuk menambah baris kegiatan baru sebanyak yang dibutuhkan.',
+          side: 'top',
+          align: 'center'
+        }
+      },
+      {
+        element: '#catatan',
+        popover: {
+          title: '💡 Catatan / Kendala Tambahan',
+          description: 'Tuliskan catatan khusus atau kendala (jika ada). Jika tidak ada kendala, Anda boleh membiarkannya kosong karena sistem AI akan otomatis membuat evaluasi positif untuk laporan Monev Anda.',
+          side: 'top',
+          align: 'start'
+        }
+      },
+      {
+        element: '.signature-container',
+        popover: {
+          title: '✍️ Tanda Tangan Digital',
+          description: 'Goreskan tanda tangan langsung di canvas atau klik "Upload Foto TTD". <strong>Tenang saja:</strong> Tanda tangan peserta dan mentor TERSIMPAN AMAN dan tidak akan hilang saat pergantian hari.',
+          side: 'top',
+          align: 'center'
+        }
+      },
+      {
+        element: '#nav-preview',
+        popover: {
+          title: '👁️ Tab 2: Preview & Export Dokumen',
+          description: 'Klik tab ini untuk melihat lembar logbook resmi dengan Kop Surat Kemendikdasmen. Dari sini Anda bisa langsung mendownload dokumen dalam bentuk <strong>Word (.docx)</strong> atau <strong>PDF (.pdf)</strong>.',
+          side: 'right',
+          align: 'center'
+        }
+      },
+      {
+        element: '#nav-storage',
+        popover: {
+          title: '📁 Tab 3: Penyimpanan Berkas & 33 Folder',
+          description: 'Buka tab ini untuk mengakses folder masing-masing dari 33 peserta magang di Google Drive koordinator. Klik ikon bintang (⭐) pada folder Anda agar selalu dipin di urutan paling atas!',
+          side: 'right',
+          align: 'center'
+        }
+      },
+      {
+        element: '#nav-monev',
+        popover: {
+          title: '🤖 Format Monev AI (3 Clip Siap Salin)',
+          description: 'Fitur paling praktis! Klik menu ini untuk menyusun 3 klip siap salin ke portal <strong>monev.maganghub.kemnaker.go.id</strong>: Uraian Kronologis + Link Drive, Pembelajaran otomatis AI Gemini, dan Kendala otomatis positif.',
+          side: 'right',
+          align: 'center'
+        }
+      },
+      {
+        element: '#theme-toggle-btn',
+        popover: {
+          title: '🌙 Mode Terang & Gelap',
+          description: 'Klik tombol ini untuk beralih antara Mode Terang dan Mode Gelap yang nyaman untuk mata saat bekerja malam hari.',
+          side: 'top',
+          align: 'start'
+        }
+      }
+    ]
+  });
+}
+
+function startAppTour(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  switchTab('form');
+
+  const sb = document.getElementById('sidebar');
+  if (sb && sb.classList.contains('mobile-open')) {
+    toggleSidebar();
+  }
+
+  setTimeout(() => {
+    if (!appTourDriver) {
+      initAppTour();
+    }
+    if (appTourDriver) {
+      appTourDriver.drive();
+    } else {
+      showToast('Sedang menyiapkan panduan tur interaktif...');
+    }
+  }, 200);
+}
+
+function checkFirstTimeTour() {
+  const completed = localStorage.getItem('maganghub_tour_completed');
+  if (!completed) {
+    setTimeout(() => {
+      showCustomConfirmDialog({
+        title: '🎯 Selamat Datang di Logbook MagangHub!',
+        message: 'Baru pertama kali menggunakan website ini? Ikuti <strong>Tur Panduan Cepat (1 Menit)</strong> untuk melihat cara mengisi logbook, simpan ke Google Drive, dan mengisi portal Monev Kemnaker.',
+        subtext: 'Panduan ini bisa Anda buka kembali kapan saja melalui tombol "Panduan Tur 🎯" di sidebar.',
+        confirmText: 'Mulai Tur Sekarang 🚀',
+        cancelText: 'Nanti Saja',
+        isDanger: false
+      }).then(ok => {
+        if (ok) {
+          startAppTour();
+        } else {
+          localStorage.setItem('maganghub_tour_completed', 'true');
+        }
+      });
+    }, 1500);
+  }
+}
+
