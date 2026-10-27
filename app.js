@@ -3445,10 +3445,10 @@ function checkFirstTimeTour() {
   if (!completed) {
     setTimeout(() => {
       showCustomConfirmDialog({
-        title: '🎯 Selamat Datang di Logbook MagangHub!',
+        title: 'Selamat Datang di Logbook MagangHub',
         message: 'Baru pertama kali menggunakan website ini? Ikuti <strong>Tur Panduan Cepat (1 Menit)</strong> untuk melihat cara mengisi logbook, simpan ke Google Drive, dan mengisi portal Monev Kemnaker.',
-        subtext: 'Panduan ini bisa Anda buka kembali kapan saja melalui tombol "Panduan Tur 🎯" di sidebar.',
-        confirmText: 'Mulai Tur Sekarang 🚀',
+        subtext: 'Panduan ini bisa Anda buka kembali kapan saja melalui tombol "Panduan Tur" di sidebar atau "Panduan Penggunaan" di kanan atas formulir.',
+        confirmText: 'Mulai Tur Sekarang',
         cancelText: 'Nanti Saja',
         isDanger: false
       }).then(ok => {
