@@ -92,6 +92,10 @@ Jika Anda baru pertama kali membuka website ini atau lupa letak menu tertentu, g
 1. **Waktu Pelaksanaan:** Atur jam mulai dan selesai kegiatan (format otomatis WIB, contoh: `07:30 - 08:00 WIB`).
 2. **Nama Kegiatan:** Tuliskan judul agenda (contoh: *Persiapan Evaluasi FTBI*, *Seminar Nasional (Daring)*, atau *Pemeliharaan Website RBD*).
 3. **Fitur Cerdas Dual-Mode: Generate Deskripsi AI & Sempurnakan Kalimat:**
+   - **Kondisi Awal (Auto-Hide Tombol):**
+     - Jika kolom *Nama Kegiatan* dan *Deskripsi* masih kosong, tombol *Generate Deskripsi AI* disembunyikan secara otomatis demi kebersihan antarmuka.
+     - Begitu Anda mulai mengetikkan nama kegiatan, tombol **"Generate Deskripsi AI"** akan langsung muncul seketika.
+     - Jika tombol diklik saat *Nama Kegiatan* belum diisi, sistem menampilkan peringatan wajib isi serta memberikan efek visual getar (*shake animation*) pada kotak input.
    - **Kondisi Kolom Kosong (`Generate Deskripsi AI`):**
      - Wajib isi *Nama Kegiatan* terlebih dahulu, lalu klik tombol ini.
      - AI Gemini otomatis menyusun narasi operasional kedinasan formal 1–3 kalimat yang runut dan terstruktur.
@@ -101,8 +105,11 @@ Jika Anda baru pertama kali membuka website ini atau lupa letak menu tertentu, g
      - Saat diklik, AI akan merapikan tata bahasa, memperpanjang penjelasan, serta memoles kalimat menjadi lebih profesional dan formal tanpa mengubah fakta, nama pihak pembimbing (misal: Bu Okta), maupun tools/software teknis yang dicantumkan.
    - Contoh hasil narasi:
      > *"Mengawali hari kerja dengan mempersiapkan dokumen dan data pendukung untuk keperluan evaluasi Festival Tunas Bahasa Ibu (FTBI) 2026, sesuai dengan instruksi dan arahan dari Ibu Okta."*
-4. **Foto Dokumentasi (Maks. 5MB):** Klik tombol **"Upload Foto"** untuk melampirkan foto bukti kegiatan langsung pada baris agenda terkait.
-5. **Menambah Kegiatan:** Jika dalam sehari Anda memiliki lebih dari 1 agenda, klik tombol biru **"Tambah Kegiatan Baru"** di bagian bawah.
+4. **Pengingat Interaktif 5 Detik ("Ayo Dipikirkan Secara Logika"):**
+   - Saat menambah baris kegiatan baru, jika dalam waktu **5 detik** Anda belum mengisi *Nama Kegiatan* maupun *Deskripsi*, sistem akan memunculkan banner pengingat animasi santai dengan stiker *"Ayo Dipikirkan Secara Logika"*.
+   - Begitu Anda mulai mengetik pada salah satu kolom atau menekan tombol AI, animasi pengingat tersebut akan langsung **hilang otomatis secara mulus**.
+5. **Foto Dokumentasi (Maks. 5MB):** Klik tombol **"Upload Foto"** untuk melampirkan foto bukti kegiatan langsung pada baris agenda terkait.
+6. **Menambah Kegiatan:** Jika dalam sehari Anda memiliki lebih dari 1 agenda, klik tombol biru **"Tambah Kegiatan Baru"** di bagian bawah.
 
 ---
 

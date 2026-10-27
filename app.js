@@ -400,19 +400,22 @@ function addNewKegiatanUI(data = null) {
         </div>
         <div class="form-group kg-nama-field">
           <label class="form-label">Nama Kegiatan <span class="req">*</span></label>
-          <input type="text" class="form-input kg-input-nama" id="kg-nama-${id}" placeholder="Contoh: Apel Pagi, Input Data, Riset Bahasa..." value="${escapeAttr(itemData.nama)}" oninput="updateKegiatanField(${id}, 'nama', this.value)" />
+          <input type="text" class="form-input kg-input-nama" id="kg-nama-${id}" placeholder="Contoh: Apel Pagi, Input Data, Riset Bahasa..." value="${escapeAttr(itemData.nama)}" oninput="updateKegiatanField(${id}, 'nama', this.value); updateDescButtonState(${id}); checkAndDismissLogicMeme(${id});" />
         </div>
       </div>
+
+      <!-- Placeholder Pengingat Logika (cobapikirkansecaralogika.jpg) jika 5 detik belum diisi -->
+      <div class="kg-logic-meme-placeholder" id="kg-logic-meme-placeholder-${id}"></div>
 
       <div class="form-group">
         <div class="kg-desc-header">
           <label class="form-label" for="kg-desc-${id}">Deskripsi Rinci Kegiatan <span class="req">*</span></label>
-          <button type="button" class="${itemData.deskripsi && itemData.deskripsi.trim() ? 'btn-ai-generate-desc btn-mode-refine' : 'btn-ai-generate-desc'}" id="btn-ai-desc-${id}" onclick="generateDeskripsiKegiatanAI(${id})" title="${itemData.deskripsi && itemData.deskripsi.trim() ? 'Rapikan tata bahasa dan kembangkan draf kalimat kegiatan ini' : 'Buat narasi deskripsi otomatis berdasarkan Nama Kegiatan'}">
+          <button type="button" class="${itemData.deskripsi && itemData.deskripsi.trim() ? 'btn-ai-generate-desc btn-mode-refine' : 'btn-ai-generate-desc'}" id="btn-ai-desc-${id}" onclick="generateDeskripsiKegiatanAI(${id})" title="${itemData.deskripsi && itemData.deskripsi.trim() ? 'Rapikan tata bahasa dan kembangkan draf kalimat kegiatan ini' : 'Buat narasi deskripsi otomatis berdasarkan Nama Kegiatan'}" style="${(!itemData.nama || !itemData.nama.trim()) && (!itemData.deskripsi || !itemData.deskripsi.trim()) ? 'display:none;' : ''}">
             <svg id="btn-ai-desc-icon-${id}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${itemData.deskripsi && itemData.deskripsi.trim() ? '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>' : '<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>'}</svg>
             <span id="btn-ai-desc-text-${id}">${itemData.deskripsi && itemData.deskripsi.trim() ? 'Sempurnakan Kalimat' : 'Generate Deskripsi AI'}</span>
           </button>
         </div>
-        <textarea class="form-input form-textarea kg-input-desc" id="kg-desc-${id}" placeholder="Jelaskan secara detail proses, tugas, atau hasil yang dikerjakan..." oninput="updateKegiatanField(${id}, 'deskripsi', this.value); updateDescButtonState(${id});">${escapeHtml(itemData.deskripsi)}</textarea>
+        <textarea class="form-input form-textarea kg-input-desc" id="kg-desc-${id}" placeholder="Jelaskan secara detail proses, tugas, atau hasil yang dikerjakan..." oninput="updateKegiatanField(${id}, 'deskripsi', this.value); updateDescButtonState(${id}); checkAndDismissLogicMeme(${id});">${escapeHtml(itemData.deskripsi)}</textarea>
       </div>
 
       <!-- Foto Dokumentasi Khusus Kegiatan Ini -->
@@ -450,6 +453,11 @@ function addNewKegiatanUI(data = null) {
   renderKgPhotosGrid(id);
   updateKegiatanNumbers();
   updateDescButtonState(id);
+
+  // Jika baris kegiatan baru ditambahkan dan masih kosong, pasang timer 5 detik untuk pengingat logika
+  if (!itemData.nama && !itemData.deskripsi) {
+    startLogicMemeTimer(id);
+  }
 }
 
 function updateKegiatanField(id, field, value) {
@@ -467,31 +475,130 @@ function updateKegiatanField(id, field, value) {
 }
 
 // ============================================================
+// PENGINGAT LOGIKA ("Ayo Dipikirkan Secara Logika")
+// ============================================================
+let logicMemeTimers = {};
+
+function startLogicMemeTimer(id) {
+  if (logicMemeTimers[id]) {
+    clearTimeout(logicMemeTimers[id]);
+    delete logicMemeTimers[id];
+  }
+
+  logicMemeTimers[id] = setTimeout(() => {
+    showLogicMeme(id);
+  }, 5000);
+}
+
+function showLogicMeme(id) {
+  const row = document.getElementById('kg-row-' + id);
+  if (!row) return;
+
+  const namaVal = (document.getElementById(`kg-nama-${id}`)?.value || '').trim();
+  const descVal = (document.getElementById(`kg-desc-${id}`)?.value || '').trim();
+
+  // Jika salah satu field sudah mulai terisi, batalkan pengingat
+  if (namaVal || descVal) return;
+
+  const placeholder = document.getElementById(`kg-logic-meme-placeholder-${id}`);
+  if (!placeholder) return;
+
+  // Hindari duplikasi jika sudah tampil
+  if (document.getElementById(`kg-logic-meme-${id}`)) return;
+
+  const kegiatanIndex = kegiatanDataStore.findIndex(k => k.id === id);
+  const numDisplay = kegiatanIndex !== -1 ? kegiatanIndex + 1 : id;
+
+  placeholder.innerHTML = `
+    <div class="kg-logic-meme-banner" id="kg-logic-meme-${id}">
+      <div class="kg-logic-meme-card">
+        <div class="kg-logic-meme-media">
+          <img src="assets/cobapikirkansecaralogika.jpg" alt="Ayo Dipikirkan Secara Logika" class="kg-logic-meme-img" />
+          <div class="kg-logic-meme-badge">
+            <span class="pulse-dot"></span>
+            <span>5 Detik Berlalu</span>
+          </div>
+        </div>
+        <div class="kg-logic-meme-info">
+          <div class="kg-logic-meme-tag">Pengingat Kegiatan #${numDisplay}</div>
+          <h4 class="kg-logic-meme-headline">Ayo, dipikirkan secara logika! 🧠</h4>
+          <p class="kg-logic-meme-caption">Nama Kegiatan &amp; Deskripsinya masih kosong nih. Yuk mulai tulis judul kegiatannya sekarang, nanti tombol <strong>Generate Deskripsi AI</strong> otomatis muncul buat bantu kamu!</p>
+        </div>
+        <button type="button" class="kg-logic-meme-dismiss-btn" onclick="dismissLogicMeme(${id})" title="Tutup pengingat santai ini">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function dismissLogicMeme(id, immediate = false) {
+  if (logicMemeTimers[id]) {
+    clearTimeout(logicMemeTimers[id]);
+    delete logicMemeTimers[id];
+  }
+
+  const banner = document.getElementById(`kg-logic-meme-${id}`);
+  if (!banner) return;
+
+  if (immediate) {
+    banner.remove();
+  } else {
+    banner.classList.add('dismissing');
+    setTimeout(() => {
+      if (banner && banner.parentNode) {
+        banner.remove();
+      }
+    }, 350);
+  }
+}
+
+function checkAndDismissLogicMeme(id) {
+  const namaVal = (document.getElementById(`kg-nama-${id}`)?.value || '').trim();
+  const descVal = (document.getElementById(`kg-desc-${id}`)?.value || '').trim();
+
+  // Jika salah satu field sudah mulai terisi, segera hapus pengingat logika
+  if (namaVal || descVal) {
+    dismissLogicMeme(id);
+  }
+}
+
+// ============================================================
 // AI GENERATE & SEMPURNAKAN KALIMAT (DUAL MODE)
 // ============================================================
 
 function updateDescButtonState(id) {
+  const namaInput = document.getElementById(`kg-nama-${id}`);
   const descInput = document.getElementById(`kg-desc-${id}`);
   const btn = document.getElementById(`btn-ai-desc-${id}`);
   const btnText = document.getElementById(`btn-ai-desc-text-${id}`);
   const btnIcon = document.getElementById(`btn-ai-desc-icon-${id}`);
   if (!btn || !btnText) return;
 
-  const hasContent = descInput && descInput.value.trim().length > 0;
-  if (hasContent) {
+  const hasNama = namaInput && namaInput.value.trim().length > 0;
+  const hasDesc = descInput && descInput.value.trim().length > 0;
+
+  if (hasDesc) {
+    // Mode Sempurnakan Kalimat (user sudah mengetik draf di deskripsi)
+    btn.style.display = 'inline-flex';
     btn.title = 'Rapikan tata bahasa dan kembangkan draf kalimat kegiatan ini agar lebih rinci & formal';
     btn.classList.add('btn-mode-refine');
     btnText.textContent = 'Sempurnakan Kalimat';
     if (btnIcon) {
       btnIcon.innerHTML = `<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>`;
     }
-  } else {
+  } else if (hasNama) {
+    // Mode Generate Deskripsi AI (Nama Kegiatan terisi, deskripsi masih kosong)
+    btn.style.display = 'inline-flex';
     btn.title = 'Buat narasi deskripsi otomatis berdasarkan Nama Kegiatan';
     btn.classList.remove('btn-mode-refine');
     btnText.textContent = 'Generate Deskripsi AI';
     if (btnIcon) {
       btnIcon.innerHTML = `<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>`;
     }
+  } else {
+    // Nama Kegiatan & Deskripsi KOSONG: Sembunyikan tombol generate deskripsi AI terlebih dahulu!
+    btn.style.display = 'none';
   }
 }
 
@@ -521,6 +628,9 @@ function updateCatatanButtonState() {
 }
 
 async function generateDeskripsiKegiatanAI(id) {
+  // Hapus animasi/pengingat logika segera saat user klik generate AI
+  dismissLogicMeme(id, true);
+
   const item = kegiatanDataStore.find(k => k.id === id);
   const namaInput = document.getElementById(`kg-nama-${id}`);
   const descInput = document.getElementById(`kg-desc-${id}`);
@@ -534,8 +644,16 @@ async function generateDeskripsiKegiatanAI(id) {
   const isRefineMode = currentDesc.length > 0;
 
   if (!namaKegiatan && !isRefineMode) {
-    showToast('⚠️ Silakan isi Nama Kegiatan terlebih dahulu sebelum generate deskripsi!');
-    if (namaInput) namaInput.focus();
+    showToast('⚠️ Wajib isi Nama Kegiatan terlebih dahulu sebelum generate deskripsi!');
+    if (namaInput) {
+      namaInput.focus();
+      namaInput.classList.remove('input-shake-error');
+      void namaInput.offsetWidth;
+      namaInput.classList.add('input-shake-error');
+      setTimeout(() => {
+        if (namaInput) namaInput.classList.remove('input-shake-error');
+      }, 800);
+    }
     return;
   }
 
@@ -884,6 +1002,7 @@ Aturan Wajib:
 }
 
 function removeKegiatan(id) {
+  dismissLogicMeme(id, true);
   const el = document.getElementById('kg-row-' + id);
   if (el) {
     el.style.opacity = '0';
@@ -1333,6 +1452,14 @@ function startDailyResetWatcher() {
 }
 
 function clearDailyActivitiesAuto() {
+  // Bersihkan seluruh timer pengingat logika
+  if (typeof logicMemeTimers === 'object') {
+    Object.keys(logicMemeTimers).forEach(tid => {
+      clearTimeout(logicMemeTimers[tid]);
+    });
+    logicMemeTimers = {};
+  }
+
   // Hanya reset Rincian Kegiatan & Foto Dokumentasi serta catatan harian
   const list = document.getElementById('kegiatan-list');
   if (list) list.innerHTML = '';
@@ -1398,6 +1525,12 @@ async function resetForm() {
   initRealtimeDate();
 
   // Reset Activities
+  if (typeof logicMemeTimers === 'object') {
+    Object.keys(logicMemeTimers).forEach(tid => {
+      clearTimeout(logicMemeTimers[tid]);
+    });
+    logicMemeTimers = {};
+  }
   document.getElementById('kegiatan-list').innerHTML = '';
   kegiatanCounter = 0;
   kegiatanDataStore = [];
