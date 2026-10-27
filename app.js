@@ -279,6 +279,8 @@ function switchTab(name, e) {
     renderPreview();
   } else if (name === 'storage') {
     updateStorageFormSummary();
+    // Selalu sync ulang dari cloud setiap kali tab Penyimpanan Berkas dibuka
+    syncStorageWithCloud(true);
   }
   document.getElementById('sidebar').classList.remove('open');
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1632,12 +1634,40 @@ function getGasWebhookUrl() {
   return fromInput || fromStorage || DEFAULT_GAS_URL;
 }
 
+let cloudSyncInterval = null;
+let lastCloudSyncTime = 0;
+const CLOUD_SYNC_INTERVAL_MS = 30000; // Sinkronisasi otomatis tiap 30 detik
+
 function initStorageHub() {
   loadSavedDriveConfigs();
   loadStorageData();
   renderStorageFolders();
-  // Automatically pull live folders & files from Google Drive / Cloud
+  // Sinkronisasi pertama saat halaman dimuat
   syncStorageWithCloud(true);
+  // Mulai auto-sync periodik setiap 30 detik
+  startCloudAutoSync();
+}
+
+function startCloudAutoSync() {
+  if (cloudSyncInterval) clearInterval(cloudSyncInterval);
+  cloudSyncInterval = setInterval(() => {
+    const url = getGasWebhookUrl();
+    if (url) {
+      syncStorageWithCloud(true);
+    }
+  }, CLOUD_SYNC_INTERVAL_MS);
+}
+
+function updateSyncStatusUI(status) {
+  const indicator = document.getElementById('sync-live-indicator');
+  const lastSyncEl = document.getElementById('sync-last-time');
+  if (indicator) {
+    indicator.className = 'sync-dot ' + (status === 'ok' ? 'sync-dot-ok' : status === 'syncing' ? 'sync-dot-syncing' : 'sync-dot-error');
+  }
+  if (lastSyncEl && status === 'ok') {
+    const now = new Date();
+    lastSyncEl.textContent = `Tersinkron: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  }
 }
 
 function loadSavedDriveConfigs() {
@@ -1708,6 +1738,13 @@ async function syncStorageWithCloud(silent = true) {
   const url = getGasWebhookUrl();
   if (!url) return;
 
+  // Cegah race condition: jika sync sudah berjalan dalam 3 detik terakhir, skip
+  const now = Date.now();
+  if (silent && (now - lastCloudSyncTime) < 3000) return;
+  lastCloudSyncTime = now;
+
+  updateSyncStatusUI('syncing');
+
   const btn = document.getElementById('btn-sync-storage');
   const origHtml = btn ? btn.innerHTML : '';
   if (btn && !silent) {
@@ -1730,26 +1767,39 @@ async function syncStorageWithCloud(silent = true) {
     const res = await resp.json();
     if (res && res.success) {
       let changed = false;
-      if (Array.isArray(res.folders) && res.folders.length > 0) {
-        const cloudFolderMap = new Map();
+
+      // =====================================================================
+      // FOLDER SYNC: Cloud selalu prioritas — gabungkan dengan folder lokal
+      // =====================================================================
+      const cloudFolderMap = new Map();
+
+      if (Array.isArray(res.folders)) {
         res.folders.forEach(f => {
           if (f && f.name && !['f-1', 'f-2', 'f-3', 'f-4'].includes(f.id)) {
             cloudFolderMap.set(f.name.toLowerCase().trim(), f);
           }
         });
-
-        storageFolders.forEach(f => {
-          const k = f.name.toLowerCase().trim();
-          if (!['f-1', 'f-2', 'f-3', 'f-4'].includes(f.id) && !cloudFolderMap.has(k)) {
-            cloudFolderMap.set(k, f);
-          }
-        });
-
-        storageFolders = Array.from(cloudFolderMap.values());
-        saveStorageFolders();
-        changed = true;
       }
 
+      // Tambahkan folder lokal yang belum ada di cloud (baru dibuat, belum tersinkron)
+      storageFolders.forEach(f => {
+        const k = f.name.toLowerCase().trim();
+        if (!['f-1', 'f-2', 'f-3', 'f-4'].includes(f.id) && !cloudFolderMap.has(k)) {
+          cloudFolderMap.set(k, f);
+        }
+      });
+
+      const newFolders = Array.from(cloudFolderMap.values());
+      // Tandai sebagai changed jika jumlah folder berbeda atau ada nama baru
+      if (JSON.stringify(newFolders.map(f => f.name).sort()) !== JSON.stringify(storageFolders.map(f => f.name).sort())) {
+        changed = true;
+      }
+      storageFolders = newFolders;
+      saveStorageFolders();
+
+      // =====================================================================
+      // FILE SYNC: Cloud selalu prioritas — lokal hanya sebagai pelengkap
+      // =====================================================================
       if (Array.isArray(res.files)) {
         // Normalisasi berkas dari Cloud Google Drive
         const normalizedCloudFiles = res.files
@@ -1784,16 +1834,18 @@ async function syncStorageWithCloud(silent = true) {
         // Pertahankan berkas lokal hanya jika belum ada di cloud
         storageFiles.forEach(lf => {
           const lName = (lf.fileName || lf.name || '').trim();
-          if (!lName) return; // buang file kosong/rusak
+          if (!lName) return;
           const nameKey = `${lf.folderName || ''}:::${lName}`.toLowerCase();
           if ((!lf.url || !seenUrls.has(lf.url)) && !seenNameFolder.has(nameKey)) {
             mergedFiles.push(lf);
           }
         });
 
+        if (JSON.stringify(mergedFiles.length) !== JSON.stringify(storageFiles.length)) {
+          changed = true;
+        }
         storageFiles = mergedFiles;
         saveStorageFiles();
-        changed = true;
       }
 
       if (changed) {
@@ -1801,11 +1853,19 @@ async function syncStorageWithCloud(silent = true) {
         if (currentActiveFolderId) {
           renderFolderFiles(currentActiveFolderId);
         }
+      } else {
+        // Selalu refresh tampilan folder aktif agar jumlah berkas update
+        if (currentActiveFolderId) {
+          renderFolderFiles(currentActiveFolderId);
+        }
       }
+
+      updateSyncStatusUI('ok');
       if (!silent) showToast('✅ Data folder dan berkas berhasil disinkronkan dari Google Drive!');
     }
   } catch (err) {
     console.warn('Sync storage note:', err);
+    updateSyncStatusUI('error');
     if (!silent) {
       alert(
         '⚠️ Google Apps Script Perlu Diperbarui (1 Menit):\n\n' +
