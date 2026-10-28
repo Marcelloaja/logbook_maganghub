@@ -571,37 +571,45 @@ Peserta magang telah menuliskan gambaran umum / draf kasar kegiatan berikut:
 - Nama Kegiatan: ${namaKegiatan || 'Agenda Magang Harian'}
 - Waktu Pelaksanaan: ${timeframe}
 - Divisi/Unit: ${data.unit || 'Balai Bahasa Provinsi Jawa Timur'}
-- Peserta: ${data.nama || 'Peserta Magang'}
-- Draf Kalimat Peserta: "${currentDesc}"
+- Draf Kalimat Kegiatan: "${currentDesc}"
 
 Tugas Anda:
-Sempurnakan, perbaiki tata bahasa (EYD/PUEBI), dan kembangkan kalimat di atas menjadi 1 paragraf padat (1-3 kalimat) yang formal kedinasan, operasional, jelas, dan profesional.
-PENTING: PERTAHANKAN seluruh poin penting, nama orang, lokasi, tools/aplikasi, atau rincian tugas yang sudah dituliskan oleh peserta, namun buat susunan kalimatnya terdengar jauh lebih tertata, lugas, dan berbobot kedinasan.
+Sempurnakan, perbaiki tata bahasa (EYD/PUEBI), dan kembangkan draf kalimat di atas menjadi 1 paragraf padat (1-3 kalimat) yang formal kedinasan, operasional, jelas, dan profesional.
+
+PENTING & WAJIB DIPATUHI:
+1. JANGAN PERNAH menyertakan nama lengkap peserta / mahasiswa / penulis logbook (DILARANG menulis "Saya, [Nama Lengkap]", DILARANG menyebut nama mahasiswa/penulis). Langsung tuliskan isi kegiatannya saja secara lugas.
+2. Awali kalimat langsung dengan kata kerja aktif operasional kedinasan (contoh: "Melaksanakan...", "Menyusun...", "Mengerjakan...", "Mengikuti...", "Menghadiri...", "Melakukan...", "Mengkoordinasikan...").
+3. PERTAHANKAN seluruh poin penting, nama pembimbing instansi / tokoh kedinasan yang disebut (seperti Ibu Okta, Pak Joko, Kepala Balai, dll.), nama ruangan/lokasi, tools/aplikasi, atau rincian tugas yang dituliskan oleh peserta, namun susun menjadi kalimat yang rapi, lugas, dan berbobot kedinasan.
 
 Aturan Wajib:
-1. HANYA kembalikan teks hasil penyempurnaan saja.
-2. JANGAN sertakan ulang jam/waktu di depan teks, JANGAN mengulang judul kegiatan di awal kalimat, JANGAN menggunakan tanda petik pembuka/penutup, dan JANGAN menggunakan format markdown tebal (**tebal**).
-3. Gunakan Bahasa Indonesia baku yang mengalir alami dan profesional.`;
+1. HANYA kembalikan teks hasil penyempurnaan saja (langsung isi kegiatan).
+2. DILARANG mencantumkan nama peserta / mahasiswa (JANGAN sebut nama lengkap penulis).
+3. JANGAN sertakan ulang jam/waktu di depan teks, JANGAN mengulang judul kegiatan di awal kalimat, JANGAN menggunakan tanda petik pembuka/penutup, dan JANGAN menggunakan format markdown tebal (**tebal**).
+4. Gunakan Bahasa Indonesia baku yang mengalir alami dan profesional.`;
   } else {
     // Mode Generate Baru dari Awal Berdasarkan Nama Kegiatan
-    prompt = `Anda adalah asisten penulisan logbook resmi peserta magang di Balai Bahasa Provinsi Jawa Timur (Kemendikdasmen).
+    prompt = `Anda adalah asisten penulisan logbook resmi di Balai Bahasa Provinsi Jawa Timur (Kemendikdasmen).
 Tuliskan narasi deskripsi rinci kegiatan (1 paragraf padat, 1-3 kalimat, formal kedinasan, profesional, operasional) untuk kegiatan berikut:
 - Nama Kegiatan: ${namaKegiatan}
 - Waktu Pelaksanaan: ${timeframe}
 - Divisi/Unit: ${data.unit || 'Balai Bahasa Provinsi Jawa Timur'}
-- Peserta: ${data.nama || 'Peserta Magang'}
 
-Contoh standar kedalaman narasi yang diharapkan:
-- Persiapan Evaluasi FTBI (07.30 - 08.00 WIB): Mengawali hari kerja dengan mempersiapkan dokumen dan data pendukung untuk keperluan evaluasi Festival Tunas Bahasa Ibu (FTBI) 2026, sesuai dengan instruksi dan arahan dari Ibu Okta.
-- Seminar Nasional (Daring) (08.00 - 10.37 WIB): Mengikuti "Seminar Nasional Bahasa dan Sastra dalam Pendidikan" secara virtual melalui siaran YouTube guna menambah wawasan mengenai perkembangan literasi dan pendidikan kebahasaan.
-- Rapat Evaluasi FTBI 2026 (09.40 - 12.00 WIB): Menghadiri Rapat Evaluasi Kegiatan Festival Tunas Bahasa Ibu Tahun 2026 yang diselenggarakan di Ruang Ki Hajar. Rapat ini dipimpin langsung oleh Ibu Puji Retno Hardiningtyas (Kepala BBP Jatim) dan Ibu Made Oktavia Vidiyanti (Ketua Panitia FTBI). Dalam rapat, dilaporkan bahwa evaluasi dilakukan menggunakan kuesioner berskala 1 hingga 5 yang mencakup delapan aspek penilaian serta koordinasi dinamika teknis pelaksanaan lapangan.
-- Pengembangan UX Website Logbook (13.00 - 14.00 WIB): Melakukan perbaikan teknis pada website internal logbook. Pada sesi ini, saya mengimplementasikan library driver.js untuk menambahkan fitur tour guide interaktif guna memandu rekan-rekan magang secara visual langkah demi langkah dalam pengisian bukti logbook.
-- Pemeliharaan Website RBD (14.00 - 16.00 WIB): Melanjutkan tugas pemeliharaan sistem dengan merapikan antarmuka dan struktur kode pada website Revitalisasi Bahasa Daerah (RBD) Jawa Timur agar tampilan publiknya lebih optimal dan tertata.
+PENTING & WAJIB DIPATUHI:
+1. JANGAN PERNAH menyertakan nama lengkap peserta / mahasiswa / penulis logbook (DILARANG menulis "Saya, [Nama Lengkap]" atau menyebut nama peserta). Langsung tuliskan isi kegiatannya saja.
+2. Awali kalimat langsung dengan kata kerja aktif kedinasan (contoh: "Melaksanakan...", "Menghadiri...", "Mengikuti...", "Menyusun...", "Mengerjakan...").
+
+Contoh standar kedalaman narasi yang diharapkan (LANGSUNG ISI KEGIATAN, TANPA NAMA PESERTA):
+- Persiapan Evaluasi FTBI: Mengawali hari kerja dengan mempersiapkan dokumen dan data pendukung untuk keperluan evaluasi Festival Tunas Bahasa Ibu (FTBI) 2026, sesuai dengan instruksi dan arahan dari Ibu Okta.
+- Seminar Nasional (Daring): Mengikuti "Seminar Nasional Bahasa dan Sastra dalam Pendidikan" secara virtual melalui siaran YouTube guna menambah wawasan mengenai perkembangan literasi dan pendidikan kebahasaan.
+- Rapat Evaluasi FTBI 2026: Menghadiri Rapat Evaluasi Kegiatan Festival Tunas Bahasa Ibu Tahun 2026 yang diselenggarakan di Ruang Ki Hajar. Rapat ini dipimpin langsung oleh Ibu Puji Retno Hardiningtyas (Kepala BBP Jatim) dan Ibu Made Oktavia Vidiyanti (Ketua Panitia FTBI). Dalam rapat, dilaporkan bahwa evaluasi dilakukan menggunakan kuesioner berskala 1 hingga 5 yang mencakup delapan aspek penilaian serta koordinasi dinamika teknis pelaksanaan lapangan.
+- Pengembangan UX Website Logbook: Melakukan perbaikan teknis pada website internal logbook dengan mengimplementasikan library driver.js untuk menambahkan fitur panduan interaktif visual langkah demi langkah.
+- Pemeliharaan Website RBD: Melanjutkan tugas pemeliharaan sistem dengan merapikan antarmuka dan struktur kode pada website Revitalisasi Bahasa Daerah (RBD) Jawa Timur agar tampilan publiknya lebih optimal dan tertata.
 
 Aturan Wajib:
-1. HANYA kembalikan teks narasi deskripsi saja.
-2. JANGAN sertakan ulang waktu/jam, JANGAN menulis ulang judul kegiatan, JANGAN menggunakan tanda petik pembuka/penutup di luar kutipan nama acara, dan JANGAN gunakan markdown tebal (**tebal**).
-3. Tulis langsung dalam Bahasa Indonesia baku, formal kedinasan, dan profesional.`;
+1. HANYA kembalikan teks narasi deskripsi saja (langsung isi kegiatan).
+2. DILARANG mencantumkan nama peserta / mahasiswa (JANGAN sebut nama lengkap penulis).
+3. JANGAN sertakan ulang waktu/jam, JANGAN menulis ulang judul kegiatan, JANGAN menggunakan tanda petik pembuka/penutup di luar kutipan nama acara, dan JANGAN gunakan markdown tebal (**tebal**).
+4. Tulis langsung dalam Bahasa Indonesia baku, formal kedinasan, dan profesional.`;
   }
 
   try {
@@ -677,6 +685,23 @@ function cleanGeneratedDescription(rawText, namaKegiatan, timeframe) {
     const regNama = new RegExp('^' + escapedNama + '\\s*[:|-]\\s*', 'i');
     text = text.replace(regNama, '');
   }
+
+  // Bersihkan jika ada nama peserta / "Saya, [Nama], " / "Saya selaku..." di awal kalimat
+  const userName = (document.getElementById('nama')?.value || '').trim();
+  if (userName) {
+    const escapedUser = userName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    text = text.replace(new RegExp('^Saya,\\s*' + escapedUser + ',?\\s*(selaku\\s+peserta\\s+magang,?\\s*)?', 'i'), '');
+    text = text.replace(new RegExp('^Saya\\s+' + escapedUser + ',?\\s*(selaku\\s+peserta\\s+magang,?\\s*)?', 'i'), '');
+    text = text.replace(new RegExp('^' + escapedUser + ',?\\s*(selaku\\s+peserta\\s+magang,?\\s*)?', 'i'), '');
+    text = text.replace(new RegExp('\\b(saya,\\s*' + escapedUser + '|' + escapedUser + '\\s+selaku\\s+peserta\\s+magang)\\b', 'gi'), 'saya');
+  }
+  text = text.replace(/^Saya,\s*[^,]{2,40},\s*(selaku\s+peserta\s+magang,?\s*)?/i, '');
+  text = text.replace(/^Saya\s+selaku\s+peserta\s+magang,?\s*/i, '');
+  text = text.replace(/^Sebagai\s+peserta\s+magang,?\s*/i, '');
+
+  if (text.length > 0) {
+    text = text.charAt(0).toUpperCase() + text.slice(1);
+  }
   return text.trim();
 }
 
@@ -697,6 +722,19 @@ function generateSmartFallbackPenyempurnaan(nama, userText) {
   }
 
   let text = userText.trim();
+
+  // Bersihkan jika ada nama peserta di draf input
+  const userName = (document.getElementById('nama')?.value || '').trim();
+  if (userName) {
+    const escapedUser = userName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    text = text.replace(new RegExp('^Saya,\\s*' + escapedUser + ',?\\s*', 'i'), '');
+    text = text.replace(new RegExp('^Saya\\s+' + escapedUser + ',?\\s*', 'i'), '');
+    text = text.replace(new RegExp('^' + escapedUser + ',?\\s*', 'i'), '');
+  }
+  text = text.replace(/^Saya,\s*[^,]{2,40},\s*/i, '');
+  text = text.replace(/^Saya\s+selaku\s+peserta\s+magang,?\s*/i, '');
+  text = text.replace(/^Sebagai\s+peserta\s+magang,?\s*/i, '');
+
   text = text.charAt(0).toUpperCase() + text.slice(1);
   if (!/[.!?]$/.test(text)) text += '.';
 
@@ -842,9 +880,10 @@ Tugas Anda:
 Sempurnakan dan poles catatan/kendala tersebut menjadi kalimat resmi kedinasan yang santun, objektif, profesional, dan konstruktif (1-2 kalimat). Jika peserta menyebutkan masalah teknis atau dinamika lapangan, jelaskan masalah tersebut secara elegan dan sertakan koordinasi/solusi penanganan yang bijak.
 
 Aturan Wajib:
-1. HANYA kembalikan kalimat hasil penyempurnaan saja.
-2. JANGAN gunakan tanda petik pembuka/penutup, dan JANGAN gunakan format markdown tebal (**tebal**).
-3. Gunakan Bahasa Indonesia baku kedinasan.`;
+1. HANYA kembalikan kalimat hasil penyempurnaan saja (langsung uraikan kendala dan solusi).
+2. DILARANG mencantumkan nama lengkap peserta / mahasiswa.
+3. JANGAN gunakan tanda petik pembuka/penutup, dan JANGAN gunakan format markdown tebal (**tebal**).
+4. Gunakan Bahasa Indonesia baku kedinasan.`;
 
   try {
     const apiKey = getGeminiApiKey();
