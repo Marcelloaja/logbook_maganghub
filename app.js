@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await preloadLogo();
   loadSavedDraft();
   initStorageHub();
+  initAutoSortWaktu();
   startDailyResetWatcher();
   handleUrlParams();
   checkFirstTimeTour();
@@ -349,6 +350,351 @@ function formatWaktuKegiatan(k) {
   return '-';
 }
 
+// ============================================================
+// CHRONOLOGICAL SORTING & REORDERING HELPER FUNCTIONS
+// ============================================================
+
+function parseTimeToMinutes(str) {
+  if (!str) return 9999;
+  const cleaned = String(str).trim().toLowerCase().replace('wib', '').replace('wita', '').replace('wit', '').trim();
+  const match = cleaned.match(/(\d{1,2})[:.](\d{1,2})/);
+  if (match) {
+    const h = parseInt(match[1], 10);
+    const m = parseInt(match[2], 10);
+    if (!isNaN(h) && !isNaN(m)) {
+      return h * 60 + m;
+    }
+  }
+  const singleMatch = cleaned.match(/^(\d{1,2})$/);
+  if (singleMatch) {
+    const h = parseInt(singleMatch[1], 10);
+    if (!isNaN(h) && h >= 0 && h <= 24) return h * 60;
+  }
+  return 9999;
+}
+
+function syncKegiatanDOMToStore() {
+  kegiatanDataStore.forEach(k => {
+    const waktuMulaiEl = document.getElementById('kg-waktu-mulai-' + k.id);
+    const waktuSelesaiEl = document.getElementById('kg-waktu-selesai-' + k.id);
+    const namaEl = document.getElementById('kg-nama-' + k.id);
+    const descEl = document.getElementById('kg-desc-' + k.id);
+
+    if (waktuMulaiEl) k.waktuMulai = waktuMulaiEl.value;
+    if (waktuSelesaiEl) k.waktuSelesai = waktuSelesaiEl.value;
+    k.waktu = formatWaktuKegiatan(k);
+    if (namaEl) k.nama = namaEl.value;
+    if (descEl) k.deskripsi = descEl.value;
+  });
+}
+
+function syncStoreToDOMOrder() {
+  const container = document.getElementById('kegiatan-list');
+  if (!container) return;
+  const rows = Array.from(container.querySelectorAll('.kegiatan-row'));
+  const newStore = [];
+  rows.forEach(r => {
+    const match = r.id.match(/^kg-row-(\d+)$/);
+    if (match) {
+      const rowId = parseInt(match[1], 10);
+      const item = kegiatanDataStore.find(k => k.id === rowId);
+      if (item) newStore.push(item);
+    }
+  });
+  kegiatanDataStore = newStore;
+}
+
+function sortKegiatanByTime(options = { showToastFeedback: true, auto: false }) {
+  if (!kegiatanDataStore || kegiatanDataStore.length <= 1) return false;
+
+  syncKegiatanDOMToStore();
+
+  const mapped = kegiatanDataStore.map((item, idx) => {
+    const startM = parseTimeToMinutes(item.waktuMulai);
+    const endM = parseTimeToMinutes(item.waktuSelesai);
+    return { item, startM, endM, origIdx: idx };
+  });
+
+  mapped.sort((a, b) => {
+    if (a.startM !== b.startM) return a.startM - b.startM;
+    if (a.endM !== b.endM) return a.endM - b.endM;
+    return a.origIdx - b.origIdx;
+  });
+
+  const orderChanged = mapped.some((m, idx) => m.item.id !== kegiatanDataStore[idx].id);
+  if (!orderChanged) {
+    if (options.showToastFeedback) {
+      showToast('ℹ Urutan kegiatan sudah tepat dari jam paling pagi ke paling malam.');
+    }
+    return false;
+  }
+
+  kegiatanDataStore = mapped.map(m => m.item);
+
+  const container = document.getElementById('kegiatan-list');
+  if (container) {
+    kegiatanDataStore.forEach(item => {
+      const row = document.getElementById('kg-row-' + item.id);
+      if (row) {
+        container.appendChild(row);
+      }
+    });
+  }
+
+  updateKegiatanNumbers();
+  updateKegiatanOrderButtons();
+  autoSaveDraft();
+
+  if (options.showToastFeedback) {
+    showToast('✓ Seluruh kegiatan berhasil diurutkan dari pagi ke malam!');
+  }
+  return true;
+}
+
+function moveKegiatanUp(id) {
+  syncKegiatanDOMToStore();
+  const idx = kegiatanDataStore.findIndex(k => k.id === id);
+  if (idx <= 0) return;
+
+  const temp = kegiatanDataStore[idx - 1];
+  kegiatanDataStore[idx - 1] = kegiatanDataStore[idx];
+  kegiatanDataStore[idx] = temp;
+
+  const container = document.getElementById('kegiatan-list');
+  const currentRow = document.getElementById('kg-row-' + id);
+  const prevRow = document.getElementById('kg-row-' + temp.id);
+  if (container && currentRow && prevRow) {
+    container.insertBefore(currentRow, prevRow);
+    highlightMovedRow(currentRow);
+  }
+
+  updateKegiatanNumbers();
+  updateKegiatanOrderButtons();
+  autoSaveDraft();
+  showToast(`✓ Kegiatan #${idx + 1} dipindahkan ke posisi #${idx}`);
+}
+
+function moveKegiatanDown(id) {
+  syncKegiatanDOMToStore();
+  const idx = kegiatanDataStore.findIndex(k => k.id === id);
+  if (idx === -1 || idx >= kegiatanDataStore.length - 1) return;
+
+  const temp = kegiatanDataStore[idx + 1];
+  kegiatanDataStore[idx + 1] = kegiatanDataStore[idx];
+  kegiatanDataStore[idx] = temp;
+
+  const container = document.getElementById('kegiatan-list');
+  const currentRow = document.getElementById('kg-row-' + id);
+  const nextRow = document.getElementById('kg-row-' + temp.id);
+  if (container && currentRow && nextRow) {
+    container.insertBefore(nextRow, currentRow);
+    highlightMovedRow(currentRow);
+  }
+
+  updateKegiatanNumbers();
+  updateKegiatanOrderButtons();
+  autoSaveDraft();
+  showToast(`✓ Kegiatan #${idx + 1} dipindahkan ke posisi #${idx + 2}`);
+}
+
+function highlightMovedRow(row) {
+  if (!row) return;
+  row.classList.remove('row-just-moved');
+  void row.offsetWidth;
+  row.classList.add('row-just-moved');
+  setTimeout(() => {
+    if (row) row.classList.remove('row-just-moved');
+  }, 800);
+}
+
+function updateKegiatanOrderButtons() {
+  kegiatanDataStore.forEach((item, idx) => {
+    const btnUp = document.getElementById(`btn-move-up-${item.id}`);
+    const btnDown = document.getElementById(`btn-move-down-${item.id}`);
+    if (btnUp) {
+      btnUp.disabled = (idx === 0);
+      btnUp.classList.toggle('disabled', idx === 0);
+    }
+    if (btnDown) {
+      btnDown.disabled = (idx === kegiatanDataStore.length - 1);
+      btnDown.classList.toggle('disabled', idx === kegiatanDataStore.length - 1);
+    }
+  });
+
+  const badge = document.getElementById('kg-total-badge');
+  if (badge) {
+    badge.textContent = `${kegiatanDataStore.length} Kegiatan`;
+  }
+}
+
+let autoSortDebounceTimer = null;
+function checkAndApplyAutoSort(currentId) {
+  if (!isAutoSortWaktuEnabled()) return;
+
+  clearTimeout(autoSortDebounceTimer);
+  autoSortDebounceTimer = setTimeout(() => {
+    if (kegiatanDataStore.length <= 1) return;
+    const changed = sortKegiatanByTime({ showToastFeedback: false, auto: true });
+    if (changed) {
+      showToast('⚡ Urutan kegiatan diselaraskan otomatis (pagi ke malam)');
+    }
+  }, 450);
+}
+
+function isAutoSortWaktuEnabled() {
+  const saved = localStorage.getItem('maganghub_autosort_time');
+  if (saved === null) return true;
+  return saved === 'true';
+}
+
+function toggleAutoSortWaktu(checked) {
+  localStorage.setItem('maganghub_autosort_time', checked ? 'true' : 'false');
+  if (checked) {
+    sortKegiatanByTime({ showToastFeedback: true, auto: false });
+  } else {
+    showToast('ℹ Auto-urut jam dimatikan. Anda bebas memindahkan urutan kegiatan secara manual.');
+  }
+}
+
+function initAutoSortWaktu() {
+  const chk = document.getElementById('kg-autosort-checkbox');
+  if (chk) {
+    chk.checked = isAutoSortWaktuEnabled();
+  }
+}
+
+function attachKegiatanDragAndDrop(row, id) {
+  const handle = row.querySelector('.kegiatan-drag-handle');
+  if (!handle) return;
+
+  handle.addEventListener('mousedown', () => {
+    row.setAttribute('draggable', 'true');
+  });
+  handle.addEventListener('mouseup', () => {
+    row.setAttribute('draggable', 'false');
+  });
+
+  row.addEventListener('dragstart', (e) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(id));
+    row.classList.add('is-dragging');
+  });
+
+  row.addEventListener('dragend', () => {
+    row.setAttribute('draggable', 'false');
+    row.classList.remove('is-dragging');
+    document.querySelectorAll('.kegiatan-row').forEach(r => {
+      r.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+  });
+
+  row.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const rect = row.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    if (e.clientY < midY) {
+      row.classList.add('drag-over-top');
+      row.classList.remove('drag-over-bottom');
+    } else {
+      row.classList.add('drag-over-bottom');
+      row.classList.remove('drag-over-top');
+    }
+  });
+
+  row.addEventListener('dragleave', (e) => {
+    if (!row.contains(e.relatedTarget)) {
+      row.classList.remove('drag-over-top', 'drag-over-bottom');
+    }
+  });
+
+  row.addEventListener('drop', (e) => {
+    e.preventDefault();
+    row.classList.remove('drag-over-top', 'drag-over-bottom');
+    const draggedId = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (!draggedId || draggedId === id) return;
+
+    syncKegiatanDOMToStore();
+    const draggedRow = document.getElementById('kg-row-' + draggedId);
+    const container = document.getElementById('kegiatan-list');
+    if (!draggedRow || !container) return;
+
+    const rect = row.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    if (e.clientY < midY) {
+      container.insertBefore(draggedRow, row);
+    } else {
+      container.insertBefore(draggedRow, row.nextSibling);
+    }
+
+    syncStoreToDOMOrder();
+    updateKegiatanNumbers();
+    updateKegiatanOrderButtons();
+    autoSaveDraft();
+    highlightMovedRow(draggedRow);
+    showToast('✓ Urutan kegiatan berhasil dipindahkan!');
+  });
+
+  // Mobile Touch Drag Support
+  let touchStartY = 0;
+  handle.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    touchStartY = e.touches[0].clientY;
+    row.classList.add('is-dragging');
+  }, { passive: true });
+
+  handle.addEventListener('touchmove', (e) => {
+    if (e.touches.length !== 1) return;
+    const touchY = e.touches[0].clientY;
+    const elem = document.elementFromPoint(e.touches[0].clientX, touchY);
+    const targetRow = elem ? elem.closest('.kegiatan-row') : null;
+
+    document.querySelectorAll('.kegiatan-row').forEach(r => {
+      r.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+
+    if (targetRow && targetRow !== row) {
+      const rect = targetRow.getBoundingClientRect();
+      if (touchY < rect.top + rect.height / 2) {
+        targetRow.classList.add('drag-over-top');
+      } else {
+        targetRow.classList.add('drag-over-bottom');
+      }
+    }
+  }, { passive: true });
+
+  handle.addEventListener('touchend', (e) => {
+    const touchY = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientY : touchStartY;
+    const touchX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : 0;
+    const elem = document.elementFromPoint(touchX, touchY);
+    const targetRow = elem ? elem.closest('.kegiatan-row') : null;
+
+    document.querySelectorAll('.kegiatan-row').forEach(r => {
+      r.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+    row.classList.remove('is-dragging');
+
+    if (targetRow && targetRow !== row) {
+      syncKegiatanDOMToStore();
+      const container = document.getElementById('kegiatan-list');
+      if (container) {
+        const rect = targetRow.getBoundingClientRect();
+        if (touchY < rect.top + rect.height / 2) {
+          container.insertBefore(row, targetRow);
+        } else {
+          container.insertBefore(row, targetRow.nextSibling);
+        }
+        syncStoreToDOMOrder();
+        updateKegiatanNumbers();
+        updateKegiatanOrderButtons();
+        autoSaveDraft();
+        highlightMovedRow(row);
+        showToast('✓ Urutan kegiatan berhasil dipindahkan!');
+      }
+    }
+  });
+}
+
 function addNewKegiatanUI(data = null) {
   kegiatanCounter++;
   const id = kegiatanCounter;
@@ -387,7 +733,27 @@ function addNewKegiatanUI(data = null) {
   div.id = 'kg-row-' + id;
 
   div.innerHTML = `
-    <div class="kegiatan-num" id="kg-num-${id}">${kegiatanDataStore.length}</div>
+    <div class="kegiatan-side-controls">
+      <div class="kegiatan-drag-handle" title="Tahan dan geser untuk memindahkan urutan kegiatan (Drag &amp; Drop)" draggable="false">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="9" cy="5" r="1.6"/>
+          <circle cx="15" cy="5" r="1.6"/>
+          <circle cx="9" cy="12" r="1.6"/>
+          <circle cx="15" cy="12" r="1.6"/>
+          <circle cx="9" cy="19" r="1.6"/>
+          <circle cx="15" cy="19" r="1.6"/>
+        </svg>
+      </div>
+      <div class="kegiatan-num" id="kg-num-${id}">${kegiatanDataStore.length}</div>
+      <div class="kegiatan-move-btns">
+        <button type="button" class="btn-move-kg btn-move-up" id="btn-move-up-${id}" onclick="moveKegiatanUp(${id})" title="Pindahkan kegiatan ke atas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+        <button type="button" class="btn-move-kg btn-move-down" id="btn-move-down-${id}" onclick="moveKegiatanDown(${id})" title="Pindahkan kegiatan ke bawah">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+    </div>
     <div class="kegiatan-fields">
       <div class="kegiatan-top-grid">
         <div class="form-group kg-waktu-col">
@@ -447,8 +813,10 @@ function addNewKegiatanUI(data = null) {
   `;
 
   container.appendChild(div);
+  attachKegiatanDragAndDrop(div, id);
   renderKgPhotosGrid(id);
   updateKegiatanNumbers();
+  updateKegiatanOrderButtons();
   updateDescButtonState(id);
 }
 
@@ -458,6 +826,7 @@ function updateKegiatanField(id, field, value) {
     item[field] = value;
     if (field === 'waktuMulai' || field === 'waktuSelesai') {
       item.waktu = formatWaktuKegiatan(item);
+      checkAndApplyAutoSort(id);
     }
     autoSaveDraft();
     if (field === 'nama') {
@@ -950,6 +1319,7 @@ function removeKegiatan(id) {
       el.remove();
       kegiatanDataStore = kegiatanDataStore.filter(k => k.id !== id);
       updateKegiatanNumbers();
+      updateKegiatanOrderButtons();
       autoSaveDraft();
     }, 200);
   }
@@ -960,6 +1330,10 @@ function updateKegiatanNumbers() {
     const numEl = document.getElementById('kg-num-' + item.id);
     if (numEl) numEl.textContent = idx + 1;
   });
+  const badge = document.getElementById('kg-total-badge');
+  if (badge) {
+    badge.textContent = `${kegiatanDataStore.length} Kegiatan`;
+  }
 }
 
 // Upload Foto Khusus Kegiatan
@@ -1347,6 +1721,8 @@ function loadSavedDraft() {
     } else {
       addNewKegiatanUI();
     }
+    updateKegiatanOrderButtons();
+    initAutoSortWaktu();
 
     if (data.sigData) {
       sigData = data.sigData;

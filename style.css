@@ -627,16 +627,190 @@ a {
   width: 100%;
 }
 
+/* Card Title Row with Header Action */
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.btn-sort-time-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+
+.btn-sort-time-header:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.38);
+  filter: brightness(1.05);
+}
+
+.btn-sort-time-header:active {
+  transform: translateY(0);
+}
+
+.btn-sort-time-header svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Kegiatan Toolbar Bar */
+.kg-toolbar-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 18px;
+}
+
+[data-theme="dark"] .kg-toolbar-bar {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.kg-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.kg-toolbar-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 12px;
+}
+
+[data-theme="dark"] .kg-toolbar-badge {
+  background: var(--primary-glow);
+  color: var(--primary-light);
+}
+
+.kg-toolbar-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.kg-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.kg-autosort-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.kg-autosort-toggle input {
+  display: none;
+}
+
+.kg-autosort-slider {
+  width: 32px;
+  height: 18px;
+  background: #cbd5e1;
+  border-radius: 20px;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.kg-autosort-slider::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  left: 2px;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.kg-autosort-toggle input:checked + .kg-autosort-slider {
+  background: #10b981;
+}
+
+.kg-autosort-toggle input:checked + .kg-autosort-slider::before {
+  transform: translateX(14px);
+}
+
+.btn-sort-quick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-sort-quick:hover {
+  background: #eef2ff;
+  border-color: #a5b4fc;
+  color: #4f46e5;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .btn-sort-quick:hover {
+  background: var(--primary-glow);
+  border-color: var(--primary-light);
+  color: var(--primary-light);
+}
+
+.btn-sort-quick svg {
+  width: 13.5px;
+  height: 13.5px;
+}
+
+/* Kegiatan Row & Side Controls */
 .kegiatan-row {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 22px;
+  padding: 20px 22px;
   display: flex;
-  gap: 18px;
+  gap: 16px;
   position: relative;
   align-items: flex-start;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
   width: 100%;
 }
@@ -650,6 +824,44 @@ a {
   border-color: rgba(255, 255, 255, 0.15);
 }
 
+/* Side Controls (Drag Handle + Number + Up/Down) */
+.kegiatan-side-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  width: 34px;
+}
+
+.kegiatan-drag-handle {
+  width: 28px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  cursor: grab;
+  border-radius: 5px;
+  transition: all 0.15s ease;
+  user-select: none;
+  touch-action: none;
+}
+
+.kegiatan-drag-handle:hover {
+  color: var(--primary);
+  background: rgba(79, 70, 229, 0.08);
+}
+
+.kegiatan-drag-handle:active {
+  cursor: grabbing;
+}
+
+.kegiatan-drag-handle svg {
+  width: 15px;
+  height: 15px;
+}
+
 .kegiatan-num {
   width: 32px;
   height: 32px;
@@ -657,17 +869,114 @@ a {
   background: #eef2ff;
   color: #4f46e5;
   font-weight: 800;
-  font-size: 13.5px;
+  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-top: 2px;
 }
 
 [data-theme="dark"] .kegiatan-num {
   background: var(--primary-glow);
   color: var(--primary-light);
+}
+
+.kegiatan-move-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  width: 100%;
+}
+
+.btn-move-kg {
+  width: 28px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.btn-move-kg:hover:not(:disabled) {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-move-kg:disabled,
+.btn-move-kg.disabled {
+  opacity: 0.22;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: transparent;
+  border-color: transparent;
+}
+
+.btn-move-kg svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Drag & Drop Visuals */
+.kegiatan-row.is-dragging {
+  opacity: 0.45;
+  background: rgba(79, 70, 229, 0.04);
+  border: 2px dashed var(--primary) !important;
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.15);
+  transform: scale(0.99);
+}
+
+.kegiatan-row.drag-over-top::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 4px;
+  box-shadow: 0 0 10px var(--primary-glow);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.kegiatan-row.drag-over-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 4px;
+  box-shadow: 0 0 10px var(--primary-glow);
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes rowMovedPulse {
+  0% {
+    background: rgba(79, 70, 229, 0.18);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.35);
+    transform: scale(1.01);
+  }
+  100% {
+    background: var(--bg-card);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    transform: scale(1);
+  }
+}
+
+.kegiatan-row.row-just-moved {
+  animation: rowMovedPulse 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .kegiatan-fields {

@@ -151,13 +151,38 @@
       <div class="card">
         <div class="card-header">
           <div class="card-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg></div>
-          <div>
-            <h2 class="card-title">Rincian Kegiatan &amp; Foto Dokumentasi</h2>
-            <p class="card-desc">Tambahkan jadwal waktu mulai &amp; selesai, deskripsi rinci, dan lampirkan foto dokumentasi langsung per kegiatan (Maks. 5MB/foto)</p>
+          <div style="flex:1;">
+            <div class="card-title-row">
+              <h2 class="card-title">Rincian Kegiatan &amp; Foto Dokumentasi</h2>
+              <button type="button" class="btn-sort-time-header" id="btn-sort-time-header" onclick="sortKegiatanByTime({ showToastFeedback: true })" title="Urutkan seluruh kegiatan dari jam paling pagi ke paling malam">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/><path d="M16 18l4-4-4-4"/></svg>
+                <span>Urutkan Waktu (Pagi → Malam)</span>
+              </button>
+            </div>
+            <p class="card-desc">Tambahkan jadwal waktu mulai &amp; selesai, deskripsi rinci, dan lampirkan foto dokumentasi langsung per kegiatan (Maks. 5MB/foto). Posisi kegiatan dapat diurutkan otomatis terpagi ke termalam atau digeser manual.</p>
             <div class="reset-policy-pill">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <span>Direset otomatis lewat pukul <strong>23.59</strong> untuk hari baru (Data Peserta, Tanggal, &amp; TTD tetap tersimpan aman).</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Toolbar Urutan Kegiatan -->
+        <div class="kg-toolbar-bar">
+          <div class="kg-toolbar-left">
+            <span class="kg-toolbar-badge" id="kg-total-badge">1 Kegiatan</span>
+            <span class="kg-toolbar-hint">💡 Urutan kegiatan dapat dipindahkan menggunakan tombol panah <strong>▲ / ▼</strong> atau geser ikon <strong>⠿</strong>.</span>
+          </div>
+          <div class="kg-toolbar-right">
+            <label class="kg-autosort-toggle" title="Jika aktif, setiap mengubah jam kegiatan akan otomatis diurutkan terpagi ke termalam">
+              <input type="checkbox" id="kg-autosort-checkbox" checked onchange="toggleAutoSortWaktu(this.checked)" />
+              <span class="kg-autosort-slider"></span>
+              <span class="kg-autosort-label">Auto-urut Jam</span>
+            </label>
+            <button type="button" class="btn-sort-quick" onclick="sortKegiatanByTime({ showToastFeedback: true })" title="Klik untuk mengurutkan semua kegiatan dari jam paling pagi ke paling malam">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M7 12h10M10 18h4"/></svg>
+              <span>Urutkan Terpagi</span>
+            </button>
           </div>
         </div>
 
