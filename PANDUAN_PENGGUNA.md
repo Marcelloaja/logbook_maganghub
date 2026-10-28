@@ -105,11 +105,8 @@ Jika Anda baru pertama kali membuka website ini atau lupa letak menu tertentu, g
      - Saat diklik, AI akan merapikan tata bahasa, memperpanjang penjelasan, serta memoles kalimat menjadi lebih profesional dan formal tanpa mengubah fakta, nama pihak pembimbing (misal: Bu Okta), maupun tools/software teknis yang dicantumkan.
    - Contoh hasil narasi:
      > *"Mengawali hari kerja dengan mempersiapkan dokumen dan data pendukung untuk keperluan evaluasi Festival Tunas Bahasa Ibu (FTBI) 2026, sesuai dengan instruksi dan arahan dari Ibu Okta."*
-4. **Pengingat Interaktif 5 Detik ("Ayo Dipikirkan Secara Logika"):**
-   - Saat menambah baris kegiatan baru, jika dalam waktu **5 detik** Anda belum mengisi *Nama Kegiatan* maupun *Deskripsi*, sistem akan memunculkan banner pengingat animasi santai dengan stiker *"Ayo Dipikirkan Secara Logika"*.
-   - Begitu Anda mulai mengetik pada salah satu kolom atau menekan tombol AI, animasi pengingat tersebut akan langsung **hilang otomatis secara mulus**.
-5. **Foto Dokumentasi (Maks. 5MB):** Klik tombol **"Upload Foto"** untuk melampirkan foto bukti kegiatan langsung pada baris agenda terkait.
-6. **Menambah Kegiatan:** Jika dalam sehari Anda memiliki lebih dari 1 agenda, klik tombol biru **"Tambah Kegiatan Baru"** di bagian bawah.
+4. **Foto Dokumentasi (Maks. 5MB):** Klik tombol **"Upload Foto"** untuk melampirkan foto bukti kegiatan langsung pada baris agenda terkait.
+5. **Menambah Kegiatan:** Jika dalam sehari Anda memiliki lebih dari 1 agenda, klik tombol biru **"Tambah Kegiatan Baru"** di bagian bawah.
 
 ---
 

@@ -400,12 +400,9 @@ function addNewKegiatanUI(data = null) {
         </div>
         <div class="form-group kg-nama-field">
           <label class="form-label">Nama Kegiatan <span class="req">*</span></label>
-          <input type="text" class="form-input kg-input-nama" id="kg-nama-${id}" placeholder="Contoh: Apel Pagi, Input Data, Riset Bahasa..." value="${escapeAttr(itemData.nama)}" oninput="updateKegiatanField(${id}, 'nama', this.value); updateDescButtonState(${id}); checkAndDismissLogicMeme(${id});" />
+          <input type="text" class="form-input kg-input-nama" id="kg-nama-${id}" placeholder="Contoh: Apel Pagi, Input Data, Riset Bahasa..." value="${escapeAttr(itemData.nama)}" oninput="updateKegiatanField(${id}, 'nama', this.value); updateDescButtonState(${id});" />
         </div>
       </div>
-
-      <!-- Placeholder Pengingat Logika (cobapikirkansecaralogika.jpg) jika 5 detik belum diisi -->
-      <div class="kg-logic-meme-placeholder" id="kg-logic-meme-placeholder-${id}"></div>
 
       <div class="form-group">
         <div class="kg-desc-header">
@@ -415,7 +412,7 @@ function addNewKegiatanUI(data = null) {
             <span id="btn-ai-desc-text-${id}">${itemData.deskripsi && itemData.deskripsi.trim() ? 'Sempurnakan Kalimat' : 'Generate Deskripsi AI'}</span>
           </button>
         </div>
-        <textarea class="form-input form-textarea kg-input-desc" id="kg-desc-${id}" placeholder="Jelaskan secara detail proses, tugas, atau hasil yang dikerjakan..." oninput="updateKegiatanField(${id}, 'deskripsi', this.value); updateDescButtonState(${id}); checkAndDismissLogicMeme(${id});">${escapeHtml(itemData.deskripsi)}</textarea>
+        <textarea class="form-input form-textarea kg-input-desc" id="kg-desc-${id}" placeholder="Jelaskan secara detail proses, tugas, atau hasil yang dikerjakan..." oninput="updateKegiatanField(${id}, 'deskripsi', this.value); updateDescButtonState(${id});">${escapeHtml(itemData.deskripsi)}</textarea>
       </div>
 
       <!-- Foto Dokumentasi Khusus Kegiatan Ini -->
@@ -453,11 +450,6 @@ function addNewKegiatanUI(data = null) {
   renderKgPhotosGrid(id);
   updateKegiatanNumbers();
   updateDescButtonState(id);
-
-  // Jika baris kegiatan baru ditambahkan dan masih kosong, pasang timer 5 detik untuk pengingat logika
-  if (!itemData.nama && !itemData.deskripsi) {
-    startLogicMemeTimer(id);
-  }
 }
 
 function updateKegiatanField(id, field, value) {
@@ -471,91 +463,6 @@ function updateKegiatanField(id, field, value) {
     if (field === 'nama') {
       renderKgPhotosGrid(id);
     }
-  }
-}
-
-// ============================================================
-// PENGINGAT LOGIKA ("Ayo Dipikirkan Secara Logika")
-// ============================================================
-let logicMemeTimers = {};
-
-function startLogicMemeTimer(id) {
-  if (logicMemeTimers[id]) {
-    clearTimeout(logicMemeTimers[id]);
-    delete logicMemeTimers[id];
-  }
-
-  logicMemeTimers[id] = setTimeout(() => {
-    showLogicMeme(id);
-  }, 5000);
-}
-
-function showLogicMeme(id) {
-  const row = document.getElementById('kg-row-' + id);
-  if (!row) return;
-
-  const namaVal = (document.getElementById(`kg-nama-${id}`)?.value || '').trim();
-  const descVal = (document.getElementById(`kg-desc-${id}`)?.value || '').trim();
-
-  // Jika salah satu field sudah mulai terisi, batalkan pengingat
-  if (namaVal || descVal) return;
-
-  const placeholder = document.getElementById(`kg-logic-meme-placeholder-${id}`);
-  if (!placeholder) return;
-
-  // Hindari duplikasi jika sudah tampil
-  if (document.getElementById(`kg-logic-meme-${id}`)) return;
-
-  const kegiatanIndex = kegiatanDataStore.findIndex(k => k.id === id);
-  const numDisplay = kegiatanIndex !== -1 ? kegiatanIndex + 1 : id;
-
-  placeholder.innerHTML = `
-    <div class="kg-logic-meme-banner pure-image-mode" id="kg-logic-meme-${id}">
-      <div class="kg-logic-meme-wrap" onclick="focusNamaKegiatanAndDismiss(${id})" title="Klik untuk mulai ketik Nama Kegiatan">
-        <img src="assets/cobapikirkansecaralogika.jpg" alt="Ayo Dipikirkan Secara Logika" class="kg-logic-meme-img-standalone" />
-        <button type="button" class="kg-logic-meme-close-standalone" onclick="event.stopPropagation(); dismissLogicMeme(${id});" title="Tutup gambar">&times;</button>
-      </div>
-    </div>
-  `;
-}
-
-function focusNamaKegiatanAndDismiss(id) {
-  dismissLogicMeme(id);
-  const input = document.getElementById(`kg-nama-${id}`);
-  if (input) {
-    input.focus();
-    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-}
-
-function dismissLogicMeme(id, immediate = false) {
-  if (logicMemeTimers[id]) {
-    clearTimeout(logicMemeTimers[id]);
-    delete logicMemeTimers[id];
-  }
-
-  const banner = document.getElementById(`kg-logic-meme-${id}`);
-  if (!banner) return;
-
-  if (immediate) {
-    banner.remove();
-  } else {
-    banner.classList.add('dismissing');
-    setTimeout(() => {
-      if (banner && banner.parentNode) {
-        banner.remove();
-      }
-    }, 350);
-  }
-}
-
-function checkAndDismissLogicMeme(id) {
-  const namaVal = (document.getElementById(`kg-nama-${id}`)?.value || '').trim();
-  const descVal = (document.getElementById(`kg-desc-${id}`)?.value || '').trim();
-
-  // Jika salah satu field sudah mulai terisi, segera hapus pengingat logika
-  if (namaVal || descVal) {
-    dismissLogicMeme(id);
   }
 }
 
@@ -624,9 +531,6 @@ function updateCatatanButtonState() {
 }
 
 async function generateDeskripsiKegiatanAI(id) {
-  // Hapus animasi/pengingat logika segera saat user klik generate AI
-  dismissLogicMeme(id, true);
-
   const item = kegiatanDataStore.find(k => k.id === id);
   const namaInput = document.getElementById(`kg-nama-${id}`);
   const descInput = document.getElementById(`kg-desc-${id}`);
@@ -998,7 +902,6 @@ Aturan Wajib:
 }
 
 function removeKegiatan(id) {
-  dismissLogicMeme(id, true);
   const el = document.getElementById('kg-row-' + id);
   if (el) {
     el.style.opacity = '0';
@@ -1448,14 +1351,6 @@ function startDailyResetWatcher() {
 }
 
 function clearDailyActivitiesAuto() {
-  // Bersihkan seluruh timer pengingat logika
-  if (typeof logicMemeTimers === 'object') {
-    Object.keys(logicMemeTimers).forEach(tid => {
-      clearTimeout(logicMemeTimers[tid]);
-    });
-    logicMemeTimers = {};
-  }
-
   // Hanya reset Rincian Kegiatan & Foto Dokumentasi serta catatan harian
   const list = document.getElementById('kegiatan-list');
   if (list) list.innerHTML = '';
@@ -1521,12 +1416,6 @@ async function resetForm() {
   initRealtimeDate();
 
   // Reset Activities
-  if (typeof logicMemeTimers === 'object') {
-    Object.keys(logicMemeTimers).forEach(tid => {
-      clearTimeout(logicMemeTimers[tid]);
-    });
-    logicMemeTimers = {};
-  }
   document.getElementById('kegiatan-list').innerHTML = '';
   kegiatanCounter = 0;
   kegiatanDataStore = [];
