@@ -33,9 +33,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadSavedDraft();
   initStorageHub();
   initAutoSortWaktu();
+  initPushNotifications();
   startDailyResetWatcher();
   handleUrlParams();
   checkFirstTimeTour();
+  checkFirstTimeWhatsNew();
 });
 
 function handleUrlParams() {
@@ -50,6 +52,9 @@ function handleUrlParams() {
     }
     if (modal === 'monev') {
       setTimeout(() => openMonevModal(), 400);
+    }
+    if (modal === 'whatsnew' || modal === 'fitur') {
+      setTimeout(() => openWhatsNewModal(), 400);
     }
     if (tour === '1' || tour === 'true') {
       setTimeout(() => startAppTour(), 500);
@@ -4601,14 +4606,258 @@ async function copyStickerResultLink() {
   }
 }
 
-// Close sticker modal on Escape key press
+// Close modals on Escape key press
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const stickerModal = document.getElementById('submit-sticker-modal');
     if (stickerModal && stickerModal.classList.contains('active')) {
       closeSubmitStickerModal();
     }
+    const whatsnewModal = document.getElementById('whatsnew-modal');
+    if (whatsnewModal && whatsnewModal.classList.contains('open')) {
+      closeWhatsNewModal();
+    }
   }
 });
+
+// ============================================================
+// WHAT'S NEW MODAL & PUSH NOTIFICATION SYSTEM
+// ============================================================
+
+const WHATS_NEW_VERSION = 'v2_4';
+
+function openWhatsNewModal() {
+  const modal = document.getElementById('whatsnew-modal');
+  if (!modal) return;
+  modal.classList.add('open');
+
+  // Sync checkbox state
+  const chk = document.getElementById('chk-dont-show-whatsnew');
+  if (chk) {
+    chk.checked = (localStorage.getItem(`maganghub_whatsnew_seen_${WHATS_NEW_VERSION}`) === 'true');
+  }
+
+  updateNotificationUI();
+}
+
+function closeWhatsNewModal(e) {
+  if (e && e.target !== e.currentTarget && !e.target.classList.contains('modal-close') && !e.target.closest('.btn-whatsnew-close')) return;
+  const modal = document.getElementById('whatsnew-modal');
+  if (modal) modal.classList.remove('open');
+
+  // Mark as seen when closed
+  localStorage.setItem(`maganghub_whatsnew_seen_${WHATS_NEW_VERSION}`, 'true');
+}
+
+function toggleDontShowWhatsNew(checked) {
+  localStorage.setItem(`maganghub_whatsnew_seen_${WHATS_NEW_VERSION}`, checked ? 'true' : 'false');
+}
+
+function checkFirstTimeWhatsNew() {
+  const hasSeen = localStorage.getItem(`maganghub_whatsnew_seen_${WHATS_NEW_VERSION}`);
+  if (hasSeen !== 'true') {
+    setTimeout(() => {
+      openWhatsNewModal();
+    }, 1200);
+  }
+}
+
+// ------------------------------------------------------------
+// Push Notification Logic (Web Notification API)
+// ------------------------------------------------------------
+
+function isNotificationSupported() {
+  return ('Notification' in window);
+}
+
+function getNotificationPermission() {
+  if (!isNotificationSupported()) return 'unsupported';
+  return Notification.permission;
+}
+
+function updateNotificationUI() {
+  const perm = getNotificationPermission();
+  const headerBtn = document.getElementById('btn-push-notif-header');
+  const headerText = document.getElementById('notif-header-text');
+  const modalBtn = document.getElementById('btn-modal-notif-action');
+  const modalText = document.getElementById('btn-modal-notif-text');
+  const mobileBtn = document.getElementById('btn-notif-mobile');
+
+  if (perm === 'granted') {
+    if (headerBtn) {
+      headerBtn.classList.add('notif-granted');
+      headerBtn.classList.remove('notif-denied');
+      headerBtn.title = 'Push Notifikasi Aktif (Pengingat Logbook Siap)';
+    }
+    if (headerText) headerText.textContent = 'Notif Aktif';
+    if (modalBtn) {
+      modalBtn.classList.add('is-granted');
+      modalBtn.disabled = false;
+    }
+    if (modalText) modalText.textContent = '✓ Notifikasi Aktif';
+    if (mobileBtn) {
+      mobileBtn.title = 'Notifikasi Aktif';
+      mobileBtn.style.color = '#10b981';
+    }
+  } else if (perm === 'denied') {
+    if (headerBtn) {
+      headerBtn.classList.remove('notif-granted');
+      headerBtn.classList.add('notif-denied');
+      headerBtn.title = 'Notifikasi diblokir browser. Klik untuk petunjuk aktivasi.';
+    }
+    if (headerText) headerText.textContent = 'Notif Diblokir';
+    if (modalBtn) {
+      modalBtn.classList.remove('is-granted');
+      modalBtn.disabled = false;
+    }
+    if (modalText) modalText.textContent = 'Izin Diblokir';
+    if (mobileBtn) {
+      mobileBtn.title = 'Notifikasi Diblokir';
+      mobileBtn.style.color = '#ef4444';
+    }
+  } else {
+    if (headerBtn) {
+      headerBtn.classList.remove('notif-granted', 'notif-denied');
+      headerBtn.title = 'Aktifkan Pengingat Logbook via Push Notifikasi';
+    }
+    if (headerText) headerText.textContent = 'Notifikasi';
+    if (modalBtn) {
+      modalBtn.classList.remove('is-granted');
+      modalBtn.disabled = false;
+    }
+    if (modalText) modalText.textContent = 'Aktifkan Notifikasi';
+    if (mobileBtn) {
+      mobileBtn.title = 'Aktifkan Notifikasi';
+      mobileBtn.style.color = '';
+    }
+  }
+}
+
+async function requestPushNotificationPermission() {
+  if (!isNotificationSupported()) {
+    showToast('⚠️ Browser Anda belum mendukung Web Notification API.');
+    return false;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    updateNotificationUI();
+    if (permission === 'granted') {
+      showToast('✓ Izin Push Notifikasi berhasil diaktifkan!');
+      sendBrowserNotification(
+        'Logbook MagangHub Aktif! 🎉',
+        'Pengingat harian logbook sebelum batas 23.59 WIB telah aktif di perangkat Anda.'
+      );
+      return true;
+    } else if (permission === 'denied') {
+      showToast('⚠️ Izin notifikasi ditolak. Anda dapat mengaktifkannya di setelan izin situs browser.');
+      return false;
+    }
+  } catch (err) {
+    console.warn('Error requesting notification permission:', err);
+  }
+  return false;
+}
+
+async function togglePushNotificationPermission() {
+  const perm = getNotificationPermission();
+  if (perm === 'granted') {
+    showToast('✓ Push Notifikasi sudah aktif! Pengingat logbook otomatis dikirim sebelum 23.59 WIB.');
+    testPushNotification();
+  } else if (perm === 'denied') {
+    showToast('⚠️ Notifikasi diblokir oleh peramban. Klik ikon gembok/setelan di address bar browser untuk mengizinkan notifikasi.');
+  } else {
+    await requestPushNotificationPermission();
+  }
+}
+
+async function handleNotificationButtonClick() {
+  const perm = getNotificationPermission();
+  if (perm === 'granted') {
+    testPushNotification();
+  } else {
+    await requestPushNotificationPermission();
+  }
+}
+
+function sendBrowserNotification(title, bodyText, options = {}) {
+  if (!isNotificationSupported() || Notification.permission !== 'granted') return null;
+
+  try {
+    const notif = new Notification(title, {
+      body: bodyText,
+      icon: 'assets/compress.png',
+      badge: 'assets/compress.png',
+      ...options
+    });
+
+    notif.onclick = () => {
+      window.focus();
+      notif.close();
+    };
+
+    return notif;
+  } catch (err) {
+    console.warn('Gagal memicu browser notification:', err);
+    return null;
+  }
+}
+
+function testPushNotification() {
+  if (!isNotificationSupported()) {
+    showToast('⚠️ Browser Anda tidak mendukung Web Notification API.');
+    return;
+  }
+
+  if (Notification.permission !== 'granted') {
+    requestPushNotificationPermission().then(granted => {
+      if (granted) {
+        sendBrowserNotification(
+          'Uji Coba Notifikasi Berhasil! 🔔',
+          'Sistem notifikasi Logbook MagangHub siap mengingatkan agenda kegiatan Anda.'
+        );
+      }
+    });
+    return;
+  }
+
+  sendBrowserNotification(
+    'Uji Coba Notifikasi Berhasil! 🔔',
+    'Pengingat harian aktif. Sistem akan mengingatkan pengisian sebelum batas 23.59 WIB.'
+  );
+  showToast('✓ Notifikasi uji coba telah dikirim ke perangkat Anda!');
+}
+
+function initPushNotifications() {
+  updateNotificationUI();
+  startDailyNotificationWatcher();
+}
+
+// Watcher untuk mengirim pengingat sore/malam jika logbook hari ini belum diisi
+function startDailyNotificationWatcher() {
+  setInterval(() => {
+    if (getNotificationPermission() !== 'granted') return;
+
+    const now = new Date();
+    const hours = now.getHours();
+    const todayStr = getTodayDateString();
+    const notifSentKey = `maganghub_daily_notif_sent_${todayStr}`;
+
+    // Kirim pengingat antara jam 16.00 s.d 23.50 jika belum dikirim hari ini
+    if (hours >= 16 && hours <= 23) {
+      const alreadySent = localStorage.getItem(notifSentKey);
+      if (!alreadySent) {
+        const hasActivities = kegiatanDataStore.some(k => k.nama && k.nama.trim() && k.deskripsi && k.deskripsi.trim());
+        if (!hasActivities) {
+          sendBrowserNotification(
+            'Pengingat Logbook MagangHub 📝',
+            'Jangan lupa melengkapi dan menyimpan bukti logbook magang hari ini sebelum sistem direset otomatis pada pukul 23.59 WIB.'
+          );
+          localStorage.setItem(notifSentKey, 'true');
+        }
+      }
+    }
+  }, 10 * 60 * 1000);
+}
 
 
