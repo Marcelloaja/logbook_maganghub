@@ -313,6 +313,7 @@ function switchTab(name, e) {
     syncStorageWithCloud(true);
   } else if (name === 'drivelinks') {
     renderDriveLinks();
+    syncDriveLinksWithCloud(true);
   }
   document.getElementById('sidebar').classList.remove('open');
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2562,6 +2563,7 @@ function startCloudAutoSync() {
     const url = getGasWebhookUrl();
     if (url) {
       syncStorageWithCloud(true);
+      syncDriveLinksWithCloud(true);
     }
   }, CLOUD_SYNC_INTERVAL_MS);
 }
@@ -2825,6 +2827,11 @@ async function syncStorageWithCloud(silent = true) {
           storageFiles = newFiles;
           saveStorageFiles();
         }
+      }
+
+      // Sinkronisasi link dokumentasi kegiatan dari cloud (Google Drive bersama)
+      if (Array.isArray(res.links)) {
+        syncDriveLinksStoreFromCloud(res.links);
       }
 
       if (changed) {
@@ -4910,6 +4917,10 @@ function initDriveLinks() {
     driveLinksStore = [...DEFAULT_SAMPLE_DRIVE_LINKS];
   }
   renderDriveLinks();
+  // Sinkronisasi otomatis dari cloud Google Drive bersama (background)
+  setTimeout(() => {
+    syncDriveLinksWithCloud(true);
+  }, 1200);
 }
 
 function saveDriveLinksStore() {
@@ -5250,7 +5261,7 @@ function closeAddDriveLinkModal(e) {
   if (modal) modal.classList.remove('open');
 }
 
-function saveDriveLinkItem() {
+async function saveDriveLinkItem() {
   const editId = (document.getElementById('drivelink-edit-id')?.value || '').trim();
   const title = (document.getElementById('drivelink-input-title')?.value || '').trim();
   const category = (document.getElementById('drivelink-input-category')?.value || 'Foto').trim();
@@ -5270,6 +5281,8 @@ function saveDriveLinkItem() {
     return;
   }
 
+  let savedItem = null;
+
   if (editId) {
     // Mode Update
     const idx = driveLinksStore.findIndex(i => i.id === editId);
@@ -5282,30 +5295,54 @@ function saveDriveLinkItem() {
         url,
         desc
       };
+      savedItem = driveLinksStore[idx];
       saveDriveLinksStore();
       renderDriveLinks();
       closeAddDriveLinkModal();
       showToast('✓ Link dokumentasi berhasil diperbarui!');
-      return;
     }
+  } else {
+    // Mode Buat Baru
+    savedItem = {
+      id: 'link_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+      title,
+      category,
+      date,
+      url,
+      desc,
+      createdAt: Date.now()
+    };
+
+    driveLinksStore.unshift(savedItem);
+    saveDriveLinksStore();
+    renderDriveLinks();
+    closeAddDriveLinkModal();
+    showToast('✓ Link dokumentasi baru berhasil disimpan!');
   }
 
-  // Mode Buat Baru
-  const newItem = {
-    id: 'link_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-    title,
-    category,
-    date,
-    url,
-    desc,
-    createdAt: Date.now()
-  };
-
-  driveLinksStore.unshift(newItem);
-  saveDriveLinksStore();
-  renderDriveLinks();
-  closeAddDriveLinkModal();
-  showToast('✓ Link dokumentasi baru berhasil disimpan!');
+  // Sinkronkan ke Cloud Google Drive bersama agar teman langsung dapat melihat
+  const gasUrl = getGasWebhookUrl();
+  if (gasUrl && savedItem) {
+    updateDriveLinkSyncStatusUI('syncing', 'Menyimpan ke Cloud...');
+    try {
+      const resp = await fetch(gasUrl, {
+        method: 'POST',
+        mode: 'cors',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveDriveLink', linkItem: savedItem })
+      });
+      const res = await resp.json();
+      if (res && res.success) {
+        updateDriveLinkSyncStatusUI('ok', 'Cloud Tersinkron');
+      } else {
+        updateDriveLinkSyncStatusUI('warning', 'Tersimpan di Lokal');
+      }
+    } catch (e) {
+      console.warn('Gagal sinkron link ke cloud:', e);
+      updateDriveLinkSyncStatusUI('warning', 'Tersimpan di Lokal');
+    }
+  }
 }
 
 function editDriveLinkItem(id) {
@@ -5319,7 +5356,7 @@ async function deleteDriveLinkItem(id) {
   const confirmed = await showCustomConfirmDialog({
     title: 'Hapus Link Dokumentasi?',
     message: `Apakah Anda yakin ingin menghapus tautan <strong style="color:var(--text);">${escapeHtml(item.title)}</strong> dari daftar simpanan?`,
-    subtext: 'Tautan ini akan dihapus dari website, berkas di Google Drive Anda tidak akan terhapus.',
+    subtext: 'Tautan ini akan dihapus dari website peserta magang, berkas asli di Google Drive Anda tetap aman.',
     confirmText: 'Ya, Hapus Tautan',
     cancelText: 'Batal',
     isDanger: true
@@ -5331,4 +5368,269 @@ async function deleteDriveLinkItem(id) {
   saveDriveLinksStore();
   renderDriveLinks();
   showToast('✓ Tautan dokumentasi telah dihapus.');
+
+  // Hapus dari cloud Google Drive bersama
+  const gasUrl = getGasWebhookUrl();
+  if (gasUrl) {
+    updateDriveLinkSyncStatusUI('syncing', 'Menghapus di Cloud...');
+    try {
+      const resp = await fetch(gasUrl, {
+        method: 'POST',
+        mode: 'cors',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'deleteDriveLink', linkId: id })
+      });
+      const res = await resp.json();
+      if (res && res.success) {
+        updateDriveLinkSyncStatusUI('ok', 'Cloud Tersinkron');
+      }
+    } catch (e) {
+      console.warn('Gagal hapus link di cloud:', e);
+      updateDriveLinkSyncStatusUI('warning', 'Dihapus Lokal Saja');
+    }
+  }
+}
+
+// ============================================================
+// CLOUD SYNC & IMPORT/EXPORT FOR DOKUMENTASI DRIVE LINKS
+// ============================================================
+
+function updateDriveLinkSyncStatusUI(status, label) {
+  const dot = document.getElementById('drivelink-sync-dot');
+  const text = document.getElementById('drivelink-sync-label');
+  if (!dot || !text) return;
+
+  dot.className = 'sync-dot';
+  if (status === 'ok') {
+    dot.classList.add('sync-dot-ok');
+    text.textContent = label || 'Cloud Sinkron';
+  } else if (status === 'syncing') {
+    dot.classList.add('sync-dot-syncing');
+    text.textContent = label || 'Menyinkronkan...';
+  } else if (status === 'warning') {
+    dot.classList.add('sync-dot-warning');
+    text.textContent = label || 'Sinkron Lokal';
+  } else {
+    dot.classList.add('sync-dot-error');
+    text.textContent = label || 'Gagal Cloud';
+  }
+}
+
+function syncDriveLinksStoreFromCloud(cloudLinks) {
+  if (!Array.isArray(cloudLinks)) return;
+
+  if (cloudLinks.length === 0) {
+    // Cloud baru belum ada dokumentasi_links.json.
+    // Jika peserta memiliki link lokal, unggah agar teman-teman langsung bisa akses.
+    const customLocal = driveLinksStore.filter(i => i && !i.id.startsWith('link_bbjt_sample_'));
+    if (customLocal.length > 0) {
+      pushAllLocalDriveLinksToCloud();
+    }
+    return;
+  }
+
+  // Cloud memiliki data dari Google Drive bersama!
+  const cloudUrlMap = new Set(cloudLinks.map(c => (c.url || '').trim()));
+  const cloudIdMap = new Map(cloudLinks.map(c => [c.id, c]));
+
+  // Ambil link lokal peserta yang mungkin baru dibuat offline & belum masuk cloud
+  const pendingUploads = [];
+  driveLinksStore.forEach(loc => {
+    if (loc && !loc.id.startsWith('link_bbjt_sample_')) {
+      const urlKey = (loc.url || '').trim();
+      if (!cloudIdMap.has(loc.id) && !cloudUrlMap.has(urlKey)) {
+        pendingUploads.push(loc);
+      }
+    }
+  });
+
+  const merged = [...pendingUploads, ...cloudLinks];
+  merged.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  const currentKey = driveLinksStore.map(i => i.id + '_' + (i.title || '')).join('|');
+  const newKey = merged.map(i => i.id + '_' + (i.title || '')).join('|');
+
+  if (currentKey !== newKey) {
+    driveLinksStore = merged;
+    saveDriveLinksStore();
+    renderDriveLinks();
+  }
+
+  if (pendingUploads.length > 0) {
+    pushAllLocalDriveLinksToCloud();
+  }
+}
+
+async function syncDriveLinksWithCloud(silent = false) {
+  const url = getGasWebhookUrl();
+  const syncBtn = document.getElementById('btn-sync-drivelinks');
+  const origBtnHtml = syncBtn ? syncBtn.innerHTML : '';
+
+  if (!url) {
+    updateDriveLinkSyncStatusUI('warning', 'Cloud Belum Diatur');
+    if (!silent) showToast('⚠️ Webhook Google Drive belum diatur.');
+    return;
+  }
+
+  updateDriveLinkSyncStatusUI('syncing', 'Menyinkronkan...');
+  if (syncBtn && !silent) {
+    syncBtn.disabled = true;
+    syncBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-animation" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+      <span>Sinkronisasi...</span>
+    `;
+  }
+
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      mode: 'cors',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getDriveLinks' })
+    });
+    const res = await resp.json();
+
+    if (res && res.success && Array.isArray(res.links)) {
+      syncDriveLinksStoreFromCloud(res.links);
+      updateDriveLinkSyncStatusUI('ok', 'Cloud Tersinkron');
+      if (!silent) {
+        showToast('✅ Berhasil menyinkronkan data tautan dari Google Drive bersama!');
+      }
+    } else {
+      // Fallback coba panggil getSyncData
+      const resp2 = await fetch(url, {
+        method: 'POST',
+        mode: 'cors',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'getSyncData' })
+      });
+      const res2 = await resp2.json();
+      if (res2 && res2.success && Array.isArray(res2.links)) {
+        syncDriveLinksStoreFromCloud(res2.links);
+        updateDriveLinkSyncStatusUI('ok', 'Cloud Tersinkron');
+        if (!silent) showToast('✅ Berhasil menyinkronkan data tautan dari Google Drive bersama!');
+      } else {
+        updateDriveLinkSyncStatusUI('warning', 'Perlu Update Skrip');
+        if (!silent) {
+          showToast('⚠️ Skrip Google Drive koordinator perlu di-update agar mendukung sinkronisasi link bersama.');
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Gagal sync drive links:', err);
+    updateDriveLinkSyncStatusUI('error', 'Gagal Terhubung');
+    if (!silent) {
+      showToast('⚠️ Gagal terhubung ke Google Drive bersama.');
+    }
+  } finally {
+    if (syncBtn && !silent) {
+      syncBtn.disabled = false;
+      syncBtn.innerHTML = origBtnHtml;
+    }
+  }
+}
+
+async function pushAllLocalDriveLinksToCloud() {
+  const url = getGasWebhookUrl();
+  if (!url) return;
+  try {
+    const linksToPush = driveLinksStore.filter(i => i && !i.id.startsWith('link_bbjt_sample_'));
+    if (linksToPush.length === 0) return;
+
+    await fetch(url, {
+      method: 'POST',
+      mode: 'cors',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'saveDriveLinksBatch', linkItems: linksToPush })
+    });
+  } catch (e) {
+    console.warn('Gagal push links lokal ke cloud:', e);
+  }
+}
+
+function openImportExportModal() {
+  const modal = document.getElementById('import-export-modal');
+  const textarea = document.getElementById('import-export-json-textarea');
+  if (!modal) return;
+
+  if (textarea) {
+    textarea.value = JSON.stringify(driveLinksStore, null, 2);
+  }
+  modal.classList.add('open');
+}
+
+function closeImportExportModal(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const modal = document.getElementById('import-export-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function exportDriveLinksToClipboard() {
+  const jsonStr = JSON.stringify(driveLinksStore, null, 2);
+  navigator.clipboard.writeText(jsonStr).then(() => {
+    showToast('📋 Data link berhasil disalin! Anda bisa langsung paste & kirim ke WhatsApp teman.');
+  }).catch(() => {
+    const textarea = document.getElementById('import-export-json-textarea');
+    if (textarea) {
+      textarea.select();
+      document.execCommand('copy');
+      showToast('📋 Data link berhasil disalin!');
+    }
+  });
+}
+
+async function importDriveLinksFromInput() {
+  const textarea = document.getElementById('import-export-json-textarea');
+  if (!textarea) return;
+
+  const rawVal = textarea.value.trim();
+  if (!rawVal) {
+    showToast('⚠️ Silakan tempelkan data JSON tautan terlebih dahulu.');
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(rawVal);
+    if (!Array.isArray(parsed)) {
+      showToast('⚠️ Format data tidak sesuai (harus berupa daftar JSON []).');
+      return;
+    }
+
+    const validItems = parsed.filter(item => item && item.title && item.url);
+    if (validItems.length === 0) {
+      showToast('⚠️ Tidak ada tautan valid yang ditemukan dalam data tersebut.');
+      return;
+    }
+
+    const existingIds = new Set(driveLinksStore.map(i => i.id));
+    const existingUrls = new Set(driveLinksStore.map(i => (i.url || '').trim()));
+
+    let addedCount = 0;
+    validItems.forEach(item => {
+      const urlTrim = (item.url || '').trim();
+      if (!existingIds.has(item.id) && !existingUrls.has(urlTrim)) {
+        driveLinksStore.unshift({
+          ...item,
+          id: item.id || ('link_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
+          createdAt: item.createdAt || Date.now()
+        });
+        addedCount++;
+      }
+    });
+
+    saveDriveLinksStore();
+    renderDriveLinks();
+    closeImportExportModal();
+
+    showToast(`✅ Berhasil mengimpor ${addedCount} link dokumentasi baru!`);
+
+    // Dorong ke cloud agar tersimpan permanen di Google Drive bersama
+    pushAllLocalDriveLinksToCloud();
+  } catch (err) {
+    showToast('❌ Gagal membaca format JSON. Pastikan seluruh teks kode disalin lengkap.');
+  }
 }

@@ -576,6 +576,14 @@
           <p class="page-sub">Simpan tautan Google Drive dokumentasi magang (foto kegiatan, video, lembar laporan, folder) &bull; Akses dan pratinjau langsung di website</p>
         </div>
         <div class="header-action-group">
+          <button type="button" class="btn btn-secondary" id="btn-sync-drivelinks" onclick="syncDriveLinksWithCloud(false)" title="Sinkronkan link dokumentasi dari cloud Google Drive bersama">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67"/></svg>
+            <span>Sinkronkan Cloud</span>
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="openImportExportModal()" title="Bagikan data tautan ke teman atau impor tautan cadangan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            <span>Bagikan / Impor</span>
+          </button>
           <button type="button" class="btn btn-primary" onclick="openAddDriveLinkModal()" style="display:inline-flex; align-items:center; gap:8px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             <span>Tambah Link Baru</span>
@@ -599,9 +607,15 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
           </div>
           <div class="gdrive-banner-text">
-            <h4 class="gdrive-banner-title">Pratinjau Langsung di Website Aktif! 🚀</h4>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px; flex-wrap:wrap;">
+              <h4 class="gdrive-banner-title" style="margin:0;">Sinkronisasi Cloud Google Drive Bersama Aktif ☁️</h4>
+              <div class="sync-status-pill" id="drivelink-sync-status-pill" onclick="syncDriveLinksWithCloud(false)" style="cursor:pointer; margin:0;" title="Klik untuk sinkronkan manual">
+                <span class="sync-dot sync-dot-ok" id="drivelink-sync-dot"></span>
+                <span id="drivelink-sync-label" style="font-size:11.5px; font-weight:700;">Cloud Sinkron</span>
+              </div>
+            </div>
             <p class="gdrive-banner-desc">
-              Seluruh link hasil dokumentasi (foto, video liputan, berkas laporan, hingga folder Google Drive) dapat dilihat langsung di dalam website melalui tombol <strong>Lihat di Website</strong> tanpa harus buka tab baru. Pastikan akses Google Drive disetel ke <em>"Anyone with the link can view" (Siapa saja yang memiliki link)</em>.
+              Tautan yang disimpan di sini terhubung ke Google Drive bersama agar dapat dilihat oleh seluruh teman magang. Setiap item bisa langsung dipratinjau di website via tombol <strong>Lihat di Website</strong> tanpa harus buka tab baru.
             </p>
           </div>
           <div class="gdrive-banner-btn">
@@ -804,11 +818,44 @@ function handleGetSyncData() {
     return a.name.localeCompare(b.name);
   });
 
+  // 3. Baca link dokumentasi kegiatan (dokumentasi_links.json)
+  var drivelinks = getDriveLinksFromCloud(rootFolder);
+
   return ContentService.createTextOutput(JSON.stringify({
     success: true,
     folders: folders,
-    files: files
+    files: files,
+    links: drivelinks
   })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getDriveLinksFromCloud(rootFolder) {
+  try {
+    var files = rootFolder.getFilesByName("dokumentasi_links.json");
+    if (files.hasNext()) {
+      var content = files.next().getBlob().getDataAsString();
+      return JSON.parse(content || "[]");
+    }
+  } catch (err) {
+    Logger.log("Read links error: " + err);
+  }
+  return [];
+}
+
+function saveDriveLinksToCloud(rootFolder, links) {
+  try {
+    var content = JSON.stringify(links || []);
+    var files = rootFolder.getFilesByName("dokumentasi_links.json");
+    if (files.hasNext()) {
+      var file = files.next();
+      file.setContent(content);
+    } else {
+      var newFile = rootFolder.createFile("dokumentasi_links.json", content, MimeType.PLAIN_TEXT);
+      newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    }
+  } catch (err) {
+    Logger.log("Save links error: " + err);
+  }
 }
 
 function doPost(e) {
@@ -898,7 +945,59 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // ACTION 4: SIMPAN / UPLOAD DOKUMEN LOGBOOK
+    // ACTION 4: GET DOKUMENTASI DRIVE LINKS
+    if (data.action === "getDriveLinks") {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        links: getDriveLinksFromCloud(rootFolder)
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ACTION 5: SAVE / UPDATE DOKUMENTASI DRIVE LINK (SINGLE / BATCH)
+    if (data.action === "saveDriveLink" || data.action === "saveDriveLinksBatch") {
+      var currentLinks = getDriveLinksFromCloud(rootFolder);
+      var itemsToSave = data.action === "saveDriveLinksBatch" ? (data.linkItems || []) : [data.linkItem];
+      for (var b = 0; b < itemsToSave.length; b++) {
+        var linkItem = itemsToSave[b];
+        if (!linkItem || !linkItem.id) continue;
+        var foundIdx = -1;
+        for (var k = 0; k < currentLinks.length; k++) {
+          if (currentLinks[k].id === linkItem.id || (linkItem.url && currentLinks[k].url === linkItem.url)) {
+            foundIdx = k;
+            break;
+          }
+        }
+        if (foundIdx !== -1) {
+          currentLinks[foundIdx] = linkItem;
+        } else {
+          currentLinks.unshift(linkItem);
+        }
+      }
+      saveDriveLinksToCloud(rootFolder, currentLinks);
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        links: currentLinks
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ACTION 6: DELETE DOKUMENTASI DRIVE LINK
+    if (data.action === "deleteDriveLink") {
+      var linkIdToDelete = data.linkId;
+      var currentLinks2 = getDriveLinksFromCloud(rootFolder);
+      var filteredLinks = [];
+      for (var m = 0; m < currentLinks2.length; m++) {
+        if (currentLinks2[m].id !== linkIdToDelete) {
+          filteredLinks.push(currentLinks2[m]);
+        }
+      }
+      saveDriveLinksToCloud(rootFolder, filteredLinks);
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        links: filteredLinks
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ACTION 7: SIMPAN / UPLOAD DOKUMEN LOGBOOK
     var targetFolderName = (data.folderName || "").trim();
     var targetFolder = rootFolder;
     if (targetFolderName && targetFolderName.toLowerCase() !== "umum") {
@@ -1322,6 +1421,47 @@ function doPost(e) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:#f59e0b;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <span>Jika tampilan pratinjau meminta login atau tidak muncul karena proteksi browser, klik tombol <strong>Buka di Tab Baru ↗</strong> untuk melihat langsung di Google Drive.</span>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Bagikan & Impor Link Dokumentasi -->
+  <div class="modal-backdrop" id="import-export-modal" onclick="closeImportExportModal(event)">
+    <div class="modal-content drivelink-modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header drivelink-modal-header">
+        <div class="drivelink-modal-header-info">
+          <div class="drivelink-modal-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+              <polyline points="16 6 12 2 8 6"/>
+              <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title">Bagikan &amp; Impor Link Dokumentasi</h3>
+            <p class="drivelink-modal-sub">Kirim tautan dokumentasi Anda ke laptop teman secara instan</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" onclick="closeImportExportModal()">✕</button>
+      </div>
+      <div class="modal-body drivelink-modal-body">
+        <div class="drivelink-hint-box" style="margin-top:0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Jika laptop teman belum tersinkronisasi otomatis dari cloud, Anda bisa klik tombol <strong>Salin Seluruh Data Link</strong> di bawah lalu kirim ke WhatsApp teman. Teman Anda cukup buka menu ini dan klik <strong>Impor Data</strong>.</span>
+        </div>
+
+        <div class="form-group drivelink-field">
+          <label class="form-label" for="import-export-json-textarea">Data Tautan Dokumentasi (JSON)</label>
+          <textarea id="import-export-json-textarea" class="form-textarea" rows="5" placeholder="Tempelkan data kode JSON di sini untuk mengimpor ke website Anda..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer drivelink-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="exportDriveLinksToClipboard()">
+          📋 Salin Seluruh Data Link
+        </button>
+        <button type="button" class="btn btn-primary" onclick="importDriveLinksFromInput()">
+          📥 Impor Data ke Website
+        </button>
       </div>
     </div>
   </div>
