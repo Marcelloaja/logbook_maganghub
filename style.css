@@ -5318,3 +5318,58 @@ a {
 .sync-dot-warning {
   background: #f59e0b;
 }
+
+/* Action Toolbar Foto Kegiatan (Upload + Tempel Ctrl+V) */
+.kg-photos-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-paste-photo-kg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  color: var(--primary);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .btn-paste-photo-kg {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: var(--primary-light);
+}
+
+.btn-paste-photo-kg:hover {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.kg-add-card-hint {
+  font-size: 10.5px;
+  font-weight: 500;
+  opacity: 0.75;
+  margin-top: 3px;
+}
+
+.kg-photo-add-card.dragover,
+.kg-photos-empty-zone.dragover {
+  border-color: #4f46e5 !important;
+  background: #eef2ff !important;
+  transform: scale(1.02);
+}
+
+[data-theme="dark"] .kg-photo-add-card.dragover,
+[data-theme="dark"] .kg-photos-empty-zone.dragover {
+  border-color: var(--primary-light) !important;
+  background: var(--primary-glow) !important;
+}

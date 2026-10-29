@@ -24,6 +24,35 @@ let driveUserName = '';
 // ============================================================
 // INITIALIZATION
 // ============================================================
+// Global Clipboard Paste Listener untuk Foto Kegiatan (Ctrl + V)
+document.addEventListener('paste', (e) => {
+  const items = e.clipboardData ? Array.from(e.clipboardData.items || []) : [];
+  const imageItem = items.find(it => it.type && it.type.startsWith('image/'));
+  if (!imageItem) return; // Paste teks biasa diabaikan agar normal
+
+  // Cari baris kegiatan aktif tempat kursor berada
+  const activeRow = (e.target && e.target.closest) ? e.target.closest('.kegiatan-row') : null;
+  let targetId = null;
+  if (activeRow) {
+    const match = activeRow.id.match(/^kg-row-(\d+)$/);
+    if (match) targetId = parseInt(match[1], 10);
+  }
+  if (!targetId && currentActiveKegiatanId) {
+    targetId = currentActiveKegiatanId;
+  }
+  if (!targetId && kegiatanDataStore && kegiatanDataStore.length > 0) {
+    targetId = kegiatanDataStore[kegiatanDataStore.length - 1].id;
+  }
+
+  if (targetId) {
+    e.preventDefault();
+    const file = imageItem.getAsFile();
+    if (file) {
+      uploadPhotoFilesToKegiatan([file], targetId);
+    }
+  }
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   initRealtimeDate();
@@ -740,6 +769,8 @@ function addNewKegiatanUI(data = null) {
   const div = document.createElement('div');
   div.className = 'kegiatan-row';
   div.id = 'kg-row-' + id;
+  div.setAttribute('onclick', `setActiveKegiatanFocus(${id})`);
+  div.setAttribute('onfocusin', `setActiveKegiatanFocus(${id})`);
 
   div.innerHTML = `
     <div class="kegiatan-side-controls">
@@ -798,11 +829,17 @@ function addNewKegiatanUI(data = null) {
             <span>Foto Bukti Kegiatan</span>
             <span class="kg-photos-badge" id="kg-badge-${id}">0 foto</span>
           </div>
-          <label class="btn-add-photo-kg" title="Unggah foto bukti untuk kegiatan ini">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>Unggah Foto</span>
+          <div class="kg-photos-header-actions">
+            <button type="button" class="btn-paste-photo-kg" onclick="pastePhotoFromClipboard(${id})" title="Tempel foto/screenshot dari clipboard (Ctrl+V)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+              <span>Tempel (Ctrl+V)</span>
+            </button>
+            <button type="button" class="btn-add-photo-kg" onclick="triggerKgFileInput(${id})" title="Unggah foto bukti untuk kegiatan ini">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>+ Unggah Foto</span>
+            </button>
             <input type="file" id="kg-file-input-${id}" multiple accept="image/*" style="display:none" onchange="handleKgPhotoUpload(event, ${id})" />
-          </label>
+          </div>
         </div>
 
         <div id="kg-photos-container-${id}">
@@ -1345,25 +1382,70 @@ function updateKegiatanNumbers() {
   }
 }
 
-// Upload Foto Khusus Kegiatan
+// ============================================================
+// UPLOAD & PASTE FOTO KEGIATAN (MULTI-METODE & PASTE SUPPORT)
+// ============================================================
+
+let currentActiveKegiatanId = null;
+
+function setActiveKegiatanFocus(id) {
+  currentActiveKegiatanId = id;
+}
+
+function triggerKgFileInput(id) {
+  setActiveKegiatanFocus(id);
+  const input = document.getElementById('kg-file-input-' + id);
+  if (input) {
+    input.value = '';
+    input.click();
+  }
+}
+
+// Upload Foto Khusus Kegiatan dari File Input
 function handleKgPhotoUpload(e, id) {
-  const files = Array.from(e.target.files);
+  setActiveKegiatanFocus(id);
+  const files = e.target ? Array.from(e.target.files || []) : [];
   if (!files.length) return;
+  uploadPhotoFilesToKegiatan(files, id);
+  if (e.target) e.target.value = '';
+}
+
+// Drag & Drop Handler (Berlaku untuk Dropzone Kosong MAUPUN saat sudah ada foto)
+function handleKgPhotoDrop(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  setActiveKegiatanFocus(id);
+  if (e.currentTarget) e.currentTarget.classList.remove('dragover');
+  const files = e.dataTransfer ? Array.from(e.dataTransfer.files).filter(f => f.type && f.type.startsWith('image/')) : [];
+  if (files.length) {
+    uploadPhotoFilesToKegiatan(files, id);
+  }
+}
+
+// Fungsi Pusat Pemrosesan Foto (Input File, Drag-and-Drop, dan Clipboard Paste)
+function uploadPhotoFilesToKegiatan(files, id) {
+  const imageFiles = Array.from(files).filter(f => f.type && f.type.startsWith('image/'));
+  if (!imageFiles.length) {
+    showToast('⚠️ Berkas yang dipilih bukan file gambar/foto.');
+    return;
+  }
 
   const item = kegiatanDataStore.find(k => k.id === id);
   if (!item) return;
+  if (!item.fotos) item.fotos = [];
 
   let loaded = 0;
-  files.forEach(file => {
+  imageFiles.forEach(file => {
     if (file.size > 5 * 1024 * 1024) {
-      showToast(`File ${file.name} melebihi batas 5MB!`);
+      showToast(`⚠️ File ${file.name || 'Foto'} melebihi batas 5MB!`);
       return;
     }
 
     const reader = new FileReader();
     reader.onload = ev => {
       compressImage(ev.target.result, 1200, 0.85, (compressed) => {
-        const defaultCaption = item.nama ? `${item.nama} (${file.name.replace(/\.[^.]+$/, '')})` : file.name.replace(/\.[^.]+$/, '');
+        const rawName = file.name ? file.name.replace(/\.[^.]+$/, '') : `Foto Bukti ${item.fotos.length + 1}`;
+        const defaultCaption = item.nama ? `${item.nama} (${rawName})` : rawName;
         item.fotos.push({
           dataUrl: compressed,
           caption: defaultCaption
@@ -1371,17 +1453,43 @@ function handleKgPhotoUpload(e, id) {
         loaded++;
         renderKgPhotosGrid(id);
         autoSaveDraft();
-        if (loaded === files.length) {
-          showToast(`Berhasil menambahkan foto untuk kegiatan ini!`);
+        if (loaded === imageFiles.length) {
+          const kgIdx = kegiatanDataStore.findIndex(k => k.id === id) + 1;
+          showToast(`✓ Berhasil menambahkan ${loaded} foto untuk Kegiatan #${kgIdx}!`);
         }
       });
     };
     reader.readAsDataURL(file);
   });
-
-  e.target.value = '';
 }
 
+// Tempel Foto dari Clipboard (Tombol & API Clipboard)
+async function pastePhotoFromClipboard(id) {
+  setActiveKegiatanFocus(id);
+  try {
+    if (navigator.clipboard && navigator.clipboard.read) {
+      const clipboardItems = await navigator.clipboard.read();
+      const imageBlobs = [];
+      for (const item of clipboardItems) {
+        for (const type of item.types) {
+          if (type.startsWith('image/')) {
+            const blob = await item.getType(type);
+            imageBlobs.push(blob);
+          }
+        }
+      }
+      if (imageBlobs.length > 0) {
+        uploadPhotoFilesToKegiatan(imageBlobs, id);
+        return;
+      }
+    }
+    showToast('💡 Salin/screenshot gambar terlebih dahulu, lalu tekan Ctrl + V pada kegiatan ini.');
+  } catch (err) {
+    showToast('💡 Tekan Ctrl + V pada keyboard Anda untuk menempelkan foto dari clipboard.');
+  }
+}
+
+// Render Grid Foto Dokumentasi (Dengan Dukungan Drag & Drop Lanjutan)
 function renderKgPhotosGrid(id) {
   const item = kegiatanDataStore.find(k => k.id === id);
   const container = document.getElementById('kg-photos-container-' + id);
@@ -1400,12 +1508,16 @@ function renderKgPhotosGrid(id) {
 
   if (count === 0) {
     container.innerHTML = `
-      <div class="kg-photos-empty-zone" onclick="document.getElementById('kg-file-input-${id}').click()" ondragover="event.preventDefault(); this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleKgPhotoDrop(event, ${id})">
+      <div class="kg-photos-empty-zone" 
+           onclick="triggerKgFileInput(${id})" 
+           ondragover="event.preventDefault(); this.classList.add('dragover')" 
+           ondragleave="this.classList.remove('dragover')" 
+           ondrop="handleKgPhotoDrop(event, ${id})">
         <div class="kg-empty-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </div>
-        <div class="kg-empty-text"><strong>Klik untuk unggah foto</strong> atau seret file ke sini</div>
-        <div class="kg-empty-sub">Bisa pilih beberapa foto sekaligus • Maksimal 5MB per foto</div>
+        <div class="kg-empty-text"><strong>Klik untuk unggah foto</strong>, seret file ke sini, atau tekan <strong>Ctrl + V</strong></div>
+        <div class="kg-empty-sub">Bisa pilih beberapa foto sekaligus • Maksimal 5MB per foto • Mendukung screenshot langsung</div>
       </div>
     `;
     return;
@@ -1425,24 +1537,28 @@ function renderKgPhotosGrid(id) {
     </div>
   `).join('');
 
+  // Kartu Tambah Foto dengan dukungan Drag & Drop dan petunjuk Ctrl+V
   cardsHtml += `
-    <div class="kg-photo-add-card" onclick="document.getElementById('kg-file-input-${id}').click()" title="Tambah foto lain untuk kegiatan ini">
+    <div class="kg-photo-add-card" 
+         onclick="triggerKgFileInput(${id})" 
+         ondragover="event.preventDefault(); this.classList.add('dragover')" 
+         ondragleave="this.classList.remove('dragover')" 
+         ondrop="handleKgPhotoDrop(event, ${id})" 
+         title="Klik untuk tambah foto, seret file ke sini, atau tekan Ctrl+V">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       <span>+ Tambah Foto</span>
+      <span class="kg-add-card-hint">Seret foto / Ctrl+V</span>
     </div>
   `;
 
-  container.innerHTML = `<div class="kg-photos-grid" id="kg-photos-grid-${id}">${cardsHtml}</div>`;
-}
-
-function handleKgPhotoDrop(e, id) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('dragover');
-  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-  if (files.length) {
-    const fakeEvent = { target: { files: files, value: '' } };
-    handleKgPhotoUpload(fakeEvent, id);
-  }
+  container.innerHTML = `
+    <div class="kg-photos-grid" 
+         id="kg-photos-grid-${id}" 
+         ondragover="event.preventDefault();" 
+         ondrop="handleKgPhotoDrop(event, ${id})">
+      ${cardsHtml}
+    </div>
+  `;
 }
 
 function updateKgPhotoCaption(kgId, photoIdx, val) {
