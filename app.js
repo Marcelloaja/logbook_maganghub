@@ -5214,7 +5214,9 @@ function openAddDriveLinkModal(editId = null) {
   if (editId) {
     const item = driveLinksStore.find(i => i.id === editId);
     if (item) {
-      if (titleEl) titleEl.textContent = '✏️ Edit Link Dokumentasi Google Drive';
+      if (titleEl) titleEl.textContent = 'Edit Link Dokumentasi Google Drive';
+      const subEl = document.getElementById('drivelink-modal-sub');
+      if (subEl) subEl.textContent = 'Perbarui rincian atau tautan berkas dokumentasi Google Drive';
       if (editIdInput) editIdInput.value = item.id;
       if (titleInput) titleInput.value = item.title || '';
       if (catInput) catInput.value = item.category || 'Foto';
@@ -5228,7 +5230,9 @@ function openAddDriveLinkModal(editId = null) {
   }
 
   // Mode Tambah Baru
-  if (titleEl) titleEl.textContent = '📎 Tambah Link Dokumentasi Google Drive';
+  if (titleEl) titleEl.textContent = 'Tambah Link Dokumentasi Google Drive';
+  const subEl = document.getElementById('drivelink-modal-sub');
+  if (subEl) subEl.textContent = 'Simpan link foto kegiatan, video, atau arsip drive';
   if (editIdInput) editIdInput.value = '';
   if (titleInput) titleInput.value = '';
   if (catInput) catInput.value = 'Foto';

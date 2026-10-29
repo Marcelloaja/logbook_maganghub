@@ -1221,50 +1221,69 @@ function doPost(e) {
 
   <!-- Modal Tambah / Edit Link Google Drive Dokumentasi -->
   <div class="modal-backdrop" id="add-drivelink-modal" onclick="closeAddDriveLinkModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <h3 class="modal-title" id="drivelink-modal-title">📎 Tambah Link Dokumentasi Google Drive</h3>
+    <div class="modal-content drivelink-modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header drivelink-modal-header">
+        <div class="drivelink-modal-header-info">
+          <div class="drivelink-modal-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title" id="drivelink-modal-title">Tambah Link Dokumentasi Google Drive</h3>
+            <p class="drivelink-modal-sub" id="drivelink-modal-sub">Simpan link foto kegiatan, video, atau arsip drive</p>
+          </div>
+        </div>
         <button type="button" class="modal-close" onclick="closeAddDriveLinkModal()">✕</button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body drivelink-modal-body">
         <input type="hidden" id="drivelink-edit-id" value="" />
         
-        <div class="form-group">
+        <div class="form-group drivelink-field">
           <label class="form-label" for="drivelink-input-title">Nama / Judul Dokumentasi <span class="req">*</span></label>
           <input type="text" id="drivelink-input-title" class="form-input" placeholder="Contoh: Foto Kegiatan Sosialisasi Kebahasaan" />
         </div>
 
-        <div class="form-row" style="display:flex; gap:14px; flex-wrap:wrap;">
-          <div class="form-group" style="flex:1; min-width:200px;">
+        <div class="drivelink-form-grid">
+          <div class="form-group drivelink-field">
             <label class="form-label" for="drivelink-input-category">Kategori Berkas <span class="req">*</span></label>
-            <select id="drivelink-input-category" class="form-select">
-              <option value="Foto">📸 Foto Dokumentasi</option>
-              <option value="Video">🎬 Video Kegiatan</option>
-              <option value="Folder">📁 Folder Google Drive</option>
-              <option value="Dokumen">📄 Laporan & Dokumen (PDF/Doc)</option>
-              <option value="Lainnya">🔗 Lainnya</option>
-            </select>
+            <div class="select-wrapper">
+              <select id="drivelink-input-category" class="form-select">
+                <option value="Foto">📸 Foto Dokumentasi</option>
+                <option value="Video">🎬 Video Kegiatan</option>
+                <option value="Folder">📁 Folder Google Drive</option>
+                <option value="Dokumen">📄 Laporan &amp; Dokumen (PDF/Doc)</option>
+                <option value="Lainnya">🔗 Lainnya</option>
+              </select>
+            </div>
           </div>
-          <div class="form-group" style="flex:1; min-width:200px;">
+          <div class="form-group drivelink-field">
             <label class="form-label" for="drivelink-input-date">Tanggal Kegiatan</label>
             <input type="date" id="drivelink-input-date" class="form-input" />
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group drivelink-field">
           <label class="form-label" for="drivelink-input-url">Tautan / URL Google Drive <span class="req">*</span></label>
           <input type="url" id="drivelink-input-url" class="form-input" placeholder="https://drive.google.com/file/d/... atau https://drive.google.com/drive/folders/..." />
-          <span class="form-hint">Dapat berupa link file foto/video, dokumen Docs/PDF, atau link folder Google Drive. Pastikan perizinan Google Drive disetel ke <strong>"Siapa saja yang memiliki link"</strong> (Anyone with the link can view).</span>
+          <div class="drivelink-hint-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Dapat berupa link file foto, video, PDF, maupun folder Google Drive. Pastikan perizinan Google Drive disetel ke <strong>"Siapa saja yang memiliki link"</strong> (Anyone with the link can view).</span>
+          </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group drivelink-field">
           <label class="form-label" for="drivelink-input-desc">Keterangan Singkat (Opsional)</label>
-          <textarea id="drivelink-input-desc" class="form-textarea" rows="2" placeholder="Contoh: Dokumentasi foto kegiatan liputan apel pagi & penyerahan cinderamata bersama tim Balai Bahasa"></textarea>
+          <textarea id="drivelink-input-desc" class="form-textarea" rows="3" placeholder="Contoh: Dokumentasi foto kegiatan liputan apel pagi &amp; penyerahan cinderamata bersama tim Balai Bahasa"></textarea>
         </div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer drivelink-modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeAddDriveLinkModal()">Batal</button>
-        <button type="button" class="btn btn-primary" onclick="saveDriveLinkItem()">Simpan Link</button>
+        <button type="button" class="btn btn-primary" onclick="saveDriveLinkItem()" style="display:inline-flex; align-items:center; gap:6px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>Simpan Link</span>
+        </button>
       </div>
     </div>
   </div>

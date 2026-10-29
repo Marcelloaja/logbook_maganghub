@@ -5082,3 +5082,235 @@ a {
     align-items: stretch;
   }
 }
+
+
+/* ============================================================
+   MODAL POLISH: TAMBAH / EDIT LINK DOKUMENTASI DRIVE
+   ============================================================ */
+
+.drivelink-modal-content {
+  max-width: 560px !important;
+  width: 95% !important;
+  border-radius: 18px !important;
+  overflow: hidden;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.drivelink-modal-header {
+  padding: 18px 22px !important;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.drivelink-modal-header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.drivelink-modal-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+}
+
+.drivelink-modal-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.drivelink-modal-header .modal-title {
+  font-size: 16px !important;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.drivelink-modal-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 3px 0 0 0;
+  line-height: 1.4;
+}
+
+.drivelink-modal-body {
+  padding: 22px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.drivelink-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+}
+
+.drivelink-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.drivelink-modal-body .form-input {
+  height: 44px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  padding: 10px 14px;
+}
+
+.drivelink-modal-body .form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* Custom Styled Select */
+.form-select {
+  width: 100%;
+  height: 44px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  padding: 10px 36px 10px 14px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13.5px;
+  font-weight: 500;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-select:focus {
+  border-color: var(--primary);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+[data-theme="dark"] .form-select {
+  background-color: var(--input-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] .form-select:focus {
+  background-color: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Textarea Polish */
+.form-textarea {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: var(--font) !important;
+  font-size: 13.5px;
+  line-height: 1.55;
+  transition: all 0.2s ease;
+  outline: none;
+  resize: vertical;
+  min-height: 85px;
+}
+
+.form-textarea:focus {
+  border-color: var(--primary);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+[data-theme="dark"] .form-textarea:focus {
+  background-color: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Informative Callout Box under URL */
+.drivelink-hint-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(79, 70, 229, 0.04);
+  border: 1px solid rgba(79, 70, 229, 0.16);
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin-top: 5px;
+}
+
+.drivelink-hint-box svg {
+  width: 16px;
+  height: 16px;
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.drivelink-hint-box strong {
+  color: var(--text);
+}
+
+[data-theme="dark"] .drivelink-hint-box {
+  background: rgba(79, 70, 229, 0.1);
+  border-color: rgba(79, 70, 229, 0.28);
+}
+
+.drivelink-modal-footer {
+  padding: 16px 22px !important;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: var(--bg);
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+}
+
+.drivelink-modal-footer .btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13.5px;
+}
+
+.drivelink-modal-footer .btn-primary {
+  font-weight: 700;
+  padding: 10px 22px;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+}
+
+@media (max-width: 520px) {
+  .drivelink-form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .drivelink-modal-body {
+    padding: 18px 16px !important;
+  }
+  .drivelink-modal-header {
+    padding: 16px !important;
+  }
+}
