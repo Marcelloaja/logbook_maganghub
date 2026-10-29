@@ -4583,3 +4583,502 @@ a {
   font-weight: 700;
 }
 
+
+
+/* ============================================================
+   TAB 4: LINK DRIVE DOKUMENTASI & IN-APP DRIVE VIEWER
+   ============================================================ */
+
+.gdrive-banner-card {
+  padding: 18px 22px;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(124, 58, 237, 0.07) 100%);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: var(--radius);
+}
+
+[data-theme="dark"] .gdrive-banner-card {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12) 0%, rgba(124, 58, 237, 0.15) 100%);
+  border-color: rgba(124, 58, 237, 0.35);
+}
+
+.gdrive-banner-inner {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.gdrive-banner-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+.gdrive-banner-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.gdrive-banner-text {
+  flex: 1;
+  min-width: 260px;
+}
+
+.gdrive-banner-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: var(--text);
+}
+
+.gdrive-banner-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.gdrive-filter-card {
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+
+.gdrive-filter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gdrive-search-wrapper {
+  flex: 1;
+  min-width: 250px;
+  position: relative;
+}
+
+.gdrive-search-wrapper svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.gdrive-search-input {
+  padding-left: 38px !important;
+}
+
+.gdrive-filter-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gdrive-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gdrive-pill:hover {
+  background: rgba(79, 70, 229, 0.08);
+  color: var(--primary);
+  border-color: rgba(79, 70, 229, 0.3);
+}
+
+.gdrive-pill.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+
+.gdrive-pill-count {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.08);
+  font-weight: 700;
+}
+
+.gdrive-pill.active .gdrive-pill-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Links Grid */
+.gdrive-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.gdrive-link-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.gdrive-link-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+[data-theme="dark"] .gdrive-link-card:hover {
+  border-color: var(--border-focus);
+}
+
+.gdrive-link-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.gdrive-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+  letter-spacing: 0.1px;
+}
+
+.gdrive-badge.foto {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.gdrive-badge.video {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.gdrive-badge.folder {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.gdrive-badge.dokumen {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.gdrive-badge.lainnya {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+[data-theme="dark"] .gdrive-badge.foto { background: rgba(2, 132, 199, 0.2); color: #38bdf8; }
+[data-theme="dark"] .gdrive-badge.video { background: rgba(124, 58, 237, 0.2); color: #c084fc; }
+[data-theme="dark"] .gdrive-badge.folder { background: rgba(217, 119, 6, 0.2); color: #fbbf24; }
+[data-theme="dark"] .gdrive-badge.dokumen { background: rgba(22, 163, 74, 0.2); color: #4ade80; }
+[data-theme="dark"] .gdrive-badge.lainnya { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+
+.gdrive-card-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-card-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-card-icon:hover {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn-card-icon.delete:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+[data-theme="dark"] .btn-card-icon.delete:hover {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+}
+
+.gdrive-link-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 6px 0;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.gdrive-link-title:hover {
+  color: var(--primary);
+}
+
+.gdrive-link-desc {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: 0 0 12px 0;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gdrive-link-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.gdrive-link-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gdrive-link-meta-item svg {
+  width: 13px;
+  height: 13px;
+}
+
+.gdrive-link-url-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.gdrive-link-url-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: monospace;
+  font-size: 11.5px;
+}
+
+.gdrive-link-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-top: auto;
+}
+
+.btn-gdrive-preview {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+}
+
+.btn-gdrive-preview:hover {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+}
+
+.btn-gdrive-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-gdrive-open:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--border-focus);
+}
+
+[data-theme="dark"] .btn-gdrive-open:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* In-App Direct Drive Viewer Modal */
+.drive-viewer-backdrop {
+  z-index: 1050;
+}
+
+.drive-viewer-content {
+  max-width: 1000px;
+  width: 95%;
+  height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  border-radius: 16px;
+}
+
+.drive-viewer-header {
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.drive-viewer-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.drive-viewer-header-left h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drive-viewer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.drive-viewer-body {
+  flex: 1;
+  position: relative;
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: 380px;
+}
+
+.drive-viewer-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #ffffff;
+}
+
+.drive-viewer-loading {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+}
+
+.drive-viewer-footer {
+  padding: 10px 20px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.drive-viewer-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .drive-viewer-content {
+    width: 98%;
+    height: 94vh;
+  }
+  .drive-viewer-header {
+    padding: 10px 14px;
+  }
+  .drive-viewer-header-left h3 {
+    max-width: 140px;
+    font-size: 13.5px;
+  }
+  .gdrive-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initStorageHub();
   initAutoSortWaktu();
   initPushNotifications();
+  initDriveLinks();
   startDailyResetWatcher();
   handleUrlParams();
   checkFirstTimeTour();
@@ -47,7 +48,7 @@ function handleUrlParams() {
     const modal = params.get('modal');
     const tour = params.get('tour');
 
-    if (tab && ['form', 'preview', 'storage'].includes(tab)) {
+    if (tab && ['form', 'preview', 'storage', 'drivelinks'].includes(tab)) {
       switchTab(tab);
     }
     if (modal === 'monev') {
@@ -310,6 +311,8 @@ function switchTab(name, e) {
     updateStorageFormSummary();
     // Selalu sync ulang dari cloud setiap kali tab Penyimpanan Berkas dibuka
     syncStorageWithCloud(true);
+  } else if (name === 'drivelinks') {
+    renderDriveLinks();
   }
   document.getElementById('sidebar').classList.remove('open');
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -4400,7 +4403,7 @@ function checkFirstTimeTour() {
       showCustomConfirmDialog({
         title: 'Selamat Datang di Logbook MagangHub',
         message: 'Baru pertama kali menggunakan website ini? Ikuti <strong>Tur Panduan Cepat (1 Menit)</strong> untuk melihat cara mengisi logbook, simpan ke Google Drive, dan mengisi portal Monev Kemnaker.',
-        subtext: 'Panduan ini bisa Anda buka kembali kapan saja melalui tombol "Panduan Tur" di sidebar atau "Panduan Penggunaan" di kanan atas formulir.',
+        subtext: 'Panduan ini bisa Anda buka kembali kapan saja melalui tombol "Panduan" di navbar atas.',
         confirmText: 'Mulai Tur Sekarang',
         cancelText: 'Nanti Saja',
         isDanger: false
@@ -4861,3 +4864,467 @@ function startDailyNotificationWatcher() {
 }
 
 
+
+
+// ============================================================
+// TAB 4: KOLEKSI LINK DOKUMENTASI GOOGLE DRIVE & IN-APP VIEWER
+// ============================================================
+
+let driveLinksStore = [];
+let currentDriveFilter = 'ALL';
+let currentDriveSearch = '';
+let currentViewerLink = null;
+
+const DEFAULT_SAMPLE_DRIVE_LINKS = [
+  {
+    id: 'link_bbjt_sample_1',
+    title: 'Dokumentasi Foto Kegiatan Magang - Balai Bahasa Jatim',
+    category: 'Foto',
+    url: 'https://drive.google.com/drive/folders/1wT0vA94jW_example1',
+    date: getTodayDateString(),
+    desc: 'Dokumentasi foto kegiatan harian, apel kedinasan, dan program literasi kebahasaan Balai Bahasa Provinsi Jawa Timur.',
+    createdAt: Date.now() - 3600000
+  },
+  {
+    id: 'link_bbjt_sample_2',
+    title: 'Folder Google Drive Bersama Seluruh Peserta MagangHub',
+    category: 'Folder',
+    url: 'https://drive.google.com/drive/folders/1wT0vA94jW_example2',
+    date: getTodayDateString(),
+    desc: 'Folder arsip bersama seluruh dokumentasi kegiatan, data laporan mingguan, dan materi program magang.',
+    createdAt: Date.now()
+  }
+];
+
+function initDriveLinks() {
+  try {
+    const raw = localStorage.getItem('maganghub_custom_drive_links');
+    if (raw) {
+      driveLinksStore = JSON.parse(raw);
+    } else {
+      driveLinksStore = [...DEFAULT_SAMPLE_DRIVE_LINKS];
+      saveDriveLinksStore();
+    }
+  } catch (e) {
+    console.warn('Gagal memuat link drive:', e);
+    driveLinksStore = [...DEFAULT_SAMPLE_DRIVE_LINKS];
+  }
+  renderDriveLinks();
+}
+
+function saveDriveLinksStore() {
+  try {
+    localStorage.setItem('maganghub_custom_drive_links', JSON.stringify(driveLinksStore));
+  } catch (e) {
+    console.warn('Gagal menyimpan ke localStorage:', e);
+  }
+}
+
+// Mengubah URL Google Drive menjadi format embed yang bisa diakses langsung via iframe di website
+function parseDriveUrl(rawUrl) {
+  if (!rawUrl) return { embedUrl: '', directUrl: '', type: 'unknown' };
+  const url = rawUrl.trim();
+
+  // 1. Google Drive Folder: /drive/folders/{id} atau /folders/{id}
+  const folderMatch = url.match(/(?:\/drive\/folders\/|\/folders\/|id=)([a-zA-Z0-9_-]{15,})/);
+  if (url.includes('folder') && folderMatch && folderMatch[1]) {
+    const id = folderMatch[1];
+    return {
+      embedUrl: `https://drive.google.com/embeddedfolderview?id=${id}#grid`,
+      directUrl: url,
+      type: 'folder',
+      id: id
+    };
+  }
+
+  // 2. Google Drive File: /file/d/{id}
+  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]{15,})/);
+  if (fileMatch && fileMatch[1]) {
+    const id = fileMatch[1];
+    return {
+      embedUrl: `https://drive.google.com/file/d/${id}/preview`,
+      directUrl: url,
+      type: 'file',
+      id: id
+    };
+  }
+
+  // 3. Google Drive open?id={id} atau uc?id={id}
+  const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
+  if (url.includes('drive.google.com') && idMatch && idMatch[1] && !url.includes('embeddedfolderview')) {
+    const id = idMatch[1];
+    return {
+      embedUrl: `https://drive.google.com/file/d/${id}/preview`,
+      directUrl: url,
+      type: 'file',
+      id: id
+    };
+  }
+
+  // 4. Google Docs / Sheets / Slides
+  const docsMatch = url.match(/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([a-zA-Z0-9_-]{15,})/);
+  if (docsMatch && docsMatch[1] && docsMatch[2]) {
+    return {
+      embedUrl: `https://docs.google.com/${docsMatch[1]}/d/${docsMatch[2]}/preview`,
+      directUrl: url,
+      type: docsMatch[1],
+      id: docsMatch[2]
+    };
+  }
+
+  // 5. Sudah berupa preview atau embedded
+  if (url.includes('/preview') || url.includes('embeddedfolderview')) {
+    return {
+      embedUrl: url,
+      directUrl: url.replace('/preview', '/view'),
+      type: 'preview',
+      id: ''
+    };
+  }
+
+  return {
+    embedUrl: url,
+    directUrl: url,
+    type: 'external',
+    id: ''
+  };
+}
+
+function renderDriveFilterPills() {
+  const container = document.getElementById('gdrive-filter-pills');
+  if (!container) return;
+
+  const categories = [
+    { key: 'ALL', label: 'Semua', icon: '🗂️' },
+    { key: 'Foto', label: 'Foto Dokumentasi', icon: '📸' },
+    { key: 'Video', label: 'Video Kegiatan', icon: '🎬' },
+    { key: 'Folder', label: 'Folder Drive', icon: '📁' },
+    { key: 'Dokumen', label: 'Laporan & Dokumen', icon: '📄' },
+    { key: 'Lainnya', label: 'Lainnya', icon: '🔗' }
+  ];
+
+  let html = '';
+  categories.forEach(cat => {
+    const count = (cat.key === 'ALL')
+      ? driveLinksStore.length
+      : driveLinksStore.filter(i => (i.category || 'Lainnya').toLowerCase() === cat.key.toLowerCase()).length;
+
+    const isActive = currentDriveFilter.toLowerCase() === cat.key.toLowerCase();
+    html += `
+      <button type="button" class="gdrive-pill ${isActive ? 'active' : ''}" onclick="setDriveLinkFilter('${cat.key}')">
+        <span>${cat.icon}</span>
+        <span>${cat.label}</span>
+        <span class="gdrive-pill-count">${count}</span>
+      </button>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function setDriveLinkFilter(category) {
+  currentDriveFilter = category;
+  renderDriveLinks();
+}
+
+function handleDriveLinkSearch(query) {
+  currentDriveSearch = (query || '').toLowerCase().trim();
+  renderDriveLinks();
+}
+
+function renderDriveLinks() {
+  renderDriveFilterPills();
+  const grid = document.getElementById('gdrive-links-grid');
+  const emptyState = document.getElementById('gdrive-empty-state');
+  if (!grid || !emptyState) return;
+
+  let filtered = [...driveLinksStore];
+
+  // Filter Kategori
+  if (currentDriveFilter !== 'ALL') {
+    filtered = filtered.filter(item => (item.category || 'Lainnya').toLowerCase() === currentDriveFilter.toLowerCase());
+  }
+
+  // Filter Pencarian
+  if (currentDriveSearch) {
+    filtered = filtered.filter(item => {
+      const title = (item.title || '').toLowerCase();
+      const desc = (item.desc || '').toLowerCase();
+      const cat = (item.category || '').toLowerCase();
+      return title.includes(currentDriveSearch) || desc.includes(currentDriveSearch) || cat.includes(currentDriveSearch);
+    });
+  }
+
+  // Urutkan terbaru dulu
+  filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  if (filtered.length === 0) {
+    grid.style.display = 'none';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  grid.style.display = 'grid';
+  emptyState.style.display = 'none';
+
+  let html = '';
+  filtered.forEach(item => {
+    const catClass = (item.category || 'lainnya').toLowerCase();
+    const catIcons = {
+      'foto': '📸 Foto',
+      'video': '🎬 Video',
+      'folder': '📁 Folder Drive',
+      'dokumen': '📄 Dokumen',
+      'lainnya': '🔗 Tautan'
+    };
+    const badgeLabel = catIcons[catClass] || `🔗 ${item.category}`;
+    const cleanDate = item.date || 'Terbaru';
+
+    html += `
+      <div class="gdrive-link-card">
+        <div>
+          <div class="gdrive-link-header">
+            <span class="gdrive-badge ${catClass}">${badgeLabel}</span>
+            <div class="gdrive-card-top-actions">
+              <button type="button" class="btn-card-icon" onclick="editDriveLinkItem('${item.id}')" title="Edit Rincian Link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button type="button" class="btn-card-icon delete" onclick="deleteDriveLinkItem('${item.id}')" title="Hapus Link Ini">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <h3 class="gdrive-link-title" onclick="previewDriveLink('${item.id}')" title="Klik untuk lihat langsung di website">${escapeHtml(item.title)}</h3>
+          ${item.desc ? `<p class="gdrive-link-desc">${escapeHtml(item.desc)}</p>` : ''}
+
+          <div class="gdrive-link-meta">
+            <span class="gdrive-link-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span>${cleanDate}</span>
+            </span>
+          </div>
+
+          <div class="gdrive-link-url-box">
+            <span class="gdrive-link-url-text" title="${escapeHtml(item.url)}">${escapeHtml(item.url)}</span>
+            <button type="button" class="btn-card-icon" onclick="copyDriveLinkUrl('${escapeHtml(item.url)}')" title="Salin Tautan">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="gdrive-link-footer">
+          <button type="button" class="btn-gdrive-preview" onclick="previewDriveLink('${item.id}')" title="Akses & lihat langsung di website">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            <span>Lihat di Website</span>
+          </button>
+          <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="btn-gdrive-open" title="Buka di tab baru Google Drive">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <span>Buka ↗</span>
+          </a>
+        </div>
+      </div>
+    `;
+  });
+
+  grid.innerHTML = html;
+}
+
+// In-App Viewer Google Drive di Website
+function previewDriveLink(id) {
+  const item = driveLinksStore.find(i => i.id === id);
+  if (!item) return;
+
+  currentViewerLink = item;
+  const parsed = parseDriveUrl(item.url);
+
+  const modal = document.getElementById('drivelink-viewer-modal');
+  const titleEl = document.getElementById('viewer-title');
+  const badgeEl = document.getElementById('viewer-category-badge');
+  const externalBtn = document.getElementById('viewer-open-external-btn');
+  const iframe = document.getElementById('viewer-iframe');
+  const loading = document.getElementById('viewer-loading-indicator');
+
+  if (titleEl) titleEl.textContent = item.title;
+  if (badgeEl) {
+    const catClass = (item.category || 'lainnya').toLowerCase();
+    badgeEl.className = `gdrive-badge ${catClass}`;
+    badgeEl.textContent = item.category || 'Dokumentasi';
+  }
+  if (externalBtn) externalBtn.href = item.url;
+
+  if (loading) loading.style.display = 'flex';
+  if (iframe) {
+    iframe.src = parsed.embedUrl || item.url;
+  }
+
+  if (modal) modal.classList.add('open');
+}
+
+function handleViewerIframeLoaded() {
+  const loading = document.getElementById('viewer-loading-indicator');
+  if (loading) {
+    loading.style.display = 'none';
+  }
+}
+
+function closeDriveViewerModal(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const modal = document.getElementById('drivelink-viewer-modal');
+  const iframe = document.getElementById('viewer-iframe');
+  if (iframe) iframe.src = 'about:blank';
+  if (modal) modal.classList.remove('open');
+  currentViewerLink = null;
+}
+
+function copyViewerCurrentUrl() {
+  if (currentViewerLink && currentViewerLink.url) {
+    copyDriveLinkUrl(currentViewerLink.url);
+  }
+}
+
+function copyDriveLinkUrl(url) {
+  if (!url) return;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('✓ Link Google Drive berhasil disalin ke clipboard!');
+  }).catch(() => {
+    const input = document.createElement('input');
+    input.value = url;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+    showToast('✓ Link Google Drive berhasil disalin!');
+  });
+}
+
+// Tambah / Edit Link Modal
+function openAddDriveLinkModal(editId = null) {
+  const modal = document.getElementById('add-drivelink-modal');
+  const titleEl = document.getElementById('drivelink-modal-title');
+  const editIdInput = document.getElementById('drivelink-edit-id');
+  const titleInput = document.getElementById('drivelink-input-title');
+  const catInput = document.getElementById('drivelink-input-category');
+  const dateInput = document.getElementById('drivelink-input-date');
+  const urlInput = document.getElementById('drivelink-input-url');
+  const descInput = document.getElementById('drivelink-input-desc');
+
+  if (!modal) return;
+
+  if (editId) {
+    const item = driveLinksStore.find(i => i.id === editId);
+    if (item) {
+      if (titleEl) titleEl.textContent = '✏️ Edit Link Dokumentasi Google Drive';
+      if (editIdInput) editIdInput.value = item.id;
+      if (titleInput) titleInput.value = item.title || '';
+      if (catInput) catInput.value = item.category || 'Foto';
+      if (dateInput) dateInput.value = item.date || getTodayDateString();
+      if (urlInput) urlInput.value = item.url || '';
+      if (descInput) descInput.value = item.desc || '';
+      modal.classList.add('open');
+      if (titleInput) titleInput.focus();
+      return;
+    }
+  }
+
+  // Mode Tambah Baru
+  if (titleEl) titleEl.textContent = '📎 Tambah Link Dokumentasi Google Drive';
+  if (editIdInput) editIdInput.value = '';
+  if (titleInput) titleInput.value = '';
+  if (catInput) catInput.value = 'Foto';
+  if (dateInput) dateInput.value = getTodayDateString();
+  if (urlInput) urlInput.value = '';
+  if (descInput) descInput.value = '';
+
+  modal.classList.add('open');
+  if (titleInput) titleInput.focus();
+}
+
+function closeAddDriveLinkModal(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const modal = document.getElementById('add-drivelink-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function saveDriveLinkItem() {
+  const editId = (document.getElementById('drivelink-edit-id')?.value || '').trim();
+  const title = (document.getElementById('drivelink-input-title')?.value || '').trim();
+  const category = (document.getElementById('drivelink-input-category')?.value || 'Foto').trim();
+  const date = (document.getElementById('drivelink-input-date')?.value || '').trim() || getTodayDateString();
+  const url = (document.getElementById('drivelink-input-url')?.value || '').trim();
+  const desc = (document.getElementById('drivelink-input-desc')?.value || '').trim();
+
+  if (!title) {
+    showToast('⚠️ Nama/Judul Dokumentasi wajib diisi!');
+    document.getElementById('drivelink-input-title')?.focus();
+    return;
+  }
+
+  if (!url) {
+    showToast('⚠️ Tautan URL Google Drive wajib diisi!');
+    document.getElementById('drivelink-input-url')?.focus();
+    return;
+  }
+
+  if (editId) {
+    // Mode Update
+    const idx = driveLinksStore.findIndex(i => i.id === editId);
+    if (idx !== -1) {
+      driveLinksStore[idx] = {
+        ...driveLinksStore[idx],
+        title,
+        category,
+        date,
+        url,
+        desc
+      };
+      saveDriveLinksStore();
+      renderDriveLinks();
+      closeAddDriveLinkModal();
+      showToast('✓ Link dokumentasi berhasil diperbarui!');
+      return;
+    }
+  }
+
+  // Mode Buat Baru
+  const newItem = {
+    id: 'link_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+    title,
+    category,
+    date,
+    url,
+    desc,
+    createdAt: Date.now()
+  };
+
+  driveLinksStore.unshift(newItem);
+  saveDriveLinksStore();
+  renderDriveLinks();
+  closeAddDriveLinkModal();
+  showToast('✓ Link dokumentasi baru berhasil disimpan!');
+}
+
+function editDriveLinkItem(id) {
+  openAddDriveLinkModal(id);
+}
+
+async function deleteDriveLinkItem(id) {
+  const item = driveLinksStore.find(i => i.id === id);
+  if (!item) return;
+
+  const confirmed = await showCustomConfirmDialog({
+    title: 'Hapus Link Dokumentasi?',
+    message: `Apakah Anda yakin ingin menghapus tautan <strong style="color:var(--text);">${escapeHtml(item.title)}</strong> dari daftar simpanan?`,
+    subtext: 'Tautan ini akan dihapus dari website, berkas di Google Drive Anda tidak akan terhapus.',
+    confirmText: 'Ya, Hapus Tautan',
+    cancelText: 'Batal',
+    isDanger: true
+  });
+
+  if (!confirmed) return;
+
+  driveLinksStore = driveLinksStore.filter(i => i.id !== id);
+  saveDriveLinksStore();
+  renderDriveLinks();
+  showToast('✓ Tautan dokumentasi telah dihapus.');
+}
