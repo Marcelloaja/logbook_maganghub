@@ -836,7 +836,7 @@ function addNewKegiatanUI(data = null) {
             </button>
             <button type="button" class="btn-add-photo-kg" onclick="triggerKgFileInput(${id})" title="Unggah foto bukti untuk kegiatan ini">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>+ Unggah Foto</span>
+              <span>Unggah Foto</span>
             </button>
             <input type="file" id="kg-file-input-${id}" multiple accept="image/*" style="display:none" onchange="handleKgPhotoUpload(event, ${id})" />
           </div>
@@ -1546,7 +1546,7 @@ function renderKgPhotosGrid(id) {
          ondrop="handleKgPhotoDrop(event, ${id})" 
          title="Klik untuk tambah foto, seret file ke sini, atau tekan Ctrl+V">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      <span>+ Tambah Foto</span>
+      <span>Tambah Foto</span>
       <span class="kg-add-card-hint">Seret foto / Ctrl+V</span>
     </div>
   `;
