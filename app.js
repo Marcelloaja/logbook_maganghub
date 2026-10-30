@@ -68,6 +68,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   handleUrlParams();
   checkFirstTimeTour();
   checkFirstTimeWhatsNew();
+  startVersionWatcher();
+  initVisibilityWatcher();
 });
 
 function handleUrlParams() {
@@ -2669,7 +2671,7 @@ function getGasWebhookUrl() {
 
 let cloudSyncInterval = null;
 let lastCloudSyncTime = 0;
-const CLOUD_SYNC_INTERVAL_MS = 30000; // Sinkronisasi otomatis tiap 30 detik
+const CLOUD_SYNC_INTERVAL_MS = 15000; // Sinkronisasi otomatis realtime tiap 15 detik
 
 function initStorageHub() {
   loadSavedDriveConfigs();
@@ -5758,4 +5760,77 @@ async function importDriveLinksFromInput() {
   } catch (err) {
     showToast('❌ Gagal membaca format JSON. Pastikan seluruh teks kode disalin lengkap.');
   }
+}
+
+// ============================================================
+// LIVE APP VERSION WATCHER (AUTO-RELOAD ON NEW CODE DEPLOY)
+// ============================================================
+const CURRENT_APP_BUILD = 1793324380442;
+const VERSION_CHECK_INTERVAL_MS = 15000;
+
+async function checkForAppUpdates() {
+  try {
+    const res = await fetch('version.json?_t=' + Date.now(), {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+    });
+    if (!res.ok) return;
+    const serverVer = await res.json();
+    if (serverVer && serverVer.buildTime && serverVer.buildTime > CURRENT_APP_BUILD) {
+      triggerAutoReloadForNewVersion(serverVer);
+    }
+  } catch (e) {
+    // skip on network hiccup
+  }
+}
+
+function triggerAutoReloadForNewVersion(serverVer) {
+  if (window._isReloadingForUpdate) return;
+  window._isReloadingForUpdate = true;
+
+  autoSaveDraft();
+
+  showToast('⚡ Pembaruan website terbaru tersedia! Memuat ulang otomatis...');
+
+  const banner = document.createElement('div');
+  banner.id = 'live-update-reload-banner';
+  banner.innerHTML = `
+    <div style="position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:999999; background:linear-gradient(135deg, #4f46e5, #7c3aed); color:#fff; padding:12px 24px; border-radius:30px; box-shadow:0 10px 30px rgba(79,70,229,0.45); display:flex; align-items:center; gap:12px; font-weight:600; font-size:13.5px; animation:slideDown 0.3s ease;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-animation" style="width:18px;height:18px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67"/></svg>
+      <span>Website diperbarui oleh koordinator. Memuat versi terbaru...</span>
+    </div>
+  `;
+  document.body.appendChild(banner);
+
+  setTimeout(() => {
+    window.location.reload();
+  }, 1600);
+}
+
+function startVersionWatcher() {
+  setInterval(checkForAppUpdates, VERSION_CHECK_INTERVAL_MS);
+  setTimeout(checkForAppUpdates, 3000);
+}
+
+function initVisibilityWatcher() {
+  // Setiap kali tab kembali aktif atau dibuka, langsung cek pembaruan data & versi
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      checkForAppUpdates();
+      const url = getGasWebhookUrl();
+      if (url) {
+        syncStorageWithCloud(true);
+        syncDriveLinksWithCloud(true);
+      }
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    checkForAppUpdates();
+    const url = getGasWebhookUrl();
+    if (url) {
+      syncStorageWithCloud(true);
+      syncDriveLinksWithCloud(true);
+    }
+  });
 }

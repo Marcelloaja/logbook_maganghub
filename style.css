@@ -5373,3 +5373,8 @@ a {
   border-color: var(--primary-light) !important;
   background: var(--primary-glow) !important;
 }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
