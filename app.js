@@ -7,6 +7,8 @@ let kegiatanCounter = 0;
 let kegiatanDataStore = []; // Array of { id, waktu, nama, deskripsi, fotos: [] }
 let logoDataUrl = '';
 let logoArrayBuffer = null;
+let headerDataUrl = '';
+let headerArrayBuffer = null;
 let isMentorLocked = false;
 
 // Signatures state (data URLs)
@@ -58,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initRealtimeDate();
   initMentorLock();
   initSignaturePads();
-  await preloadLogo();
+  await Promise.all([preloadLogo(), preloadHeader()]);
   loadSavedDraft();
   initStorageHub();
   initAutoSortWaktu();
@@ -207,6 +209,32 @@ function updateMentorLockUI() {
 }
 
 // Preload Logo into Base64 and ArrayBuffer for PDF and Word
+// Preload Official Header into Base64 and ArrayBuffer for PDF and Word
+async function preloadHeader() {
+  if (window.HEADER_BASE64) {
+    headerDataUrl = window.HEADER_BASE64;
+    headerArrayBuffer = dataUrlToArrayBuffer(headerDataUrl);
+    return;
+  }
+  try {
+    const resp = await fetch('assets/header.png');
+    if (!resp.ok) throw new Error('Header fetch failed');
+    const blob = await resp.blob();
+    headerArrayBuffer = await blob.arrayBuffer();
+
+    await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        headerDataUrl = e.target.result;
+        resolve();
+      };
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.warn('Preload header fetch skip:', err);
+  }
+}
+
 async function preloadLogo() {
   if (window.LOGO_BASE64) {
     logoDataUrl = window.LOGO_BASE64;
@@ -2049,6 +2077,7 @@ function renderPreview() {
 
 function buildDocHTML(data) {
   const logoSrc = logoDataUrl || window.LOGO_BASE64 || 'assets/logo.png';
+  const headerSrc = headerDataUrl || window.HEADER_BASE64 || 'assets/header.png';
 
   // Table Kegiatan Rows
   const rowsHtml = data.kegiatan.map((k, idx) => {
@@ -2116,15 +2145,7 @@ function buildDocHTML(data) {
   return `
     <!-- KOP SURAT RESMI KEMENDIKDASMEN -->
     <div class="doc-kop">
-      <img src="${logoSrc}" alt="Logo Kemendikdasmen" class="doc-kop-logo" id="preview-kop-logo" />
-      <div class="doc-kop-text">
-        <div class="doc-kop-instansi">KEMENTERIAN PENDIDIKAN DASAR DAN MENENGAH</div>
-        <div class="doc-kop-sub">BALAI BAHASA PROVINSI JAWA TIMUR</div>
-        <div class="doc-kop-address">
-          Jl. Gebang Putih No.10, Keputih, Kec. Sukolilo, Surabaya, Jawa Timur 60117<br/>
-          Telepon: 0851-8686-5972 | Laman: https://balaibahasajatim.kemendikdasmen.go.id/
-        </div>
-      </div>
+      <img src="${headerSrc}" alt="Kop Surat Balai Bahasa Provinsi Jawa Timur" class="doc-kop-banner" id="preview-kop-banner" />
     </div>
     <div class="doc-kop-divider"></div>
 
@@ -2388,43 +2409,52 @@ async function generateWordBlob(data) {
     ]
   }));
 
-  // Embed Logo Image in Word Header
+  // Embed Official Header Image in Word Header
   const kopParagraphs = [];
-  if (logoArrayBuffer) {
+  const headerBuf = headerArrayBuffer || logoArrayBuffer;
+  if (headerBuf) {
     try {
       kopParagraphs.push(
         new Paragraph({
           children: [
             new ImageRun({
-              data: logoArrayBuffer,
-              transformation: { width: 340, height: 68 },
+              data: headerBuf,
+              transformation: { width: 540, height: 77 },
               type: 'png'
             })
           ],
           alignment: AlignmentType.CENTER,
-          spacing: { after: 100 }
+          border: {
+            bottom: {
+              color: '000000',
+              space: 8,
+              style: BorderStyle.DOUBLE,
+              size: 12
+            }
+          },
+          spacing: { after: 180 }
         })
       );
     } catch (e) {
-      console.warn('Word logo image skip:', e);
+      console.warn('Word header image skip:', e);
     }
+  } else {
+    kopParagraphs.push(
+      new Paragraph({
+        children: [new TextRun({ text: 'KEMENTERIAN PENDIDIKAN DASAR DAN MENENGAH', bold: true, size: 24, color: '0D47A1' })],
+        alignment: AlignmentType.CENTER
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: 'BALAI BAHASA PROVINSI JAWA TIMUR', bold: true, size: 22, color: '1A237E' })],
+        alignment: AlignmentType.CENTER
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: 'Jl. Gebang Putih No.10, Keputih, Kec. Sukolilo, Surabaya, Jawa Timur 60117 | Telp: 0851-8686-5972 | Laman: https://balaibahasajatim.kemendikdasmen.go.id/', size: 18, color: '666666' })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200 }
+      })
+    );
   }
-
-  kopParagraphs.push(
-    new Paragraph({
-      children: [new TextRun({ text: 'KEMENTERIAN PENDIDIKAN DASAR DAN MENENGAH', bold: true, size: 24, color: '0D47A1' })],
-      alignment: AlignmentType.CENTER
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: 'BALAI BAHASA PROVINSI JAWA TIMUR', bold: true, size: 22, color: '1A237E' })],
-      alignment: AlignmentType.CENTER
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: 'Jl. Gebang Putih No.10, Keputih, Kec. Sukolilo, Surabaya, Jawa Timur 60117 | Telp: 0851-8686-5972 | Laman: https://balaibahasajatim.kemendikdasmen.go.id/', size: 18, color: '666666' })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 200 }
-    })
-  );
 
   // Per-Activity Photos
   const fotoParagraphs = [];
@@ -5765,7 +5795,7 @@ async function importDriveLinksFromInput() {
 // ============================================================
 // LIVE APP VERSION WATCHER (AUTO-RELOAD ON NEW CODE DEPLOY)
 // ============================================================
-const CURRENT_APP_BUILD = 1793324380442;
+const CURRENT_APP_BUILD = 1793438198436;
 const VERSION_CHECK_INTERVAL_MS = 15000;
 
 async function checkForAppUpdates() {

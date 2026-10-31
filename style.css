@@ -1608,11 +1608,19 @@ a {
    RESMI: KOP SURAT & DOKUMEN HASIL
    ============================================================ */
 .doc-kop {
-  padding: 26px 36px 16px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
+  padding: 24px 36px 8px;
+  display: block;
+  text-align: center;
   background: white;
+}
+
+.doc-kop-banner {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  object-fit: contain;
 }
 
 .doc-kop-logo {
@@ -1652,7 +1660,7 @@ a {
 }
 
 .doc-kop-divider {
-  margin: 0 36px 20px;
+  margin: 8px 36px 20px;
   border-top: 2.5px solid #000;
   border-bottom: 0.8px solid #000;
   padding-top: 2px;
