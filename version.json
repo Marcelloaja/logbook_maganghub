@@ -1,5 +1,5 @@
 {
-  "version": "2.6.0",
-  "buildTime": 1793438198436,
-  "description": "Official header.png kop surat untuk preview, PDF, dan Word export"
+  "version": "2.7.0",
+  "buildTime": 1793443468744,
+  "description": "Fitur Zoom In/Out & Layar Penuh pada penampil dokumen Drive (agar tabel terlihat tanpa scroll horizontal)"
 }

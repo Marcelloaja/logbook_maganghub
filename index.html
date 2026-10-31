@@ -1387,7 +1387,7 @@ function doPost(e) {
     </div>
   </div>
 
-  <!-- Modal Penampil Langsung Google Drive di Website (In-App Viewer) -->
+  <!-- Modal Penampil Langsung Google Drive di Website (In-App Viewer dengan Zoom & Fullscreen) -->
   <div class="modal-backdrop drive-viewer-backdrop" id="drivelink-viewer-modal" onclick="closeDriveViewerModal(event)">
     <div class="modal-content drive-viewer-content" onclick="event.stopPropagation()">
       <div class="modal-header drive-viewer-header">
@@ -1396,19 +1396,39 @@ function doPost(e) {
           <h3 class="modal-title" id="viewer-title">Judul Dokumentasi</h3>
         </div>
         <div class="drive-viewer-header-actions">
+          <!-- Interactive Zoom Controls (Zoom Out agar seluruh tabel terlihat tanpa scroll horizontal) -->
+          <div class="drive-viewer-zoom-bar" id="viewer-zoom-controls" title="Pengatur Zoom Pratinjau">
+            <button type="button" class="btn-viewer-zoom" id="btn-zoom-out" onclick="zoomViewerOut()" title="Perkecil / Zoom Out (-)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+            <button type="button" class="viewer-zoom-level" id="viewer-zoom-text" onclick="toggleViewerFitWidth()" title="Klik untuk sesuaikan zoom">100%</button>
+            <button type="button" class="btn-viewer-zoom" id="btn-zoom-in" onclick="zoomViewerIn()" title="Perbesar / Zoom In (+)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+            <button type="button" class="btn-viewer-zoom btn-zoom-fit" onclick="toggleViewerFitWidth()" id="viewer-fit-btn" title="Otomatis sesuaikan lebar agar seluruh tabel terlihat tanpa scroll">
+              <span>📐 Muat Penuh</span>
+            </button>
+          </div>
+
           <button type="button" class="btn btn-secondary btn-sm" id="viewer-copy-btn" onclick="copyViewerCurrentUrl()" title="Salin Link Google Drive">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-            <span>Salin Link</span>
+            <span class="viewer-btn-label">Salin Link</span>
           </button>
           <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" id="viewer-open-external-btn" title="Buka Dokumen di Tab Baru Google Drive">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            <span>Buka di Tab Baru ↗</span>
+            <span class="viewer-btn-label">Buka di Tab Baru ↗</span>
           </a>
+          <button type="button" class="btn btn-secondary btn-sm btn-viewer-expand" id="viewer-expand-btn" onclick="toggleViewerFullscreen()" title="Perbesar Layar Penuh (Fullscreen)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;" id="viewer-expand-icon">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+            <span class="viewer-btn-label" id="viewer-expand-text">Layar Penuh</span>
+          </button>
           <button type="button" class="modal-close" onclick="closeDriveViewerModal()">✕</button>
         </div>
       </div>
 
-      <div class="drive-viewer-body">
+      <div class="drive-viewer-body" id="viewer-body-container">
         <div class="drive-viewer-loading" id="viewer-loading-indicator">
           <div class="loading-spinner-ring" style="width:36px; height:36px; border-width:3px;"></div>
           <p style="margin-top:10px; font-size:13px; color:var(--text-muted);">Memuat pratinjau dokumen dari Google Drive...</p>
@@ -1417,9 +1437,19 @@ function doPost(e) {
       </div>
 
       <div class="drive-viewer-footer">
-        <div class="drive-viewer-hint">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:#f59e0b;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span>Jika tampilan pratinjau meminta login atau tidak muncul karena proteksi browser, klik tombol <strong>Buka di Tab Baru ↗</strong> untuk melihat langsung di Google Drive.</span>
+        <div class="drive-viewer-footer-inner">
+          <div class="drive-viewer-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:#f59e0b;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Tabel terpotong? Klik tombol <strong>Zoom Out (-)</strong> atau pilih <strong>75% / 65%</strong> agar seluruh kolom terlihat tanpa scroll ke samping.</span>
+          </div>
+          <div class="drive-viewer-quick-presets">
+            <span class="quick-preset-label">Pilihan Zoom:</span>
+            <button type="button" class="btn-preset-zoom" data-zoom="0.5" onclick="setViewerZoom(0.5)" title="Perkecil ke 50%">50%</button>
+            <button type="button" class="btn-preset-zoom" data-zoom="0.65" onclick="setViewerZoom(0.65)" title="Perkecil ke 65%">65%</button>
+            <button type="button" class="btn-preset-zoom" data-zoom="0.75" id="preset-75" onclick="setViewerZoom(0.75)" title="Optimal untuk Tabel / Sheet (75%)">75% (Tabel)</button>
+            <button type="button" class="btn-preset-zoom" data-zoom="0.85" onclick="setViewerZoom(0.85)" title="Perkecil ke 85%">85%</button>
+            <button type="button" class="btn-preset-zoom active" data-zoom="1.0" id="preset-100" onclick="setViewerZoom(1.0)" title="Ukuran Asli 100%">100%</button>
+          </div>
         </div>
       </div>
     </div>

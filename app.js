@@ -5298,6 +5298,98 @@ function renderDriveLinks() {
   grid.innerHTML = html;
 }
 
+// ============================================================
+// IN-APP DRIVE VIEWER ZOOM & FULLSCREEN CONTROLLER
+// ============================================================
+let currentViewerZoom = 1.0;
+let isViewerFullscreen = false;
+
+function setViewerZoom(zoomLevel) {
+  currentViewerZoom = Math.min(Math.max(zoomLevel, 0.4), 1.5);
+  applyViewerZoom();
+}
+
+function zoomViewerOut() {
+  const steps = [1.5, 1.25, 1.0, 0.85, 0.75, 0.65, 0.5, 0.4];
+  const next = steps.find(s => s < (currentViewerZoom - 0.02)) || 0.4;
+  setViewerZoom(next);
+}
+
+function zoomViewerIn() {
+  const steps = [0.4, 0.5, 0.65, 0.75, 0.85, 1.0, 1.25, 1.5];
+  const next = steps.find(s => s > (currentViewerZoom + 0.02)) || 1.5;
+  setViewerZoom(next);
+}
+
+function resetViewerZoom() {
+  setViewerZoom(1.0);
+}
+
+function toggleViewerFitWidth() {
+  if (Math.abs(currentViewerZoom - 0.75) < 0.03) {
+    setViewerZoom(0.65);
+  } else if (currentViewerZoom < 0.75) {
+    setViewerZoom(1.0);
+  } else {
+    setViewerZoom(0.75);
+  }
+}
+
+function applyViewerZoom() {
+  const iframe = document.getElementById('viewer-iframe');
+  const zoomText = document.getElementById('viewer-zoom-text');
+  const percent = Math.round(currentViewerZoom * 100);
+
+  if (zoomText) {
+    zoomText.textContent = `${percent}%`;
+  }
+
+  document.querySelectorAll('.btn-preset-zoom').forEach(btn => {
+    btn.classList.remove('active');
+    const val = parseFloat(btn.getAttribute('data-zoom'));
+    if (val && Math.abs(val - currentViewerZoom) < 0.03) {
+      btn.classList.add('active');
+    }
+  });
+
+  if (iframe) {
+    const scale = currentViewerZoom;
+    const invScale = (100 / scale);
+    iframe.style.width = `${invScale}%`;
+    iframe.style.height = `${invScale}%`;
+    iframe.style.transform = `scale(${scale})`;
+    iframe.style.transformOrigin = '0 0';
+  }
+}
+
+function toggleViewerFullscreen() {
+  const modalContent = document.querySelector('.drive-viewer-content');
+  const expandText = document.getElementById('viewer-expand-text');
+  const expandIcon = document.getElementById('viewer-expand-icon');
+  if (!modalContent) return;
+
+  isViewerFullscreen = !isViewerFullscreen;
+  if (isViewerFullscreen) {
+    modalContent.classList.add('fullscreen');
+    if (expandText) expandText.textContent = 'Kecilkan';
+    if (expandIcon) {
+      expandIcon.innerHTML = `
+        <path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M10 10H4m6 0V4m0 6L3 3m17 7h-6m0 0V4m0 6l7-7"/>
+      `;
+    }
+  } else {
+    modalContent.classList.remove('fullscreen');
+    if (expandText) expandText.textContent = 'Layar Penuh';
+    if (expandIcon) {
+      expandIcon.innerHTML = `
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+      `;
+    }
+  }
+
+  setTimeout(() => applyViewerZoom(), 150);
+}
+
 // In-App Viewer Google Drive di Website
 function previewDriveLink(id) {
   const item = driveLinksStore.find(i => i.id === id);
@@ -5326,6 +5418,14 @@ function previewDriveLink(id) {
     iframe.src = parsed.embedUrl || item.url;
   }
 
+  // Smart initial zoom: jika dokumen tabel/sheet atau judul mengandung kata tabel/absen/rekap, otomatis set ke 75%
+  const isTableDoc = (item.url && item.url.includes('spreadsheets')) ||
+                     (item.title && /absen|presensi|rekap|sheet|tabel|data/i.test(item.title)) ||
+                     (parsed.type === 'spreadsheets');
+  
+  currentViewerZoom = isTableDoc ? 0.75 : 1.0;
+  applyViewerZoom();
+
   if (modal) modal.classList.add('open');
 }
 
@@ -5340,6 +5440,11 @@ function closeDriveViewerModal(e) {
   if (e && e.stopPropagation) e.stopPropagation();
   const modal = document.getElementById('drivelink-viewer-modal');
   const iframe = document.getElementById('viewer-iframe');
+  const modalContent = document.querySelector('.drive-viewer-content');
+  if (modalContent) modalContent.classList.remove('fullscreen');
+  isViewerFullscreen = false;
+  currentViewerZoom = 1.0;
+  applyViewerZoom();
   if (iframe) iframe.src = 'about:blank';
   if (modal) modal.classList.remove('open');
   currentViewerLink = null;
@@ -5795,7 +5900,7 @@ async function importDriveLinksFromInput() {
 // ============================================================
 // LIVE APP VERSION WATCHER (AUTO-RELOAD ON NEW CODE DEPLOY)
 // ============================================================
-const CURRENT_APP_BUILD = 1793438198436;
+const CURRENT_APP_BUILD = 1793443468744;
 const VERSION_CHECK_INTERVAL_MS = 15000;
 
 async function checkForAppUpdates() {
