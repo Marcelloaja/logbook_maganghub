@@ -1,5 +1,5 @@
 {
-  "version": "2.7.0",
-  "buildTime": 1793443468744,
-  "description": "Fitur Zoom In/Out & Layar Penuh pada penampil dokumen Drive (agar tabel terlihat tanpa scroll horizontal)"
+  "version": "2.7.1",
+  "buildTime": 1794989595507,
+  "description": "Perbaikan UI kartu folder: judul 2 baris rapi & badge tidak bertabrakan dengan tombol aksi"
 }

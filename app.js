@@ -3219,11 +3219,11 @@ function renderStorageFolders(query = '') {
           </div>
         </div>
         <div class="folder-card-bottom">
-          <div style="display:inline-flex;align-items:center;gap:6px;">
+          <div class="folder-card-badges">
             <span class="folder-card-badge">${fileCount} Dokumen</span>
             ${isStarred ? '<span class="folder-pinned-badge"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Dipin</span>' : ''}
           </div>
-          <span>Klik untuk buka &rarr;</span>
+          <span class="folder-card-action">Buka &rarr;</span>
         </div>
       </div>
     `;
@@ -5900,7 +5900,7 @@ async function importDriveLinksFromInput() {
 // ============================================================
 // LIVE APP VERSION WATCHER (AUTO-RELOAD ON NEW CODE DEPLOY)
 // ============================================================
-const CURRENT_APP_BUILD = 1793443468744;
+const CURRENT_APP_BUILD = 1794989595507;
 const VERSION_CHECK_INTERVAL_MS = 15000;
 
 async function checkForAppUpdates() {
