@@ -1457,6 +1457,19 @@ a {
   align-items: center;
   justify-content: center;
   border: 1px solid #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.canvas-wrapper.sig-locked {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  position: relative;
+  cursor: not-allowed;
+}
+
+[data-theme="dark"] .canvas-wrapper.sig-locked {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .sig-canvas {
@@ -1466,10 +1479,24 @@ a {
   touch-action: none;
 }
 
+.canvas-wrapper.sig-locked .sig-canvas {
+  cursor: not-allowed;
+}
+
 .sig-hint {
   font-size: 11px;
   color: var(--text-dim);
   text-align: center;
+}
+
+.sig-hint.locked {
+  color: #047857;
+  font-weight: 500;
+  font-size: 11px;
+}
+
+[data-theme="dark"] .sig-hint.locked {
+  color: #34d399;
 }
 
 /* ============================================================

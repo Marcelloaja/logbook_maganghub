@@ -16,6 +16,10 @@ let sigData = {
   peserta: '',
   mentor: ''
 };
+let sigIsUploaded = {
+  peserta: false,
+  mentor: false
+};
 
 // Drive OAuth State
 let gapiInited = false;
@@ -1631,6 +1635,30 @@ function compressImage(src, maxWidth, quality, callback) {
 // ============================================================
 // DIGITAL SIGNATURE (CANVAS & IMAGE UPLOAD)
 // ============================================================
+function updateSignatureLockUI(role) {
+  const canvas = document.getElementById('sig-' + role);
+  const wrapper = document.getElementById('canvas-wrapper-' + role) || canvas?.parentElement;
+  const hint = document.getElementById('sig-hint-' + role) || wrapper?.parentElement?.querySelector('.sig-hint');
+
+  if (!canvas) return;
+
+  if (sigIsUploaded[role]) {
+    if (wrapper) wrapper.classList.add('sig-locked');
+    canvas.style.pointerEvents = 'none';
+    if (hint) {
+      hint.className = 'sig-hint locked';
+      hint.innerHTML = '🔒 <strong>Tanda tangan upload terkunci</strong> (Klik <em>Hapus</em> jika ingin mengganti/coret manual)';
+    }
+  } else {
+    if (wrapper) wrapper.classList.remove('sig-locked');
+    canvas.style.pointerEvents = 'auto';
+    if (hint) {
+      hint.className = 'sig-hint';
+      hint.textContent = 'Goreskan tanda tangan di atas kotak ini';
+    }
+  }
+}
+
 function initSignaturePads() {
   ['peserta', 'mentor'].forEach(role => {
     const canvas = document.getElementById('sig-' + role);
@@ -1650,25 +1678,29 @@ function initSignaturePads() {
       if (sigData[role]) {
         drawDataUrlToCanvas(canvas, sigData[role]);
       }
+      updateSignatureLockUI(role);
     }
     resize();
     window.addEventListener('resize', resize);
 
     function startDraw(e) {
+      if (sigIsUploaded[role]) {
+        return; // Jangan izinkan coret jika tanda tangan berasal dari file upload
+      }
       drawing = true;
       ctx.beginPath();
       const pos = getPos(e, canvas);
       ctx.moveTo(pos.x, pos.y);
     }
     function moveDraw(e) {
-      if (!drawing) return;
+      if (sigIsUploaded[role] || !drawing) return;
       e.preventDefault();
       const pos = getPos(e, canvas);
       ctx.lineTo(pos.x, pos.y);
       ctx.stroke();
     }
     function endDraw() {
-      if (!drawing) return;
+      if (sigIsUploaded[role] || !drawing) return;
       drawing = false;
       sigData[role] = canvas.toDataURL('image/png');
       autoSaveDraft();
@@ -1681,6 +1713,15 @@ function initSignaturePads() {
     canvas.addEventListener('touchstart', startDraw, { passive: false });
     canvas.addEventListener('touchmove', moveDraw, { passive: false });
     window.addEventListener('touchend', endDraw);
+
+    const wrapper = document.getElementById('canvas-wrapper-' + role) || canvas.parentElement;
+    if (wrapper) {
+      wrapper.addEventListener('click', () => {
+        if (sigIsUploaded[role]) {
+          showToast('🔒 Tanda tangan hasil upload telah dikunci agar rapi. Klik "Hapus" jika ingin mengganti.');
+        }
+      });
+    }
   });
 }
 
@@ -1700,6 +1741,8 @@ function clearSignature(role) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   sigData[role] = '';
+  sigIsUploaded[role] = false;
+  updateSignatureLockUI(role);
   autoSaveDraft();
   showToast('Tanda tangan ' + role + ' dibersihkan');
 }
@@ -1710,10 +1753,12 @@ function uploadSignatureImage(e, role) {
   const reader = new FileReader();
   reader.onload = ev => {
     sigData[role] = ev.target.result;
+    sigIsUploaded[role] = true;
     const canvas = document.getElementById('sig-' + role);
     if (canvas) drawDataUrlToCanvas(canvas, ev.target.result);
+    updateSignatureLockUI(role);
     autoSaveDraft();
-    showToast('Tanda tangan ' + role + ' berhasil diupload');
+    showToast('✓ Tanda tangan ' + role + ' berhasil diupload & dikunci.');
   };
   reader.readAsDataURL(file);
   e.target.value = '';
@@ -1777,7 +1822,8 @@ function autoSaveDraft() {
       mentor: document.getElementById('mentor')?.value || '',
       catatan: document.getElementById('catatan')?.value || '',
       kegiatanList: kegiatanDataStore,
-      sigData: sigData
+      sigData: sigData,
+      sigIsUploaded: sigIsUploaded
     };
     try {
       localStorage.setItem('maganghub_logbook_draft_v2', JSON.stringify(payload));
@@ -1832,13 +1878,17 @@ function loadSavedDraft() {
       // Pulihkan Tanda Tangan Digital peserta & mentor (TIDAK di-reset)
       if (data.sigData) {
         sigData = data.sigData;
-        ['peserta', 'mentor'].forEach(role => {
-          if (sigData[role]) {
-            const c = document.getElementById('sig-' + role);
-            if (c) drawDataUrlToCanvas(c, sigData[role]);
-          }
-        });
       }
+      if (data.sigIsUploaded) {
+        sigIsUploaded = Object.assign({ peserta: false, mentor: false }, data.sigIsUploaded);
+      }
+      ['peserta', 'mentor'].forEach(role => {
+        if (sigData[role]) {
+          const c = document.getElementById('sig-' + role);
+          if (c) drawDataUrlToCanvas(c, sigData[role]);
+        }
+        updateSignatureLockUI(role);
+      });
 
       cachedAiPembelajaran = '';
       lastAiInputHash = '';
@@ -1852,7 +1902,8 @@ function loadSavedDraft() {
         mentor: document.getElementById('mentor')?.value || '',
         catatan: '',
         kegiatanList: [],
-        sigData: sigData // Tanda tangan tetap tersimpan
+        sigData: sigData, // Tanda tangan tetap tersimpan
+        sigIsUploaded: sigIsUploaded
       };
       localStorage.setItem('maganghub_logbook_draft_v2', JSON.stringify(cleanPayload));
 
@@ -1881,13 +1932,17 @@ function loadSavedDraft() {
 
     if (data.sigData) {
       sigData = data.sigData;
-      ['peserta', 'mentor'].forEach(role => {
-        if (sigData[role]) {
-          const c = document.getElementById('sig-' + role);
-          if (c) drawDataUrlToCanvas(c, sigData[role]);
-        }
-      });
     }
+    if (data.sigIsUploaded) {
+      sigIsUploaded = Object.assign({ peserta: false, mentor: false }, data.sigIsUploaded);
+    }
+    ['peserta', 'mentor'].forEach(role => {
+      if (sigData[role]) {
+        const c = document.getElementById('sig-' + role);
+        if (c) drawDataUrlToCanvas(c, sigData[role]);
+      }
+      updateSignatureLockUI(role);
+    });
   } catch (e) {
     console.warn('Gagal memuat draft:', e);
     addNewKegiatanUI();
@@ -1947,7 +2002,8 @@ function clearDailyActivitiesAuto() {
     mentor: document.getElementById('mentor')?.value || '',
     catatan: '',
     kegiatanList: [],
-    sigData: sigData // Tanda tangan tetap tersimpan utuh
+    sigData: sigData, // Tanda tangan tetap tersimpan utuh
+    sigIsUploaded: sigIsUploaded
   };
   try {
     localStorage.setItem('maganghub_logbook_draft_v2', JSON.stringify(cleanPayload));
@@ -5900,7 +5956,7 @@ async function importDriveLinksFromInput() {
 // ============================================================
 // LIVE APP VERSION WATCHER (AUTO-RELOAD ON NEW CODE DEPLOY)
 // ============================================================
-const CURRENT_APP_BUILD = 1794989595507;
+const CURRENT_APP_BUILD = 1795054929346;
 const VERSION_CHECK_INTERVAL_MS = 15000;
 
 async function checkForAppUpdates() {

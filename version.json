@@ -1,5 +1,5 @@
 {
-  "version": "2.7.1",
-  "buildTime": 1794989595507,
-  "description": "Perbaikan UI kartu folder: judul 2 baris rapi & badge tidak bertabrakan dengan tombol aksi"
+  "version": "2.7.2",
+  "buildTime": 1795054929346,
+  "description": "Kunci kanvas tanda tangan jika menggunakan hasil upload foto TTD agar tidak bisa tergores/dicoret"
 }
