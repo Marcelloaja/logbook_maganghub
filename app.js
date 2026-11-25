@@ -1062,33 +1062,10 @@ Aturan Wajib:
   }
 
   try {
-    const apiKey = getGeminiApiKey();
-    let aiText = '';
-
-    const modelsToTry = ['gemini-3.1-flash-lite', 'gemini-flash-latest'];
-    for (const model of modelsToTry) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const resp = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.6,
-              maxOutputTokens: 600
-            }
-          })
-        });
-        if (resp.status === 200) {
-          const resJson = await resp.json();
-          aiText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-          if (aiText) break;
-        }
-      } catch (errOne) {
-        console.warn(`Model ${model} error, trying fallback:`, errOne);
-      }
-    }
+    let aiText = await callGeminiAPI(prompt, {
+      temperature: 0.6,
+      maxOutputTokens: 600
+    });
 
     if (!aiText) {
       throw new Error('API quota / network unavailable');
@@ -1335,33 +1312,10 @@ Aturan Wajib:
 4. Gunakan Bahasa Indonesia baku kedinasan.`;
 
   try {
-    const apiKey = getGeminiApiKey();
-    let aiText = '';
-
-    const modelsToTry = ['gemini-3.1-flash-lite', 'gemini-flash-latest'];
-    for (const model of modelsToTry) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const resp = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.5,
-              maxOutputTokens: 300
-            }
-          })
-        });
-        if (resp.status === 200) {
-          const resJson = await resp.json();
-          aiText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-          if (aiText) break;
-        }
-      } catch (errOne) {
-        console.warn(`Model ${model} error:`, errOne);
-      }
-    }
+    let aiText = await callGeminiAPI(prompt, {
+      temperature: 0.5,
+      maxOutputTokens: 300
+    });
 
     if (!aiText) {
       throw new Error('API quota / network unavailable');
@@ -4082,15 +4036,72 @@ function showToast(msg) {
   }, 3200);
 }
 
+const GEMINI_MODELS_TO_TRY = [
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash-lite',
+  'gemini-3.6-flash',
+  'gemini-3-flash-preview',
+  'gemini-3.8-flash',
+  'gemini-4-hydrogen',
+  'gemini-flash-latest'
+];
+
 function getGeminiApiKey() {
   const fromStorage = localStorage.getItem('gemini_api_key');
-  if (fromStorage && fromStorage.trim()) return fromStorage.trim();
-  // Token default Gemini untuk asisten AI Monev MagangHub
-  try {
-    return atob('QVEuQWI4Uk42TFBlYUQ5a24wUmlJb3JSM3BPclVEUHZFVmlUUVRLWHkzampjYWJiQ3NhWlE=');
-  } catch {
-    return '';
+  return (fromStorage && fromStorage.trim()) ? fromStorage.trim() : '';
+}
+
+/**
+ * Call Gemini AI via Vercel serverless proxy (/api/gemini) when hosted online,
+ * falling back to a locally saved key in localStorage if available.
+ */
+async function callGeminiAPI(prompt, generationConfig = { temperature: 0.6, maxOutputTokens: 600 }) {
+  if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+    try {
+      const proxyResp = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          models: GEMINI_MODELS_TO_TRY,
+          generationConfig
+        })
+      });
+      if (proxyResp.ok) {
+        const data = await proxyResp.json();
+        if (data && data.text) return data.text.trim();
+      }
+    } catch (proxyErr) {
+      console.warn('Vercel Gemini proxy skip, checking local key fallback:', proxyErr);
+    }
   }
+
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) return '';
+
+  for (const model of GEMINI_MODELS_TO_TRY) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig
+        })
+      });
+      if (resp.status === 200) {
+        const resJson = await resp.json();
+        const parts = resJson?.candidates?.[0]?.content?.parts || [];
+        const aiText = parts.filter(p => !p.thought && p.text).map(p => p.text).join('').trim();
+        if (aiText) return aiText;
+      }
+    } catch (errOne) {
+      console.warn(`Model ${model} error, trying fallback:`, errOne);
+    }
+  }
+
+  return '';
 }
 let cachedAiPembelajaran = '';
 let lastAiInputHash = '';
@@ -4302,33 +4313,10 @@ Aturan Wajib:
 6. Buat 2 sampai 3 poin pembelajaran yang paling relevan dengan kegiatan hari ini.`;
 
   try {
-    const apiKey = getGeminiApiKey();
-    let aiText = '';
-    const modelsToTry = ['gemini-3.1-flash-lite', 'gemini-flash-latest'];
-
-    for (const model of modelsToTry) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const resp = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.6,
-              maxOutputTokens: 2500
-            }
-          })
-        });
-        if (resp.status === 200) {
-          const resJson = await resp.json();
-          aiText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-          if (aiText) break;
-        }
-      } catch (errOne) {
-        console.warn(`Model ${model} error, trying fallback:`, errOne);
-      }
-    }
+    let aiText = await callGeminiAPI(prompt, {
+      temperature: 0.6,
+      maxOutputTokens: 2500
+    });
 
     if (aiText) {
       aiText = formatPembelajaranText(aiText);
@@ -5956,7 +5944,7 @@ async function importDriveLinksFromInput() {
 // ============================================================
 // LIVE APP VERSION WATCHER (AUTO-RELOAD ON NEW CODE DEPLOY)
 // ============================================================
-const CURRENT_APP_BUILD = 1795595666650;
+const CURRENT_APP_BUILD = 1795596544278;
 const VERSION_CHECK_INTERVAL_MS = 15000;
 
 async function checkForAppUpdates() {

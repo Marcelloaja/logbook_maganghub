@@ -1,5 +1,5 @@
 {
-  "version": "2.7.3",
-  "buildTime": 1795595666650,
-  "description": "Pembaruan token API Gemini asisten AI"
+  "version": "2.7.4",
+  "buildTime": 1795596544278,
+  "description": "Gunakan Vercel serverless proxy (/api/gemini) dan perbarui daftar model Gemini AI"
 }
