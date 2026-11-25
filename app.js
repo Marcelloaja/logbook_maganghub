@@ -4087,7 +4087,7 @@ function getGeminiApiKey() {
   if (fromStorage && fromStorage.trim()) return fromStorage.trim();
   // Token default Gemini untuk asisten AI Monev MagangHub
   try {
-    return atob('QVEuQWI4Uk42SWoxaWs1UWhrSDhZbmlyX0QtR2YzM085NzBHZUNrTjg2VXhtTWxOcUtXcVE=');
+    return atob('QVEuQWI4Uk42TFBlYUQ5a24wUmlJb3JSM3BPclVEUHZFVmlUUVRLWHkzampjYWJiQ3NhWlE=');
   } catch {
     return '';
   }
@@ -5956,7 +5956,7 @@ async function importDriveLinksFromInput() {
 // ============================================================
 // LIVE APP VERSION WATCHER (AUTO-RELOAD ON NEW CODE DEPLOY)
 // ============================================================
-const CURRENT_APP_BUILD = 1795054929346;
+const CURRENT_APP_BUILD = 1795595666650;
 const VERSION_CHECK_INTERVAL_MS = 15000;
 
 async function checkForAppUpdates() {
